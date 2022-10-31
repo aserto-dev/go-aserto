@@ -3,6 +3,7 @@ module github.com/aserto-dev/go-aserto
 go 1.17
 
 require (
+	github.com/aserto-dev/aserto-grpc v0.1.0
 	github.com/aserto-dev/go-authorizer v0.20.1
 	github.com/gin-gonic/gin v1.8.1
 	github.com/gorilla/mux v1.8.0
@@ -26,6 +27,9 @@ require (
 	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/google/uuid v1.3.0 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
