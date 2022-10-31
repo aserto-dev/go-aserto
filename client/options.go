@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	grpcInsecure "google.golang.org/grpc/credentials/insecure"
 )
 
 var ErrInvalidOptions = errors.New("invalid connection options")
@@ -16,6 +17,18 @@ var ErrInvalidOptions = errors.New("invalid connection options")
 func WithInsecure(insecure bool) ConnectionOption {
 	return func(options *ConnectionOptions) error {
 		options.Insecure = insecure
+
+		// See: https://pkg.go.dev/google.golang.org/grpc#WithInsecure
+		//
+		// WithInsecure returns a DialOption which disables transport security for this ClientConn.
+		// Under the hood, it uses insecure.NewCredentials().
+		//
+		// Note that using this DialOption with per-RPC credentials (through WithCredentialsBundle or WithPerRPCCredentials)
+		// which require transport security is incompatible and will cause grpc.Dial() to fail.
+		//
+		// Deprecated: use WithTransportCredentials and insecure.NewCredentials() instead. Will be supported throughout 1.x.
+		options.DialOptions = append(options.DialOptions, grpc.WithTransportCredentials(grpcInsecure.NewCredentials()))
+
 		return nil
 	}
 }
