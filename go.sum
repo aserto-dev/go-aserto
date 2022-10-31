@@ -125,6 +125,7 @@ github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRF
 github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d/go.mod h1:rBZYJk541a8SKzHPHnH3zbiI+7dagKZ0cgpgrD7Fyho=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
+github.com/aserto-dev/aserto-go v0.8.14-0.20221018123009-a56db85a7ed3 h1:Kp2Ojrem4ixQEQYaxtUiR2RAW6HnQCastADjO3VOJOQ=
 github.com/aserto-dev/aserto-go v0.8.14-0.20221018123009-a56db85a7ed3/go.mod h1:dwAutTKTP8lUjcviItMCJIMRbZ17rsSXp8y4146xB48=
 github.com/aserto-dev/aserto-grpc v0.1.0 h1:x9bC36J4lvUT4F3eJ7bohUDsj1KtsaHujbOqT8Ltj2U=
 github.com/aserto-dev/aserto-grpc v0.1.0/go.mod h1:cWfo0G4Ai5XxYtguK5FpNACtET/AH0GpV7sKcdzqVBM=

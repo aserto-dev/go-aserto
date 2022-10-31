@@ -4,16 +4,17 @@ import (
 	"context"
 	"crypto/tls"
 
+	grpcClient "github.com/aserto-dev/aserto-grpc/grpcclient"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 )
 
-type DialOptionsProvider func(*Config) ([]grpc.DialOption, error)
+type DialOptionsProvider func(*grpcClient.Config) ([]grpc.DialOption, error)
 
 func NewDialOptionsProvider() DialOptionsProvider {
-	return func(cfg *Config) ([]grpc.DialOption, error) {
+	return func(cfg *grpcClient.Config) ([]grpc.DialOption, error) {
 		if (cfg.ClientCertPath != "") != (cfg.ClientKeyPath != "") {
 			return nil, errors.New("both client cert and key must be specified, or both must be empty")
 		}
