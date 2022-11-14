@@ -28,7 +28,7 @@ type IdentityBuilder struct {
 // JWT() is always called in conjunction with another method that provides the user ID itself.
 // For example:
 //
-//  idBuilder.JWT().FromHeader("Authorization")
+//	idBuilder.JWT().FromHeader("Authorization")
 func (b *IdentityBuilder) JWT() *IdentityBuilder {
 	b.identityType = api.IdentityType_IDENTITY_TYPE_JWT
 	return b
@@ -39,7 +39,7 @@ func (b *IdentityBuilder) JWT() *IdentityBuilder {
 // Subject() is always used in conjunction with another method that provides the user ID itself.
 // For example:
 //
-//  idBuilder.Subject().FromContextValue("username")
+//	idBuilder.Subject().FromContextValue("username")
 func (b *IdentityBuilder) Subject() *IdentityBuilder {
 	b.identityType = api.IdentityType_IDENTITY_TYPE_SUB
 	return b

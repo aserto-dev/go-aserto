@@ -96,16 +96,16 @@ Note: Protobuf message fields are identified using their JSON names.
 
 Example:
 
-  middleware.WithResourceFromFields("product.type", "address")
+	middleware.WithResourceFromFields("product.type", "address")
 
 This call would result in an authorization resource with the following structure:
 
-  {
-	  "product": {
-		  "type": <value from message>
-	  },
-	  "address": <value from message>
-  }
+	  {
+		  "product": {
+			  "type": <value from message>
+		  },
+		  "address": <value from message>
+	  }
 
 If the value of "address" is itself a message, all of its fields are included.
 */
@@ -120,25 +120,25 @@ of fields for different method paths.
 
 Example:
 
-  middleware.WithResourceFromMessageByPath(
-	  "/example.ExampleService/Method1": []string{"field1", "field2"},
-	  "/example.ExampleService/Method2": []string{"field1", "field2"},
-	  "id", "name",
-  )
+	  middleware.WithResourceFromMessageByPath(
+		  "/example.ExampleService/Method1": []string{"field1", "field2"},
+		  "/example.ExampleService/Method2": []string{"field1", "field2"},
+		  "id", "name",
+	  )
 
 When Method1 or Method2 are called, the middleware constructs in a authorization resource with the following structure:
 
-  {
-	  "field1": <value from message>,
-	  "field2": <value from message>
-  }
+	  {
+		  "field1": <value from message>,
+		  "field2": <value from message>
+	  }
 
 For all other methods, the middleware constructs in a authorization resource with the following structure:
 
-  {
-	  "id": <value from message>,
-	  "name": <value from message>
-  }
+	  {
+		  "id": <value from message>,
+		  "name": <value from message>
+	  }
 */
 func (m *Middleware) WithResourceFromMessageByPath(fieldsByPath map[string][]string, defaults ...string) *Middleware {
 	m.resourceMappers = append(m.resourceMappers, messageResourceMapper(fieldsByPath, defaults...))
@@ -151,7 +151,7 @@ context and add it to the authorization resource context.
 
 Example:
 
-  middleware.WithResourceFromContextValue("account_id", "account")
+	middleware.WithResourceFromContextValue("account_id", "account")
 
 In each incoming request, the middleware reads the value of the "account_id" key from the request context and
 adds its value to the "account" field in the authorization resource context.

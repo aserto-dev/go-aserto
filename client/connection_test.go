@@ -133,7 +133,7 @@ func TestTokenAndAPIKey(t *testing.T) {
 	assert.Error(t, err)
 }
 
-//nolint: dupl
+// nolint: dupl
 func TestWithTenantID(t *testing.T) {
 	recorder := &dialRecorder{}
 	newConnection(context.TODO(), recorder.DialContext, WithTenantID("<tenantid>")) // nolint:errcheck
@@ -190,7 +190,7 @@ func TestWithTenantID(t *testing.T) {
 	)
 }
 
-//nolint: dupl
+// nolint: dupl
 func TestWithSessionID(t *testing.T) {
 	recorder := &dialRecorder{}
 	newConnection(context.TODO(), recorder.DialContext, WithSessionID("<sessionid>")) // nolint:errcheck

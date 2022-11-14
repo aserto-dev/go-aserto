@@ -1,3 +1,4 @@
+//go:build zeroinstall
 // +build zeroinstall
 
 package main

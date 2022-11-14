@@ -115,12 +115,15 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 // parameters, those are added to the path with two leading underscores.
 // An optional prefix can be specified to be included in all paths.
 //
-// Example
+// # Example
 //
 // Using 'WithPolicyFromURL("myapp")', the route
-//   POST /products/{id}
+//
+//	POST /products/{id}
+//
 // becomes the policy path
-//  "myapp.POST.products.__id"
+//
+//	"myapp.POST.products.__id"
 func (m *Middleware) WithPolicyFromURL(prefix string) *Middleware {
 	m.policyMapper = urlPolicyPathMapper(prefix)
 	return m
