@@ -41,11 +41,11 @@ type Middleware struct {
 	// Identity determines the caller identity used in authorization calls.
 	Identity *httpmw.IdentityBuilder
 
-	client         AuthorizerClient
-	policyContext  api.PolicyContext
-	policyInstance api.PolicyInstance
-	policyMapper   StringMapper
-	resourceMapper StructMapper
+	client          AuthorizerClient
+	policyContext   api.PolicyContext
+	policyInstance  api.PolicyInstance
+	policyMapper    StringMapper
+	resourceMappers []ResourceMapper
 }
 
 type (
@@ -53,9 +53,8 @@ type (
 	// They are used to define policy mappers.
 	StringMapper func(*http.Request) string
 
-	// StructMapper functions are used to extract structured data from incoming requests.
-	// The optional resource mapper is a StructMapper.
-	StructMapper func(*http.Request) *structpb.Struct
+	// ResourceMapper functions are used to extract structured data from incoming requests.
+	ResourceMapper func(*http.Request, map[string]interface{})
 )
 
 // New creates middleware for the specified policy.
@@ -70,12 +69,12 @@ func New(client AuthorizerClient, policy Policy) *Middleware {
 	}
 
 	return &Middleware{
-		client:         client,
-		Identity:       (&httpmw.IdentityBuilder{}).FromHeader("Authorization"),
-		policyContext:  *internal.DefaultPolicyContext(policy),
-		policyInstance: *internal.DefaultPolicyInstance(policy),
-		resourceMapper: defaultResourceMapper,
-		policyMapper:   policyMapper,
+		client:          client,
+		Identity:        (&httpmw.IdentityBuilder{}).FromHeader("Authorization"),
+		policyContext:   *internal.DefaultPolicyContext(policy),
+		policyInstance:  *internal.DefaultPolicyInstance(policy),
+		resourceMappers: []ResourceMapper{defaultResourceMapper},
+		policyMapper:    policyMapper,
 	}
 }
 
@@ -86,26 +85,41 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 			m.policyContext.Path = m.policyMapper(r)
 		}
 
+		resource, err := m.resourceContext(r)
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
 		isRequest := authorizer.IsRequest{
 			IdentityContext: m.Identity.Build(r),
 			PolicyContext:   &m.policyContext,
-			ResourceContext: m.resourceMapper(r),
+			ResourceContext: resource,
 			PolicyInstance:  &m.policyInstance,
 		}
-		resp, err := m.client.Is(
-			r.Context(),
-			&isRequest,
-		)
-		if err == nil && len(resp.Decisions) == 1 {
-			if resp.Decisions[0].Is {
-				next.ServeHTTP(w, r)
-			} else {
-				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-			}
-		} else {
+
+		resp, err := m.client.Is(r.Context(), &isRequest)
+		if err != nil || len(resp.Decisions) != 1 {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
+
+		if !resp.Decisions[0].Is {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		next.ServeHTTP(w, r)
 	})
+}
+
+func (m *Middleware) resourceContext(r *http.Request) (*structpb.Struct, error) {
+	res := map[string]interface{}{}
+	for _, mapper := range m.resourceMappers {
+		mapper(r, res)
+	}
+
+	return structpb.NewStruct(res)
 }
 
 // WithPolicyFromURL instructs the middleware to construct the policy path from the path segment
@@ -139,32 +153,21 @@ func (m *Middleware) WithPolicyPathMapper(mapper StringMapper) *Middleware {
 // WithNoResourceContext causes the middleware to include no resource context in authorization request instead
 // of the default behavior that sends all URL path parameters.
 func (m *Middleware) WithNoResourceContext() *Middleware {
-	m.resourceMapper = func(*http.Request) *structpb.Struct {
-		return nil
-	}
-
+	m.resourceMappers = []ResourceMapper{func(*http.Request, map[string]interface{}) {}}
 	return m
 }
 
 // WithResourceMapper sets a custom resource mapper, a function that takes an incoming request
 // and returns the resource object to include with the authorization request as a `structpb.Struct`.
-func (m *Middleware) WithResourceMapper(mapper StructMapper) *Middleware {
-	m.resourceMapper = mapper
+func (m *Middleware) WithResourceMapper(mapper ResourceMapper) *Middleware {
+	m.resourceMappers = append(m.resourceMappers, mapper)
 	return m
 }
 
-func defaultResourceMapper(r *http.Request) *structpb.Struct {
-	vars := map[string]interface{}{}
+func defaultResourceMapper(r *http.Request, resource map[string]interface{}) {
 	for k, v := range mux.Vars(r) {
-		vars[k] = v
+		resource[k] = v
 	}
-
-	res, err := structpb.NewStruct(vars)
-	if err != nil {
-		return nil
-	}
-
-	return res
 }
 
 func urlPolicyPathMapper(prefix string) StringMapper {
