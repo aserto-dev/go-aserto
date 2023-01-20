@@ -10,14 +10,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aserto-dev/aserto-grpc/grpcclient"
+	"github.com/aserto-dev/go-aserto/client"
 	"github.com/aserto-dev/go-aserto/middleware"
 	"github.com/aserto-dev/go-aserto/middleware/grpc/internal/pbutil"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 	"github.com/aserto-dev/go-authorizer/pkg/aerr"
+	"github.com/aserto-dev/header"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -49,6 +53,8 @@ type Middleware struct {
 	policyInstance  api.PolicyInstance
 	policyMapper    StringMapper
 	resourceMappers []ResourceMapper
+	ignoredPaths    []string
+	cfg             *AuthorizationConfig
 }
 
 type (
@@ -65,20 +71,73 @@ type (
 // The new middleware is created with default identity and policy path mapper.
 // Those can be overridden using `Middleware.Identity` to specify the caller's identity, or using
 // the middleware's ".With...()" functions to set policy path and resource mappers.
-func New(client AuthorizerClient, policy Policy) *Middleware {
+func New(authzClient AuthorizerClient, policy Policy) *Middleware {
 	policyMapper := methodPolicyMapper("")
 	if policy.Path != "" {
 		policyMapper = nil
 	}
 
 	return &Middleware{
-		client:          client,
+		client:          authzClient,
 		Identity:        (&IdentityBuilder{}).FromMetadata("authorization"),
 		policyContext:   *internal.DefaultPolicyContext(policy),
 		policyInstance:  *internal.DefaultPolicyInstance(policy),
 		policyMapper:    policyMapper,
 		resourceMappers: []ResourceMapper{},
+		ignoredPaths:    []string{},
 	}
+}
+
+func NewFromConfig(ctx context.Context, cfg *AuthorizationConfig) (*Middleware, error) {
+	if cfg == nil {
+		return nil, errors.New("config wasn't provided")
+	}
+
+	policyMapper := methodPolicyMapper("")
+
+	if cfg.Policy.Path != "" {
+		policyMapper = nil
+	}
+
+	dialOptionsProvider := grpcclient.NewDialOptionsProvider()
+
+	authzClient, err := newAuthorizerClient(ctx, dialOptionsProvider, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Middleware{
+		client:          authzClient,
+		Identity:        (&IdentityBuilder{}).FromMetadata("authorization"),
+		policyContext:   *internal.DefaultPolicyContext(cfg.Policy),
+		policyInstance:  *internal.DefaultPolicyInstance(cfg.Policy),
+		policyMapper:    policyMapper,
+		resourceMappers: []ResourceMapper{},
+		cfg:             cfg,
+		ignoredPaths:    []string{},
+	}, nil
+}
+
+func newAuthorizerClient(ctx context.Context,
+	dop grpcclient.DialOptionsProvider,
+	cfg *AuthorizationConfig,
+) (AuthorizerClient, error) {
+	connOpts, err := cfg.ToClientOptions(dop)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to convert client config")
+	}
+
+	conn, err := client.NewConnection(ctx, connOpts...)
+	if err != nil {
+		return nil, errors.Wrap(err, "create grpc client failed")
+	}
+
+	return authz.NewAuthorizerClient(conn.Conn), nil
+}
+
+func (m *Middleware) WithIgnoredPolicyPaths(paths []string) *Middleware {
+	m.ignoredPaths = paths
+	return m
 }
 
 // WithPolicyPathMapper takes a custom StringMapper for extracting the authorization policy path form
@@ -110,7 +169,13 @@ This call would result in an authorization resource with the following structure
 If the value of "address" is itself a message, all of its fields are included.
 */
 func (m *Middleware) WithResourceFromFields(fields ...string) *Middleware {
+	if len(fields) == 1 && fields[0] == "*" {
+		m.resourceMappers = append(m.resourceMappers, reqMessageResourceMapper(map[string][]string{}))
+		return m
+	}
+
 	m.resourceMappers = append(m.resourceMappers, messageResourceMapper(map[string][]string{}, fields...))
+
 	return m
 }
 
@@ -203,6 +268,14 @@ func (m *Middleware) Stream() grpc.StreamServerInterceptor {
 }
 
 func (m *Middleware) authorize(ctx context.Context, req interface{}) error {
+	if m.cfg != nil && m.cfg.ModeParsed == Unknown {
+		return errors.New("authorization mode not set")
+	}
+
+	if m.cfg != nil && m.cfg.ModeParsed == None {
+		return nil
+	}
+
 	if m.policyMapper != nil {
 		m.policyContext.Path = m.policyMapper(ctx, req)
 	}
@@ -212,8 +285,23 @@ func (m *Middleware) authorize(ctx context.Context, req interface{}) error {
 		return errors.Wrap(err, "failed to apply resource mapper")
 	}
 
+	tCtx := ctx
+
+	if m.cfg != nil && m.cfg.TenantID != "" {
+		md := metadata.New(map[string]string{
+			string(header.HeaderAsertoTenantID): m.cfg.TenantID,
+		})
+		tCtx = metadata.NewOutgoingContext(ctx, md)
+	}
+
+	for _, path := range m.ignoredPaths {
+		if m.policyContext.Path == path {
+			return nil
+		}
+	}
+
 	resp, err := m.client.Is(
-		ctx,
+		tCtx,
 		&authz.IsRequest{
 			IdentityContext: m.Identity.build(ctx, req),
 			PolicyContext:   &m.policyContext,
@@ -267,10 +355,34 @@ func messageResourceMapper(fieldsByPath map[string][]string, defaults ...string)
 			fields = defaults
 		}
 
-		if len(fields) > 0 {
+		if len(fields) > 0 && req != nil {
 			resource, _ := pbutil.Select(req.(protoreflect.ProtoMessage), fields...)
 			for k, v := range resource.AsMap() {
 				res[k] = v
+			}
+		}
+	}
+}
+
+func reqMessageResourceMapper(fieldsByPath map[string][]string) ResourceMapper {
+	return func(ctx context.Context, req interface{}, res map[string]interface{}) {
+		if req != nil {
+			protoReq := req.(protoreflect.ProtoMessage)
+			message := protoReq.ProtoReflect()
+			fields := message.Descriptor().Fields()
+
+			for idx := 0; idx < fields.Len(); idx++ {
+				field := fields.Get(idx)
+				value := protoReq.ProtoReflect().Get(field).String()
+
+				var err error
+
+				val, err := structpb.NewValue(value)
+				if err != nil {
+					continue
+				}
+
+				res[string(field.Name())] = val.AsInterface()
 			}
 		}
 	}
