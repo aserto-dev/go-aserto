@@ -49,6 +49,7 @@ type Middleware struct {
 	policyInstance  api.PolicyInstance
 	policyMapper    StringMapper
 	resourceMappers []ResourceMapper
+	ignoredMethods  []string
 }
 
 type (
@@ -65,20 +66,26 @@ type (
 // The new middleware is created with default identity and policy path mapper.
 // Those can be overridden using `Middleware.Identity` to specify the caller's identity, or using
 // the middleware's ".With...()" functions to set policy path and resource mappers.
-func New(client AuthorizerClient, policy Policy) *Middleware {
+func New(authzClient AuthorizerClient, policy Policy) *Middleware {
 	policyMapper := methodPolicyMapper("")
 	if policy.Path != "" {
 		policyMapper = nil
 	}
 
 	return &Middleware{
-		client:          client,
+		client:          authzClient,
 		Identity:        (&IdentityBuilder{}).FromMetadata("authorization"),
 		policyContext:   *internal.DefaultPolicyContext(policy),
 		policyInstance:  *internal.DefaultPolicyInstance(policy),
 		policyMapper:    policyMapper,
 		resourceMappers: []ResourceMapper{},
+		ignoredMethods:  []string{},
 	}
+}
+
+func (m *Middleware) WithIgnoredMethods(methods []string) *Middleware {
+	m.ignoredMethods = methods
+	return m
 }
 
 // WithPolicyPathMapper takes a custom StringMapper for extracting the authorization policy path form
@@ -110,7 +117,13 @@ This call would result in an authorization resource with the following structure
 If the value of "address" is itself a message, all of its fields are included.
 */
 func (m *Middleware) WithResourceFromFields(fields ...string) *Middleware {
+	if len(fields) == 1 && fields[0] == "*" {
+		m.resourceMappers = append(m.resourceMappers, reqMessageResourceMapper())
+		return m
+	}
+
 	m.resourceMappers = append(m.resourceMappers, messageResourceMapper(map[string][]string{}, fields...))
+
 	return m
 }
 
@@ -212,6 +225,12 @@ func (m *Middleware) authorize(ctx context.Context, req interface{}) error {
 		return errors.Wrap(err, "failed to apply resource mapper")
 	}
 
+	for _, path := range m.ignoredMethods {
+		if m.policyContext.Path == path {
+			return nil
+		}
+	}
+
 	resp, err := m.client.Is(
 		ctx,
 		&authz.IsRequest{
@@ -267,10 +286,34 @@ func messageResourceMapper(fieldsByPath map[string][]string, defaults ...string)
 			fields = defaults
 		}
 
-		if len(fields) > 0 {
+		if len(fields) > 0 && req != nil {
 			resource, _ := pbutil.Select(req.(protoreflect.ProtoMessage), fields...)
 			for k, v := range resource.AsMap() {
 				res[k] = v
+			}
+		}
+	}
+}
+
+func reqMessageResourceMapper() ResourceMapper {
+	return func(ctx context.Context, req interface{}, res map[string]interface{}) {
+		if req != nil {
+			protoReq := req.(protoreflect.ProtoMessage)
+			message := protoReq.ProtoReflect()
+			fields := message.Descriptor().Fields()
+
+			for idx := 0; idx < fields.Len(); idx++ {
+				field := fields.Get(idx)
+				value := protoReq.ProtoReflect().Get(field).String()
+
+				var err error
+
+				val, err := structpb.NewValue(value)
+				if err != nil {
+					continue
+				}
+
+				res[string(field.Name())] = val.AsInterface()
 			}
 		}
 	}
