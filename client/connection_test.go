@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aserto-dev/go-aserto/client/internal"
+	"github.com/aserto-dev/header"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -235,7 +235,7 @@ func TestWithSessionID(t *testing.T) {
 			md, ok := metadata.FromOutgoingContext(c)
 			assert.True(t, ok)
 
-			sessionID := md.Get(internal.AsertoSessionID)
+			sessionID := md.Get(string(header.HeaderAsertoSessionID))
 			assert.Equal(t, 1, len(sessionID), "request should contain session ID metadata field")
 			assert.Equal(t, "<sessionid>", sessionID[0], "session ID metadata should have the expected value")
 
