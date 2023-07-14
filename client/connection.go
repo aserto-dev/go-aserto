@@ -15,9 +15,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aserto-dev/go-aserto/client/internal"
 	"github.com/aserto-dev/go-aserto/internal/hosted"
 	"github.com/aserto-dev/go-aserto/internal/tlsconf"
+	"github.com/aserto-dev/header"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -192,7 +192,7 @@ func SetTenantContext(ctx context.Context, tenantID string) context.Context {
 		return ctx
 	}
 
-	return metadata.AppendToOutgoingContext(ctx, internal.AsertoTenantID, tenantID)
+	return metadata.AppendToOutgoingContext(ctx, string(header.HeaderAsertoTenantID), tenantID)
 }
 
 func SetSessionContext(ctx context.Context, sessionID string) context.Context {
@@ -200,7 +200,7 @@ func SetSessionContext(ctx context.Context, sessionID string) context.Context {
 		return ctx
 	}
 
-	return metadata.AppendToOutgoingContext(ctx, internal.AsertoSessionID, sessionID)
+	return metadata.AppendToOutgoingContext(ctx, string(header.HeaderAsertoSessionID), sessionID)
 }
 
 func serverAddress(opts *ConnectionOptions) string {
