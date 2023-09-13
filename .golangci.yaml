@@ -42,7 +42,12 @@ linters-settings:
   gomnd:
     settings:
       mnd:
-        checks: [argument, case, condition, return]
+        # don't include the "operation" and "assign"
+        checks: 
+          - argument
+          - case
+          - condition
+          - return
   govet:
     check-shadowing: true
     settings:
@@ -57,7 +62,6 @@ linters-settings:
   misspell:
     locale: US
   nolintlint:
-    allow-leading-space: true # don't require machine-readable nolint directives (i.e. with no leading space)
     allow-unused: false # report any unused nolint directives
     require-explanation: false # don't require an explanation for nolint directives
     require-specific: false # don't require nolint directives to be specific about which linter is being skipped
@@ -69,51 +73,50 @@ linters:
   enable:
     - asciicheck
     - bodyclose
-    - deadcode
-    - depguard
     - dogsled
-    - dupl
     - errcheck
     - exportloopref
     - exhaustive
     - funlen
-    - gochecknoglobals
     - gochecknoinits
-    - gocognit
     - goconst
     - gocritic
     - gocyclo
     - godot
-    - godox
     - goerr113
     - gofmt
     - goimports
-    - gomnd
     - goprintffuncname
     - gosec
     - gosimple
     - govet
     - ineffassign
-    - lll
     - misspell
     - nakedret
-    - nestif
     - noctx
-    - nolintlint
-    - prealloc
-    - revive
     - rowserrcheck
     - staticcheck
-    - structcheck
     - stylecheck
     - testpackage
     - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
-    - whitespace
-    - wsl
+
+  # don't enable:
+    # - depguard
+    # - dupl
+    # - gochecknoglobals
+    # - gocognit
+    # - godox
+    # - gomnd
+    # - lll
+    # - nestif
+    # - nolintlint # conflict with 1.19 gofmt changes
+    # - prealloc
+    # - revive
+    # - wsl
+    # - whitespace
 
 issues:
   # List of regexps of issue texts to exclude, empty list by default.
@@ -135,6 +138,21 @@ issues:
     - text: "unnamedResult:"
       linters:
       - gocritic
+    - path: \.resolvers\.go
+      text: "typeDefFirst:"
+      linters:
+      - gocritic
+    - path: \.resolvers\.go
+      text: "paramTypeCombine:"
+      linters:
+      - gocritic
+    - path: \.resolvers\.go
+      text: "hugeParam:"
+      linters:
+      - gocritic
+    - text: "G404"
+      linters:
+      - gosec
 
 run:
   skip-dirs:

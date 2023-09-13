@@ -46,5 +46,5 @@ func Example() {
 	)
 
 	// Start server.
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", nil)) //nolint: gosec // test implementation
 }
