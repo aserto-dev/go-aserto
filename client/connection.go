@@ -73,7 +73,21 @@ context, the default connection timeout is 5 seconds. For example, to increase t
 	)
 */
 func NewConnection(ctx context.Context, opts ...ConnectionOption) (*Connection, error) {
-	return newConnection(ctx, dialContext, opts...)
+	options, err := NewConnectionOptions(opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	if options.ServerAddress() == "" {
+		// Backward compatibility: default to authorizer service.
+		options.Address = hosted.HostedAuthorizerHostname + hosted.HostedAuthorizerGRPCPort
+	}
+
+	return Connect(ctx, options)
+}
+
+func Connect(ctx context.Context, options *ConnectionOptions) (*Connection, error) {
+	return newConnection(ctx, dialContext, options)
 }
 
 // dialer is introduced in order to test the logic responsible for configuring the underlying gRPC connection
@@ -96,6 +110,10 @@ func dialContext(
 	connection *Connection,
 	options []grpc.DialOption,
 ) (grpc.ClientConnInterface, error) {
+	if address == "" {
+		return nil, errors.Wrap(ErrInvalidOptions, "address not specified")
+	}
+
 	dialOptions := []grpc.DialOption{
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)),
 		grpc.WithBlock(),
@@ -115,12 +133,7 @@ func dialContext(
 	)
 }
 
-func newConnection(ctx context.Context, dialContext dialer, opts ...ConnectionOption) (*Connection, error) {
-	options, err := NewConnectionOptions(opts...)
-	if err != nil {
-		return nil, err
-	}
-
+func newConnection(ctx context.Context, dialContext dialer, options *ConnectionOptions) (*Connection, error) {
 	tlsConf, err := tlsconf.TLSConfig(options.Insecure, options.CACertPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to setup tls configuration")
@@ -148,7 +161,7 @@ func newConnection(ctx context.Context, dialContext dialer, opts ...ConnectionOp
 
 	conn, err := dialContext(
 		ctx,
-		serverAddress(options),
+		options.ServerAddress(),
 		tlsConf,
 		options.Creds,
 		connection,
@@ -201,16 +214,4 @@ func SetSessionContext(ctx context.Context, sessionID string) context.Context {
 	}
 
 	return metadata.AppendToOutgoingContext(ctx, string(header.HeaderAsertoSessionID), sessionID)
-}
-
-func serverAddress(opts *ConnectionOptions) string {
-	if opts.URL != nil {
-		return opts.URL.String()
-	}
-
-	if opts.Address != "" {
-		return opts.Address
-	}
-
-	return hosted.HostedAuthorizerHostname + hosted.HostedAuthorizerGRPCPort
 }
