@@ -7,13 +7,13 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/aserto-dev/go-aserto/middleware/grpc/internal/pbutil"
-	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
+	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 func TestFieldMaskIsValid(t *testing.T) {
-	msg := &authorizer.IsRequest{
+	msg := &authz.IsRequest{
 		PolicyContext: &api.PolicyContext{
 			Path: "policy.path",
 		},
@@ -27,7 +27,7 @@ func TestFieldMaskIsValid(t *testing.T) {
 		},
 	}
 
-	var msgType *authorizer.IsRequest
+	var msgType *authz.IsRequest
 
 	mask, err := fieldmaskpb.New(
 		msgType,

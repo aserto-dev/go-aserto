@@ -13,7 +13,7 @@ import (
 	"github.com/aserto-dev/go-aserto/middleware"
 	httpmw "github.com/aserto-dev/go-aserto/middleware/http"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
-	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
+	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 	"github.com/gorilla/mux"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -21,7 +21,7 @@ import (
 
 type (
 	Policy           = middleware.Policy
-	AuthorizerClient = authorizer.AuthorizerClient
+	AuthorizerClient = authz.AuthorizerClient
 )
 
 /*
@@ -91,7 +91,7 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 			return
 		}
 
-		isRequest := authorizer.IsRequest{
+		isRequest := authz.IsRequest{
 			IdentityContext: m.Identity.Build(r),
 			PolicyContext:   &m.policyContext,
 			ResourceContext: resource,
