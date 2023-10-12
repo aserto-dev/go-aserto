@@ -11,6 +11,7 @@ import (
 	"github.com/aserto-dev/go-aserto/client/directory/internal"
 	des "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
 	dis "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
+	dms "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
 	drs "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	dws "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 )
@@ -36,6 +37,9 @@ type Config struct {
 
 	// Exporter configuration.
 	Exporter *client.Config `json:"exporter"`
+
+	// Model configuration.
+	Model *client.Config `json:"model"`
 }
 
 // Connect create a new directory client from the specified configuration.
@@ -82,11 +86,17 @@ func connect(ctx context.Context, conns *internal.Connections, cfg *Config) (*Cl
 		return nil, errors.Wrap(err, "exporter connection failed")
 	}
 
+	model, err := getConnection(ctx, conns, cfg.Model, cfg.Config)
+	if err != nil {
+		return nil, errors.Wrap(err, "model connection failed")
+	}
+
 	return &Client{
 		Reader:   newClient(reader, drs.NewReaderClient),
 		Writer:   newClient(writer, dws.NewWriterClient),
 		Importer: newClient(importer, dis.NewImporterClient),
 		Exporter: newClient(exporter, des.NewExporterClient),
+		Model:    newClient(model, dms.NewModelClient),
 	}, nil
 }
 
