@@ -29,8 +29,8 @@ func (opts *testOptions) HasStatusCode() bool {
 const DefaultPolicyPath = "GET.foo"
 
 func NewTest(t *testing.T, name string, options *testOptions) *TestCase {
-	if !options.HasPolicy() {
-		options.PolicyPath = DefaultPolicyPath
+	if !options.Options.HasPolicy() {
+		options.Options.PolicyPath = DefaultPolicyPath
 	}
 
 	if !options.HasStatusCode() {
@@ -87,7 +87,7 @@ func TestAuthorizer(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(
-			test.Name,
+			test.Case.Name,
 			testCase(test),
 		)
 	}

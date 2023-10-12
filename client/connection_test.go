@@ -369,7 +369,10 @@ func publicKey(priv interface{}) interface{} {
 }
 
 func subjectInCertPool(pool *x509.CertPool, name string) (bool, error) {
-	for _, subject := range pool.Subjects() {
+	// pool.Subjects() is deprecated. It only works when loading CA cert form file.
+	// Doesn't work on pools returned by x509.SystemCertPool().
+	// The tests use a generated CA cert, this this is ok.
+	for _, subject := range pool.Subjects() { // nolint:staticcheck
 		var rdns pkix.RDNSequence
 
 		_, err := asn1.Unmarshal(subject, &rdns)
