@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/aserto-dev/go-aserto/client"
+	"github.com/aserto-dev/go-aserto/client/directory/internal"
 	des "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
 	dis "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
 	drs "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
@@ -39,7 +40,7 @@ type Config struct {
 
 // Connect create a new directory client from the specified configuration.
 func (c *Config) Connect(ctx context.Context) (*Client, error) {
-	return connect(ctx, newConnections(), c)
+	return connect(ctx, internal.NewConnections(), c)
 }
 
 // Validate returns an error if the configuration is invalid.
@@ -56,7 +57,7 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func connect(ctx context.Context, conns *connections, cfg *Config) (*Client, error) {
+func connect(ctx context.Context, conns *internal.Connections, cfg *Config) (*Client, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -94,7 +95,11 @@ func allNil[T any](slice []*T) bool {
 	return lo.Every([]*T{nil}, slice)
 }
 
-func getConnection(ctx context.Context, conns *connections, cfg, fallback *client.Config) (*client.Connection, error) {
+func getConnection(
+	ctx context.Context,
+	conns *internal.Connections,
+	cfg, fallback *client.Config,
+) (*client.Connection, error) {
 	if cfg != nil {
 		return conns.Get(ctx, cfg)
 	}
