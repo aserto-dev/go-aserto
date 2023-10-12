@@ -1,4 +1,4 @@
-package directory
+package internal
 
 import (
 	"context"
@@ -7,19 +7,19 @@ import (
 	hs "github.com/mitchellh/hashstructure/v2"
 )
 
-type connections struct {
+type Connections struct {
 	conns   map[uint64]*client.Connection
-	connect func(context.Context, ...client.ConnectionOption) (*client.Connection, error)
+	Connect func(context.Context, ...client.ConnectionOption) (*client.Connection, error)
 }
 
-func newConnections() *connections {
-	return &connections{
+func NewConnections() *Connections {
+	return &Connections{
 		conns:   make(map[uint64]*client.Connection),
-		connect: client.NewConnection,
+		Connect: client.NewConnection,
 	}
 }
 
-func (cb *connections) Get(ctx context.Context, cfg *client.Config) (*client.Connection, error) {
+func (cb *Connections) Get(ctx context.Context, cfg *client.Config) (*client.Connection, error) {
 	if cfg == nil {
 		return nil, nil
 	}
@@ -38,7 +38,7 @@ func (cb *connections) Get(ctx context.Context, cfg *client.Config) (*client.Con
 			return nil, err
 		}
 
-		conn, err = cb.connect(ctx, opts...)
+		conn, err = cb.Connect(ctx, opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -47,4 +47,14 @@ func (cb *connections) Get(ctx context.Context, cfg *client.Config) (*client.Con
 	}
 
 	return conn, nil
+}
+
+// Used for testing.
+type ConnectCounter struct {
+	Count int
+}
+
+func (cc *ConnectCounter) Connect(context.Context, ...client.ConnectionOption) (*client.Connection, error) {
+	cc.Count++
+	return &client.Connection{}, nil
 }
