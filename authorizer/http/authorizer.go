@@ -195,7 +195,7 @@ func (a *authorizer) ListPolicies(
 
 func (a *authorizer) Info(
 	ctx context.Context,
-	in *authz.InfoRequest,
+	_ *authz.InfoRequest,
 	opts ...grpc.CallOption,
 ) (*authz.InfoResponse, error) {
 	var paths []string

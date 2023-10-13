@@ -1,4 +1,4 @@
-package grpc // nolint:testpackage // Testing unexported method .build()
+package grpc //nolint: testpackage // Testing unexported method .build()
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/aserto-dev/go-aserto/middleware"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 )
 
@@ -132,11 +131,4 @@ func TestMissingContextValue(t *testing.T) {
 		builder.build(context.TODO(), nil),
 		"Missing context value should result in anonymous identity",
 	)
-}
-
-func TestIdentityMapper(t *testing.T) {
-	builder := &IdentityBuilder{}
-	builder.None().Mapper(func(ctx context.Context, _ interface{}, id middleware.Identity) {
-		id.Subject().ID("george")
-	})
 }

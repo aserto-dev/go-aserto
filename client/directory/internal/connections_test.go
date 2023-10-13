@@ -1,4 +1,4 @@
-package internal // nolint:testpackage
+package internal //nolint: testpackage
 
 import (
 	"context"

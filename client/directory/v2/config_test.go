@@ -1,4 +1,4 @@
-package directory // nolint:testpackage
+package directory //nolint: testpackage
 
 import (
 	"context"
@@ -71,7 +71,7 @@ func TestUnmarshalConfig(t *testing.T) {
 func TestConnect(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("base only", func(t *testing.T) { // nolint:dupl
+	t.Run("base only", func(t *testing.T) { //nolint: dupl
 		assert := asserts.New(t)
 
 		conns, counter := mockConns()
@@ -110,7 +110,7 @@ func TestConnect(t *testing.T) {
 		assert.Equal(2, counter.Count)
 	})
 
-	t.Run("no base", func(t *testing.T) { // nolint:dupl
+	t.Run("no base", func(t *testing.T) { //nolint: dupl
 		assert := asserts.New(t)
 
 		conns, counter := mockConns()

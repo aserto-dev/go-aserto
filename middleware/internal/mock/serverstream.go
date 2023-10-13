@@ -29,10 +29,10 @@ func (s *ServerStream) Context() context.Context {
 	return s.Ctx
 }
 
-func (s *ServerStream) SendMsg(m interface{}) error {
+func (s *ServerStream) SendMsg(_ interface{}) error {
 	return errNotImplemented
 }
 
-func (s *ServerStream) RecvMsg(m interface{}) error {
+func (s *ServerStream) RecvMsg(_ interface{}) error {
 	return errNotImplemented
 }

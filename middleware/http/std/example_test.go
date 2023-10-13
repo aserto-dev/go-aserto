@@ -4,13 +4,14 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/aserto-dev/go-aserto/authorizer/grpc"
 	"github.com/aserto-dev/go-aserto/client"
 	mw "github.com/aserto-dev/go-aserto/middleware/http/std"
 )
 
-func Hello(w http.ResponseWriter, r *http.Request) {
+func Hello(w http.ResponseWriter, _ *http.Request) {
 	if _, err := w.Write([]byte(`"hello"`)); err != nil {
 		log.Println("Failed to write HTTP response:", err)
 	}
@@ -46,5 +47,9 @@ func Example() {
 	)
 
 	// Start server.
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	server := &http.Server{
+		Addr:              ":8080",
+		ReadHeaderTimeout: 2 * time.Second,
+	}
+	log.Fatal(server.ListenAndServe())
 }
