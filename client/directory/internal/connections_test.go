@@ -1,4 +1,4 @@
-package internal //nolint: testpackage
+package internal_test
 
 import (
 	"context"
@@ -7,13 +7,14 @@ import (
 	asserts "github.com/stretchr/testify/assert"
 
 	"github.com/aserto-dev/go-aserto/client"
+	"github.com/aserto-dev/go-aserto/client/directory/internal"
 )
 
 func TestConnections(t *testing.T) {
 	ctx := context.Background()
 
-	counter := &ConnectCounter{}
-	conns := NewConnections()
+	counter := &internal.ConnectCounter{}
+	conns := internal.NewConnections()
 	conns.Connect = counter.Connect
 
 	cfg := &client.Config{Address: "localhost:8282"}
