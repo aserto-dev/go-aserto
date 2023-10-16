@@ -28,8 +28,8 @@ type testOptions struct {
 const DefaultPolicyPath = "policy.path"
 
 func NewTest(t *testing.T, name string, options *testOptions) *TestCase {
-	if options.ExpectedRequest == nil && options.PolicyPath == "" {
-		options.PolicyPath = DefaultPolicyPath
+	if options.Options.ExpectedRequest == nil && options.Options.PolicyPath == "" {
+		options.Options.PolicyPath = DefaultPolicyPath
 	}
 
 	base := test.NewTest(t, name, &options.Options)
@@ -83,7 +83,7 @@ func TestAuthorizer(t *testing.T) {
 	for _, test := range tests {
 		for runnerName, runner := range runners() {
 			t.Run(
-				fmt.Sprintf("%s: %s", test.Name, runnerName),
+				fmt.Sprintf("%s: %s", test.Case.Name, runnerName),
 				testCase(test, runner),
 			)
 		}

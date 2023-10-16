@@ -5,7 +5,7 @@ import (
 
 	"github.com/aserto-dev/go-aserto/middleware"
 	"github.com/aserto-dev/go-aserto/middleware/internal/mock"
-	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
+	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -27,7 +27,7 @@ type Case struct {
 }
 
 type Options struct {
-	ExpectedRequest *authorizer.IsRequest
+	ExpectedRequest *authz.IsRequest
 	Reject          bool
 	PolicyPath      string
 }
@@ -55,11 +55,11 @@ func Policy(path string) middleware.Policy {
 	}
 }
 
-func Decision(authorize bool) *authorizer.Decision {
-	return &authorizer.Decision{Decision: DefaultDecision, Is: authorize}
+func Decision(authorize bool) *authz.Decision {
+	return &authz.Decision{Decision: DefaultDecision, Is: authorize}
 }
 
-func Request(o ...Override) *authorizer.IsRequest {
+func Request(o ...Override) *authz.IsRequest {
 	os := &Overrides{
 		idtype:        api.IdentityType_IDENTITY_TYPE_SUB,
 		id:            DefaultUsername,
@@ -73,7 +73,7 @@ func Request(o ...Override) *authorizer.IsRequest {
 		ov(os)
 	}
 
-	return &authorizer.IsRequest{
+	return &authz.IsRequest{
 		IdentityContext: &api.IdentityContext{Type: os.idtype, Identity: os.id},
 		PolicyContext: &api.PolicyContext{
 			Path:      os.path,

@@ -6,7 +6,7 @@ import (
 	"github.com/aserto-dev/go-aserto/client"
 	"google.golang.org/grpc"
 
-	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
+	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 
 	"github.com/pkg/errors"
 )
@@ -16,7 +16,7 @@ type Client struct {
 	conn *client.Connection
 
 	// Authorizer provides methods for performing authorization requests.
-	Authorizer authorizer.AuthorizerClient
+	Authorizer authz.AuthorizerClient
 }
 
 // NewClient creates a Client with the specified connection options.
@@ -28,7 +28,7 @@ func New(ctx context.Context, opts ...client.ConnectionOption) (*Client, error) 
 
 	return &Client{
 		conn:       connection,
-		Authorizer: authorizer.NewAuthorizerClient(connection.Conn),
+		Authorizer: authz.NewAuthorizerClient(connection.Conn),
 	}, err
 }
 
