@@ -29,8 +29,8 @@ func (opts *testOptions) HasStatusCode() bool {
 const DefaultPolicyPath = "GET.foo"
 
 func NewTest(t *testing.T, name string, options *testOptions) *TestCase {
-	if !options.HasPolicy() {
-		options.PolicyPath = DefaultPolicyPath
+	if !options.Options.HasPolicy() {
+		options.Options.PolicyPath = DefaultPolicyPath
 	}
 
 	if !options.HasStatusCode() {
