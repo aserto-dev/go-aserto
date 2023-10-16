@@ -4,10 +4,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/aserto-dev/go-aserto.svg)](https://pkg.go.dev/github.com/aserto-dev/go-aserto)
 [![Go Report Card](https://goreportcard.com/badge/github.com/aserto-dev/go-aserto)](https://goreportcard.com/report/github.com/aserto-dev/go-aserto)
 
-Package `go-aserto` implements clients and middleware for the [Aserto](http://aserto.com) authorizer and supporting services.
-
-Authorization requests are performed using an AuthorizerClient.
-A client can be used on its own to make authorization calls or, more commonly, it can be used to create server middleware.
+Package `go-aserto` implements clients and middleware for [Aserto](http://aserto.com) services.
 
 * Docs: https://docs.aserto.com/docs/
 * API Reference:  https://aserto.readme.io/
@@ -19,10 +16,17 @@ A client can be used on its own to make authorization calls or, more commonly, i
 go get -u github.com/aserto-dev/go-aserto
 ```
 
-## AuthorizerClient
+## Authorizer
+
+The [Authorizer](https://docs.aserto.com/docs/overview/authorizer) service is is an [open source authorization engine](https://www.topaz.sh)
+which uses the [Open Policy Agent](https://www.openpolicyagent.org) (OPA) to make decisions by computing authorization
+policies.
+
+
+### AuthorizerClient
 
 The `AuthorizerClient` interface, defined in
-[`"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"`](https://github.com/aserto-dev/go-authorizer/blob/main/aserto/authorizer/v2/authorizer_grpc.pb.go#L24),
+[`github.com/aserto-dev/go-authorizer/aserto/authorizer/v2`](https://github.com/aserto-dev/go-authorizer/blob/main/aserto/authorizer/v2/authorizer_grpc.pb.go#L34),
 describes the operations exposed by the Aserto authorizer service.
 
 Two implementation of `AuthorizerClient` are available:
@@ -81,7 +85,7 @@ authorizer, err := grpc.New(
 ```
 
 
-### Make Authorization Calls
+### Making Authorization Calls
 
 Use the client's `Is()` method to request authorization decisions from the Aserto authorizer service.
 
@@ -101,6 +105,131 @@ resp, err := authorizer.Is(c.Context, &authz.IsRequest{
 		Type:     api.IdentityType_IDENTITY_TYPE_SUB,
 	},
 })
+```
+
+## Directory
+
+The [Directory](https://docs.aserto.com/docs/overview/directory) stores information required to make authorization
+decisions.
+
+
+### Directory Client
+
+The directory client provides access to the directory services:
+
+1. Reader - provides functions to query the directory.
+2. Writer - provides functions to mutate or delete directory data.
+3. Exporter - provides bulk export of data from the directory.
+4. Importer - provides bulk import of data into the directory.
+
+
+To create a directory client:
+
+```go
+
+import (
+	"context"
+	"github.com/aserto-dev/go-aserto/client"
+	"github.com/aserto-dev/go-aserto/client/directory/v2"
+)
+
+...
+
+dir, err := directory.New(context.Background(), client.WithAPIKeyAuth('<api key>'))
+```
+
+[Connection options](#connection-options) are the same as those for the authorizer client.
+If `WithAddr()` is not provided, the default address is `directory.prod.aserto.com:8443`.
+
+
+### Configuration
+
+The hosted Aserto directory exposes all services on the same address (`directory.prod.aserto.com:8443`).
+However, with Topaz or in self-hosted environments, it is possible to configure the services individually and to
+disable selected services entirely.
+
+The `directory.Config` structs allows for customization of connection options for directory services.
+
+```go
+// Config provides configuration for connecting to the Aserto Directory service.
+type Config struct {
+	// Base configuration. If non-nil, this configuration is used for any client that doesn't have its own configuration.
+	// If nil, only clients that have their own configuration will be created.
+	*client.Config
+
+	// Reader configuration.
+	Reader *client.Config `json:"reader"`
+
+	// Writer configuration.
+	Writer *client.Config `json:"writer"`
+
+	// Importer configuration.
+	Importer *client.Config `json:"importer"`
+
+	// Exporter configuration.
+	Exporter *client.Config `json:"exporter"`
+}
+```
+
+The embedded `*client.Config` acts as a fallback. If no configuration is provided for a specific service, the fallback
+configuration is used. If no fallback is provided, the client for that service is nil.
+
+To create a directory client from configuration, call `Connect(context.Context)` on the config struct:
+
+```go
+import (
+	"context"
+
+	"github.com/aserto-dev/go-aserto/client/directory/v2"
+	"github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	"github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+)
+
+...
+
+// Use the same address for all services.
+cfg := &directory.Config{Address: "localhost:9292"}
+
+dir, err := cfg.Connect(context.Background())
+if err != nil {
+	panic(err)
+}
+
+resp, err := dir.Reader.GetObjects(&reader.GetObjectsRequest{})
+```
+
+**Examples**
+
+All services use the same configuration:
+```json
+{
+	"address": "directory.prod.aserto.com:8443",
+	"api_key": "<API-KEY>",
+	"tenant_id": "<TENANT-ID>"
+}
+```
+
+
+All services use the same configuration except for the writer, that uses a different address:
+```json
+{
+	"address": "localhost:9292",
+	"writer": {
+		"address": "localhost:9293"
+	}
+}
+```
+
+Only a reader and writer are configured. `Client.Importer` and `Client.Exporter` are nil:
+```json
+{
+	"reader": {
+		"address": "localhost:9292"
+	},
+	"writer": {
+		"address": "localhost:9293"
+	}
+}
 ```
 
 
@@ -132,7 +261,7 @@ type Policy struct {
 	// Decision is the authorization rule to use.
 	Decision string
 
-	// Label name of the aserto policy's instance being queried for authorization.	
+	// Label name of the aserto policy's instance being queried for authorization.
 	InstanceLabel string
 }
 ```

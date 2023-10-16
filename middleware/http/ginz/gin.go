@@ -7,7 +7,7 @@ import (
 	"github.com/aserto-dev/go-aserto/middleware"
 	httpmw "github.com/aserto-dev/go-aserto/middleware/http"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
-	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
+	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -15,7 +15,7 @@ import (
 
 type (
 	Policy           = middleware.Policy
-	AuthorizerClient = authorizer.AuthorizerClient
+	AuthorizerClient = authz.AuthorizerClient
 )
 
 /*
@@ -79,11 +79,11 @@ func (m *Middleware) Handler(c *gin.Context) {
 
 	resource, err := m.resourceContext(c)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err) // nolint:errcheck
+		c.AbortWithError(http.StatusInternalServerError, err) //nolint: errcheck
 		return
 	}
 
-	isRequest := authorizer.IsRequest{
+	isRequest := authz.IsRequest{
 		IdentityContext: m.Identity.Build(c.Request),
 		PolicyContext:   &m.policy,
 		ResourceContext: resource,
@@ -100,7 +100,7 @@ func (m *Middleware) Handler(c *gin.Context) {
 			c.AbortWithStatus(http.StatusForbidden)
 		}
 	} else {
-		c.AbortWithError(http.StatusInternalServerError, err) // nolint:errcheck
+		c.AbortWithError(http.StatusInternalServerError, err) //nolint: errcheck
 	}
 }
 

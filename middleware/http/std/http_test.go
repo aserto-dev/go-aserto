@@ -99,7 +99,7 @@ func testCase(testCase *TestCase) func(*testing.T) {
 	return func(t *testing.T) {
 		handler := testCase.middleware.Handler(http.HandlerFunc(noopHandler))
 
-		req := httptest.NewRequest("GET", "https://example.com/foo", nil)
+		req := httptest.NewRequest("GET", "https://example.com/foo", http.NoBody)
 		req.Header.Add("Authorization", test.DefaultUsername)
 
 		w := httptest.NewRecorder()

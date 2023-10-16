@@ -4,12 +4,11 @@
 
 linters-settings:
   depguard:
-    list-type: blacklist
-    packages:
-      # logging is allowed only by zerolog
-      - github.com/sirupsen/logrus
-    packages-with-error-message:
-      - github.com/sirupsen/logrus: "logging is allowed only by zerolog"
+    rules:
+      Main:
+        deny:
+          - pkg: github.com/sirupsen/logrus
+            desc: "logging is allowed only by zerolog"
   dupl:
     threshold: 100
   funlen:
@@ -69,7 +68,6 @@ linters:
   enable:
     - asciicheck
     - bodyclose
-    - deadcode
     - depguard
     - dogsled
     - dupl
@@ -104,14 +102,12 @@ linters:
     - revive
     - rowserrcheck
     - staticcheck
-    - structcheck
     - stylecheck
     - testpackage
     - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
     - whitespace
     - wsl
 

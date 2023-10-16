@@ -4,82 +4,82 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
+	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 )
 
 type Authorizer struct {
 	t        *testing.T
-	expected *authorizer.IsRequest
-	response authorizer.IsResponse
+	expected *authz.IsRequest
+	response authz.IsResponse
 }
 
-func New(t *testing.T, expectedRequest *authorizer.IsRequest, decision *authorizer.Decision) *Authorizer {
+func New(t *testing.T, expectedRequest *authz.IsRequest, decision *authz.Decision) *Authorizer {
 	return &Authorizer{
 		t:        t,
 		expected: expectedRequest,
-		response: authorizer.IsResponse{
-			Decisions: []*authorizer.Decision{decision},
+		response: authz.IsResponse{
+			Decisions: []*authz.Decision{decision},
 		},
 	}
 }
 
-var _ authorizer.AuthorizerClient = (*Authorizer)(nil)
+var _ authz.AuthorizerClient = (*Authorizer)(nil)
 
 func (c *Authorizer) DecisionTree(
-	ctx context.Context,
-	in *authorizer.DecisionTreeRequest,
-	opts ...grpc.CallOption,
-) (*authorizer.DecisionTreeResponse, error) {
+	_ context.Context,
+	_ *authz.DecisionTreeRequest,
+	_ ...grpc.CallOption,
+) (*authz.DecisionTreeResponse, error) {
 	return nil, nil
 }
 
 func (c *Authorizer) Is(
-	ctx context.Context,
-	in *authorizer.IsRequest,
-	opts ...grpc.CallOption,
-) (*authorizer.IsResponse, error) {
+	_ context.Context,
+	in *authz.IsRequest,
+	_ ...grpc.CallOption,
+) (*authz.IsResponse, error) {
 	assert.Equal(c.t, c.expected, in)
 	return &c.response, nil
 }
 
 func (c *Authorizer) Query(
-	ctx context.Context,
-	in *authorizer.QueryRequest,
-	opts ...grpc.CallOption,
-) (*authorizer.QueryResponse, error) {
+	_ context.Context,
+	_ *authz.QueryRequest,
+	_ ...grpc.CallOption,
+) (*authz.QueryResponse, error) {
 	return nil, nil
 }
 
 func (c *Authorizer) Compile(
-	ctx context.Context,
-	in *authorizer.CompileRequest,
-	opts ...grpc.CallOption,
-) (*authorizer.CompileResponse, error) {
+	_ context.Context,
+	_ *authz.CompileRequest,
+	_ ...grpc.CallOption,
+) (*authz.CompileResponse, error) {
 	return nil, nil
 }
 
 func (c *Authorizer) GetPolicy(
-	ctx context.Context,
-	in *authorizer.GetPolicyRequest,
-	opts ...grpc.CallOption,
-) (*authorizer.GetPolicyResponse, error) {
+	_ context.Context,
+	_ *authz.GetPolicyRequest,
+	_ ...grpc.CallOption,
+) (*authz.GetPolicyResponse, error) {
 	return nil, nil
 }
 
 func (c *Authorizer) ListPolicies(
-	ctx context.Context,
-	in *authorizer.ListPoliciesRequest,
-	opts ...grpc.CallOption,
-) (*authorizer.ListPoliciesResponse, error) {
+	_ context.Context,
+	_ *authz.ListPoliciesRequest,
+	_ ...grpc.CallOption,
+) (*authz.ListPoliciesResponse, error) {
 	return nil, nil
 }
 
 func (c *Authorizer) Info(
-	ctx context.Context,
-	in *authorizer.InfoRequest,
-	opts ...grpc.CallOption,
-) (*authorizer.InfoResponse, error) {
+	_ context.Context,
+	_ *authz.InfoRequest,
+	_ ...grpc.CallOption,
+) (*authz.InfoResponse, error) {
 	return nil, nil
 }

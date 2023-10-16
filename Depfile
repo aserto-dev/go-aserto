@@ -10,11 +10,11 @@ bin:
       linux-arm64: "e57e719e1eec9bce9057751e2583907210d3ac99c0a01897479506fbb2af828d"
       darwin-amd64: "b398481bf33ebf9563cf69d7639014f0d652a2d5e26c0a9a424e2a39bb853354"
       darwin-arm64: "20aead134ef8e77cb70efcfe047fc2e381793004fba103e7692b7dab00fe5131"
-      
+
 go:
   gotestsum:
     importPath: "gotest.tools/gotestsum"
-    version: "v1.7.0"
+    version: "v1.10.1"
   golangci-lint:
     importPath: "github.com/golangci/golangci-lint/cmd/golangci-lint"
-    version: "v1.46.2"
+    version: "v1.53.2"

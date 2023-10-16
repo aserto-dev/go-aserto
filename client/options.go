@@ -140,7 +140,7 @@ type ConnectionOptions struct {
 	// Note: Address and URL are mutually exclusive. Only one of them may be set.
 	Address string
 
-	// URL is the authorizer service URL.
+	// URL is the service URL.
 	//
 	// Unlike ConnectionOptions.Address, URL gives gRPC clients the ability to use Unix sockets in addition
 	// to DNS names (see https://github.com/grpc/grpc/blob/master/doc/naming.md#name-syntax)
@@ -208,4 +208,12 @@ func NewConnectionOptions(opts ...ConnectionOption) (*ConnectionOptions, error) 
 	}
 
 	return options, nil
+}
+
+func (o *ConnectionOptions) ServerAddress() string {
+	if o.URL != nil {
+		return o.URL.String()
+	}
+
+	return o.Address
 }
