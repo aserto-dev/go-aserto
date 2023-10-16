@@ -130,7 +130,7 @@ To create a directory client:
 import (
 	"context"
 	"github.com/aserto-dev/go-aserto/client"
-	"github.com/aserto-dev/go-aserto/client/directory/v2"
+	"github.com/aserto-dev/go-aserto/client/directory/v3"
 )
 
 ...
@@ -180,7 +180,7 @@ To create a directory client from configuration, call `Connect(context.Context)`
 import (
 	"context"
 
-	"github.com/aserto-dev/go-aserto/client/directory/v2"
+	"github.com/aserto-dev/go-aserto/client/directory/v3"
 	"github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 )
