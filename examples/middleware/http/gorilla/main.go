@@ -28,7 +28,7 @@ func main() {
 
 	mw := std.New(
 		authClient,
-		middleware.Policy{
+		&middleware.Policy{
 			Name:          "local",
 			Decision:      "allowed",
 			InstanceLabel: "label",
