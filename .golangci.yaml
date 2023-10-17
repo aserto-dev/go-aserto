@@ -4,12 +4,11 @@
 
 linters-settings:
   depguard:
-    list-type: blacklist
-    packages:
-      # logging is allowed only by zerolog
-      - github.com/sirupsen/logrus
-    packages-with-error-message:
-      - github.com/sirupsen/logrus: "logging is allowed only by zerolog"
+    rules:
+      Main:
+        deny:
+          - pkg: github.com/sirupsen/logrus
+            desc: "logging is allowed only by zerolog"
   dupl:
     threshold: 100
   funlen:
@@ -43,7 +42,7 @@ linters-settings:
     settings:
       mnd:
         # don't include the "operation" and "assign"
-        checks: 
+        checks:
           - argument
           - case
           - condition
@@ -73,6 +72,7 @@ linters:
   enable:
     - asciicheck
     - bodyclose
+    - depguard
     - dogsled
     - errcheck
     - exportloopref
@@ -102,21 +102,8 @@ linters:
     - unconvert
     - unparam
     - unused
-
-  # don't enable:
-    # - depguard
-    # - dupl
-    # - gochecknoglobals
-    # - gocognit
-    # - godox
-    # - gomnd
-    # - lll
-    # - nestif
-    # - nolintlint # conflict with 1.19 gofmt changes
-    # - prealloc
-    # - revive
-    # - wsl
-    # - whitespace
+    - whitespace
+    - wsl
 
 issues:
   # List of regexps of issue texts to exclude, empty list by default.

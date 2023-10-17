@@ -16,7 +16,7 @@ func TLSConfig(insecure bool, caCertPath string) (*tls.Config, error) {
 	)
 
 	if insecure {
-		tlsConf.InsecureSkipVerify = true
+		tlsConf.InsecureSkipVerify = true //nolint: gosec
 		return &tlsConf, nil
 	}
 

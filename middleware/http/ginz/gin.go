@@ -79,7 +79,7 @@ func (m *Middleware) Handler(c *gin.Context) {
 
 	resource, err := m.resourceContext(c)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err) // nolint:errcheck
+		c.AbortWithError(http.StatusInternalServerError, err) //nolint: errcheck
 		return
 	}
 
@@ -100,7 +100,7 @@ func (m *Middleware) Handler(c *gin.Context) {
 			c.AbortWithStatus(http.StatusForbidden)
 		}
 	} else {
-		c.AbortWithError(http.StatusInternalServerError, err) // nolint:errcheck
+		c.AbortWithError(http.StatusInternalServerError, err) //nolint: errcheck
 	}
 }
 
