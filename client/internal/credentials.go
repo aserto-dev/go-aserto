@@ -25,7 +25,7 @@ func NewTokenAuth(token string) *TokenAuth {
 	}
 }
 
-func (t TokenAuth) GetRequestMetadata(ctx context.Context, in ...string) (map[string]string, error) {
+func (t TokenAuth) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
 	return map[string]string{
 		Authorization: t.token,
 	}, nil
@@ -48,7 +48,7 @@ func NewAPIKeyAuth(key string) *APIKeyAuth {
 	}
 }
 
-func (k *APIKeyAuth) GetRequestMetadata(ctx context.Context, in ...string) (map[string]string, error) {
+func (k *APIKeyAuth) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
 	return map[string]string{
 		Authorization: Basic + " " + k.key,
 	}, nil

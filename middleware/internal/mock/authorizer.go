@@ -28,58 +28,58 @@ func New(t *testing.T, expectedRequest *authz.IsRequest, decision *authz.Decisio
 var _ authz.AuthorizerClient = (*Authorizer)(nil)
 
 func (c *Authorizer) DecisionTree(
-	ctx context.Context,
-	in *authz.DecisionTreeRequest,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *authz.DecisionTreeRequest,
+	_ ...grpc.CallOption,
 ) (*authz.DecisionTreeResponse, error) {
 	return nil, nil
 }
 
 func (c *Authorizer) Is(
-	ctx context.Context,
+	_ context.Context,
 	in *authz.IsRequest,
-	opts ...grpc.CallOption,
+	_ ...grpc.CallOption,
 ) (*authz.IsResponse, error) {
 	assert.Equal(c.t, c.expected, in)
 	return &c.response, nil
 }
 
 func (c *Authorizer) Query(
-	ctx context.Context,
-	in *authz.QueryRequest,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *authz.QueryRequest,
+	_ ...grpc.CallOption,
 ) (*authz.QueryResponse, error) {
 	return nil, nil
 }
 
 func (c *Authorizer) Compile(
-	ctx context.Context,
-	in *authz.CompileRequest,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *authz.CompileRequest,
+	_ ...grpc.CallOption,
 ) (*authz.CompileResponse, error) {
 	return nil, nil
 }
 
 func (c *Authorizer) GetPolicy(
-	ctx context.Context,
-	in *authz.GetPolicyRequest,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *authz.GetPolicyRequest,
+	_ ...grpc.CallOption,
 ) (*authz.GetPolicyResponse, error) {
 	return nil, nil
 }
 
 func (c *Authorizer) ListPolicies(
-	ctx context.Context,
-	in *authz.ListPoliciesRequest,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *authz.ListPoliciesRequest,
+	_ ...grpc.CallOption,
 ) (*authz.ListPoliciesResponse, error) {
 	return nil, nil
 }
 
 func (c *Authorizer) Info(
-	ctx context.Context,
-	in *authz.InfoRequest,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *authz.InfoRequest,
+	_ ...grpc.CallOption,
 ) (*authz.InfoResponse, error) {
 	return nil, nil
 }
