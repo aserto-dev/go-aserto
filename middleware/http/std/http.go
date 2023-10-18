@@ -113,6 +113,10 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 	})
 }
 
+func (m *Middleware) HandlerFunc(next http.HandlerFunc) http.Handler {
+	return m.Handler(http.HandlerFunc(next))
+}
+
 func (m *Middleware) resourceContext(r *http.Request) (*structpb.Struct, error) {
 	res := map[string]interface{}{}
 	for _, mapper := range m.resourceMappers {
