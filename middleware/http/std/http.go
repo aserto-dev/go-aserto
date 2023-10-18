@@ -14,7 +14,6 @@ import (
 	httpmw "github.com/aserto-dev/go-aserto/middleware/http"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
-	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 	"github.com/gorilla/mux"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -42,8 +41,7 @@ type Middleware struct {
 	Identity *httpmw.IdentityBuilder
 
 	client          AuthorizerClient
-	policyContext   api.PolicyContext
-	policyInstance  api.PolicyInstance
+	policy          *Policy
 	policyMapper    StringMapper
 	resourceMappers []ResourceMapper
 }
@@ -69,10 +67,9 @@ func New(client AuthorizerClient, policy Policy) *Middleware {
 	}
 
 	return &Middleware{
-		client:          client,
 		Identity:        (&httpmw.IdentityBuilder{}).FromHeader("Authorization"),
-		policyContext:   *internal.DefaultPolicyContext(policy),
-		policyInstance:  *internal.DefaultPolicyInstance(policy),
+		client:          client,
+		policy:          &policy,
 		resourceMappers: []ResourceMapper{defaultResourceMapper},
 		policyMapper:    policyMapper,
 	}
@@ -81,8 +78,10 @@ func New(client AuthorizerClient, policy Policy) *Middleware {
 // Handler is the middleware implementation. It is how an Authorizer is wired to an HTTP server.
 func (m *Middleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		policyContext := internal.DefaultPolicyContext(m.policy)
+
 		if m.policyMapper != nil {
-			m.policyContext.Path = m.policyMapper(r)
+			policyContext.Path = m.policyMapper(r)
 		}
 
 		resource, err := m.resourceContext(r)
@@ -93,9 +92,9 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 
 		isRequest := authz.IsRequest{
 			IdentityContext: m.Identity.Build(r),
-			PolicyContext:   &m.policyContext,
+			PolicyContext:   policyContext,
 			ResourceContext: resource,
-			PolicyInstance:  &m.policyInstance,
+			PolicyInstance:  internal.DefaultPolicyInstance(m.policy),
 		}
 
 		resp, err := m.client.Is(r.Context(), &isRequest)
@@ -114,7 +113,11 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 }
 
 func (m *Middleware) HandlerFunc(next http.HandlerFunc) http.Handler {
-	return m.Handler(http.HandlerFunc(next))
+	return m.Handler(next)
+}
+
+func (m *Middleware) Check() *Check {
+	return nil
 }
 
 func (m *Middleware) resourceContext(r *http.Request) (*structpb.Struct, error) {
