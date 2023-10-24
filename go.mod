@@ -3,7 +3,7 @@ module github.com/aserto-dev/go-aserto
 go 1.18
 
 require (
-	github.com/aserto-dev/go-authorizer v0.20.1
+	github.com/aserto-dev/go-authorizer v0.20.3
 	github.com/aserto-dev/go-directory v0.21.8-0.20230928155853-8b1ea7613972
 	github.com/aserto-dev/header v0.0.4
 	github.com/gin-gonic/gin v1.8.1

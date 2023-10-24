@@ -7,6 +7,7 @@ be allowed or denied.
 package std
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -14,6 +15,8 @@ import (
 	httpmw "github.com/aserto-dev/go-aserto/middleware/http"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
+	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
+	aerr "github.com/aserto-dev/go-authorizer/pkg/aerr"
 	"github.com/gorilla/mux"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -60,7 +63,7 @@ type (
 // The new middleware is created with default identity and policy path mapper.
 // Those can be overridden using `Middleware.Identity` to specify the caller's identity, or using
 // the middleware's ".With...()" functions to set policy path and resource mappers.
-func New(client AuthorizerClient, policy Policy) *Middleware {
+func New(client AuthorizerClient, policy *Policy) *Middleware {
 	policyMapper := urlPolicyPathMapper("")
 	if policy.Path != "" {
 		policyMapper = nil
@@ -69,16 +72,16 @@ func New(client AuthorizerClient, policy Policy) *Middleware {
 	return &Middleware{
 		Identity:        (&httpmw.IdentityBuilder{}).FromHeader("Authorization"),
 		client:          client,
-		policy:          &policy,
+		policy:          policy,
 		resourceMappers: []ResourceMapper{defaultResourceMapper},
 		policyMapper:    policyMapper,
 	}
 }
 
-// Handler is the middleware implementation. It is how an Authorizer is wired to an HTTP server.
+// Handler returns a middlleware handler that authorizes incoming requests.
 func (m *Middleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		policyContext := internal.DefaultPolicyContext(m.policy)
+		policyContext := m.policyContext()
 
 		if m.policyMapper != nil {
 			policyContext.Path = m.policyMapper(r)
@@ -90,20 +93,13 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 			return
 		}
 
-		isRequest := authz.IsRequest{
-			IdentityContext: m.Identity.Build(r),
-			PolicyContext:   policyContext,
-			ResourceContext: resource,
-			PolicyInstance:  internal.DefaultPolicyInstance(m.policy),
-		}
-
-		resp, err := m.client.Is(r.Context(), &isRequest)
-		if err != nil || len(resp.Decisions) != 1 {
+		allowed, err := m.is(r.Context(), m.Identity.Build(r), policyContext, resource)
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		if !resp.Decisions[0].Is {
+		if !allowed {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
@@ -112,12 +108,20 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 	})
 }
 
+// HandlerFunc returns a middleware handler that wraps the given http.HandlerFunc and authorizes incoming requests.
 func (m *Middleware) HandlerFunc(next http.HandlerFunc) http.Handler {
 	return m.Handler(next)
 }
 
-func (m *Middleware) Check() *Check {
-	return nil
+// Check returns a new Check middleware object that can be used to make ReBAC authorization decisions for individual
+// routes.
+// A check call returns true if a given relation exists between an object and a subject.
+func (m *Middleware) Check(options ...CheckOption) *Check {
+	return newCheck(m, options...)
+}
+
+func (m *Middleware) policyContext() *api.PolicyContext {
+	return internal.DefaultPolicyContext(m.policy)
 }
 
 func (m *Middleware) resourceContext(r *http.Request) (*structpb.Struct, error) {
@@ -127,6 +131,31 @@ func (m *Middleware) resourceContext(r *http.Request) (*structpb.Struct, error) 
 	}
 
 	return structpb.NewStruct(res)
+}
+
+func (m *Middleware) is(
+	ctx context.Context,
+	identityContext *api.IdentityContext,
+	policyContext *api.PolicyContext,
+	resourceContext *structpb.Struct,
+) (bool, error) {
+	isRequest := authz.IsRequest{
+		IdentityContext: identityContext,
+		PolicyContext:   policyContext,
+		ResourceContext: resourceContext,
+		PolicyInstance:  internal.DefaultPolicyInstance(m.policy),
+	}
+
+	resp, err := m.client.Is(ctx, &isRequest)
+
+	switch {
+	case err != nil:
+		return false, err
+	case len(resp.Decisions) != 1:
+		return false, aerr.ErrInvalidDecision
+	}
+
+	return resp.Decisions[0].Is, nil
 }
 
 // WithPolicyFromURL instructs the middleware to construct the policy path from the path segment

@@ -64,7 +64,7 @@ type (
 // The new middleware is created with default identity and policy path mapper.
 // Those can be overridden using `Middleware.Identity` to specify the caller's identity, or using
 // the middleware's ".With...()" functions to set policy path and resource mappers.
-func New(authzClient AuthorizerClient, policy Policy) *Middleware {
+func New(authzClient AuthorizerClient, policy *Policy) *Middleware {
 	policyMapper := methodPolicyMapper("")
 	if policy.Path != "" {
 		policyMapper = nil
@@ -73,7 +73,7 @@ func New(authzClient AuthorizerClient, policy Policy) *Middleware {
 	return &Middleware{
 		Identity:        (&IdentityBuilder{}).FromMetadata("authorization"),
 		client:          authzClient,
-		policy:          &policy,
+		policy:          policy,
 		policyMapper:    policyMapper,
 		resourceMappers: []ResourceMapper{},
 		ignoredMethods:  []string{},
