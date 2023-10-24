@@ -46,8 +46,8 @@ func NewTest(t *testing.T, name string, options *Options) *Case {
 	return &Case{Name: name, Client: mockAuth}
 }
 
-func Policy(path string) middleware.Policy {
-	return middleware.Policy{
+func Policy(path string) *middleware.Policy {
+	return &middleware.Policy{
 		Name:          DefaultPolicyName,
 		Path:          path,
 		Decision:      DefaultDecision,
