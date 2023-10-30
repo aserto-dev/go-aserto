@@ -82,6 +82,7 @@ func WithPolicyPath(path string) CheckOption {
 	}
 }
 
+// CheckOptions is used to configure the check middleware.
 type CheckOptions struct {
 	obj struct {
 		id       string
