@@ -73,7 +73,7 @@ func (b *IdentityBuilder) FromHeader(header ...string) *IdentityBuilder {
 				continue
 			}
 
-			if h == "Authorization" {
+			if strings.EqualFold(h, "authorization") {
 				// Authorization header is special. Need to remove "Bearer" auth scheme.
 				id = b.fromAuthzHeader(id)
 			}
