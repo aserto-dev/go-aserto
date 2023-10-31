@@ -399,12 +399,12 @@ The default behavior of the gRPC middleware is:
 
 The HTTP middleware are available under the sub-package `middleware/http`.
 
-Several flavors are implemented:
+Two flavors are implemented:
 
-* Standard `net/http` middleware is implemented in `middleware/http/std`.
+* Standard `net/http` middleware with support for [gorilla/mux](https://pkg.go.dev/github.com/gorilla/mux) is implemented in `middleware/http/std`.
 * [Gin](https://github.com/gin-gonic/gin) middleware is implemented in `middleware/http/gin`.
 
-All middleware are constructed and configured in a similar way. They differ in the signature of their `Handler()`
+Both are constructed and configured in a similar way. They differ in the signature of their `Handler()`
 function, which is used to attach them to HTTP routes, and in the signatures of their mapper functions.
 
 #### net/http Middleware
@@ -483,6 +483,39 @@ The gin middleware looks and behaves just like the net/http middleware with the 
 		StructMapper func(*gin.Context) *structpb.Struct
 	)
   ```
+
+### Check Middleware (ReBAC)
+
+In addition to the pattern described above, in which each route is authorized by its own policy module,
+the HTTP middleware can be used to implement Relation-Based Access Control (rebac) in which authorization
+decisions are made by checking if a given subject has the necessary permission or relation to the object being accessed.
+
+This is achieved using the `Check` function on `http.Middleware`.
+
+A check call needs three pieces of information:
+
+* The type and key of the object.
+* The name of the relation or permission to look for.
+* The type and key of the subject. When omitted, the subject is derived from the middleware's [Identity](#identity)
+with type `"user"`.
+
+Example:
+```go
+router := mux.NewRouter()
+router.Handle(
+	"/items/{id}",
+	mw.Check(
+		std.WithObjectType("item"),
+		std.WithObjectIDFromVar("id"),
+		std.WithRelation("read"),
+	).HandlerFunc(GetItem),
+).Methods("GET")
+```
+
+`GetItem()` is an http handler function that serves GET request to the `/items/{id}` route.
+The `mw.Check` call only authorizes requests if the calling user has the `read` permission on an object of type `item`
+with the object ID extracted from the route's `{id}` parameter.
+
 
 ## Other Aserto Services
 
