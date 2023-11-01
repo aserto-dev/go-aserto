@@ -520,6 +520,38 @@ router.Handle(
 The `mw.Check` call only authorizes requests if the calling user has the `read` permission on an object of type `item`
 with the object ID extracted from the route's `{id}` parameter.
 
+#### Check Options
+
+The `Check()` function accepts options that configure the object, subject, and relation sent to the authorizer.
+
+`WithIdentityMapper(IdentityMapper)` can be used to override the identity context sent to the authorizer. The `mapper` is a
+function that takes an `http.Request` and a `middleware.Identity` and can set options on the `Identity` object based on
+information from the request.
+If an identity mapper isn't provided, the check call uses the identity configured on the middleware object on which
+the `Check` call is made.
+
+**`WithRelation(string)`** sets the relation name sent to the authorizer.
+
+**`WithRelationMapper(StringMapper)`** can be used in cases where the relation to be checked isn't known ahead of time. It
+receives a function that takes an `http.Request` object and returns the name of the relation.
+
+**`WithObjectType(string)`** sets the object type sent to the authorizer.
+
+**`WithObjectID(string)`** sets the object ID sent to the authorizer.
+
+**`WithObjectIDMapper(StringMapper)`** is used to determine the object ID sent to the authorizer at runtime. It receives
+a function that takes an `http.Request` object and returns an object ID.
+
+**`WithObjectIDFromVar(string)`** configures the check call to use the value of a path parameter as the object ID sent to
+the authorizer.
+
+**`WithObjectMapper(ObjectMapper)`** can be used to set both the object type and ID at runtime. It receives a function that
+takes an `http.Request` and returns a `(objectType string, objectID string)` pair.
+
+**`WithPolicyPath(string)`** sets the name of the policy module to evaluate in check calls. It defaults to `check`.
+If the `Policy` object used to construct the middleware contains the `Root` field, the root is used as a prefix.
+For example, if the root is set to `"myPolicy"`, the `Check` call looks for a policy module named `myPolicy.check`.
+
 
 ## Other Aserto Services
 
