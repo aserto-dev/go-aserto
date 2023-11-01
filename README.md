@@ -289,6 +289,10 @@ middleware.Identity.Subject().FromMetadata("identity")
 
 // Read identity from the context value "user". Middleware infers the identity type from the value.
 middleware.Identity.FromContext("user")
+
+// Manually pass the identity to the authorizer without resolving it to a user.
+// Manual identities are availabe in the authorizer's policy language through the "input.identity" variable.
+middleware.Manual().ID("object_id")
 ```
 
 In addition, it is possible to provide custom logic to specify the callers identity. For example, in HTTP middleware:

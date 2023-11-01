@@ -38,6 +38,15 @@ func (id *Identity) IsSubject() bool {
 	return id.context.Type == api.IdentityType_IDENTITY_TYPE_SUB
 }
 
+func (id *Identity) Manual() middleware.Identity {
+	id.context.Type = api.IdentityType_IDENTITY_TYPE_MANUAL
+	return id
+}
+
+func (id *Identity) IsManual() bool {
+	return id.context.Type == api.IdentityType_IDENTITY_TYPE_MANUAL
+}
+
 func (id *Identity) None() middleware.Identity {
 	id.context.Type = api.IdentityType_IDENTITY_TYPE_NONE
 	id.context.Identity = ""

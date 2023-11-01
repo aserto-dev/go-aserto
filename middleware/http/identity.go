@@ -45,6 +45,14 @@ func (b *IdentityBuilder) Subject() *IdentityBuilder {
 	return b
 }
 
+// Call Manual() to indicate that the user's identity is set manually and isn't resolved to a user by the authorizer.
+//
+// Manually set identities are available in the authorizer's policy language through the "input.identity" variable.
+func (b *IdentityBuilder) Manual() *IdentityBuilder {
+	b.identityType = api.IdentityType_IDENTITY_TYPE_MANUAL
+	return b
+}
+
 // Call None() to indicate that requests are unauthenticated.
 func (b *IdentityBuilder) None() *IdentityBuilder {
 	b.identityType = api.IdentityType_IDENTITY_TYPE_NONE
