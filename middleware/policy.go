@@ -9,7 +9,7 @@ package middleware
 
 // Policy holds authorization options that apply to all requests.
 type Policy struct {
-	// Name is the Name of the aserto policy being queried for authorization.
+	// Name is the Name of the policy being queried for authorization.
 	Name string
 
 	// Path is the package name of the rego policy to evaluate.
@@ -19,6 +19,9 @@ type Policy struct {
 
 	// Decision is the authorization rule to use.
 	Decision string
+
+	// Root is an optional prefix shared by all policy modules being evaluated.
+	Root string
 
 	// Label name of the aserto policy's instance being queried for authorization.
 	InstanceLabel string

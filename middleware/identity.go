@@ -18,6 +18,9 @@ type Identity interface {
 	// Subject indicates that ID should be interpreted as a subject name (e.g. username, account ID, email, etc.).
 	Subject() Identity
 
+	// Manual indicates that the identity value is set manually and isn't resolved to a user by the authorizer.
+	Manual() Identity
+
 	// None indicates that this Identity represents an unauthenticated caller.
 	None() Identity
 

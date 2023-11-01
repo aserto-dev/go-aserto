@@ -33,13 +33,21 @@ func (b *IdentityBuilder) JWT() *IdentityBuilder {
 }
 
 // Call Subject() to indicate that the user's identity is a subject name (email, userid, etc.).
-
+//
 // Subject() is always used in conjunction with another method that provides the user ID itself.
 // For example:
 //
 //	idBuilder.Subject().FromContextValue("username")
 func (b *IdentityBuilder) Subject() *IdentityBuilder {
 	b.identityType = api.IdentityType_IDENTITY_TYPE_SUB
+	return b
+}
+
+// Call Manual() to indicate that the user's identity is set manually and isn't resolved to a user by the authorizer.
+//
+// Manually set identities are available in the authorizer's policy language through the "input.identity" variable.
+func (b *IdentityBuilder) Manual() *IdentityBuilder {
+	b.identityType = api.IdentityType_IDENTITY_TYPE_MANUAL
 	return b
 }
 

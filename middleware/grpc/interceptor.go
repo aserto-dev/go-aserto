@@ -14,7 +14,6 @@ import (
 	"github.com/aserto-dev/go-aserto/middleware/grpc/internal/pbutil"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
-	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 	"github.com/aserto-dev/go-authorizer/pkg/aerr"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -45,8 +44,7 @@ type Middleware struct {
 	Identity *IdentityBuilder
 
 	client          AuthorizerClient
-	policyContext   api.PolicyContext
-	policyInstance  api.PolicyInstance
+	policy          *Policy
 	policyMapper    StringMapper
 	resourceMappers []ResourceMapper
 	ignoredMethods  []string
@@ -66,17 +64,16 @@ type (
 // The new middleware is created with default identity and policy path mapper.
 // Those can be overridden using `Middleware.Identity` to specify the caller's identity, or using
 // the middleware's ".With...()" functions to set policy path and resource mappers.
-func New(authzClient AuthorizerClient, policy Policy) *Middleware {
+func New(authzClient AuthorizerClient, policy *Policy) *Middleware {
 	policyMapper := methodPolicyMapper("")
 	if policy.Path != "" {
 		policyMapper = nil
 	}
 
 	return &Middleware{
-		client:          authzClient,
 		Identity:        (&IdentityBuilder{}).FromMetadata("authorization"),
-		policyContext:   *internal.DefaultPolicyContext(policy),
-		policyInstance:  *internal.DefaultPolicyInstance(policy),
+		client:          authzClient,
+		policy:          policy,
 		policyMapper:    policyMapper,
 		resourceMappers: []ResourceMapper{},
 		ignoredMethods:  []string{},
@@ -216,8 +213,9 @@ func (m *Middleware) Stream() grpc.StreamServerInterceptor {
 }
 
 func (m *Middleware) authorize(ctx context.Context, req interface{}) error {
+	policyContext := internal.DefaultPolicyContext(m.policy)
 	if m.policyMapper != nil {
-		m.policyContext.Path = m.policyMapper(ctx, req)
+		policyContext.Path = m.policyMapper(ctx, req)
 	}
 
 	resource, err := m.resourceContext(ctx, req)
@@ -226,7 +224,7 @@ func (m *Middleware) authorize(ctx context.Context, req interface{}) error {
 	}
 
 	for _, path := range m.ignoredMethods {
-		if m.policyContext.Path == path {
+		if policyContext.Path == path {
 			return nil
 		}
 	}
@@ -235,9 +233,9 @@ func (m *Middleware) authorize(ctx context.Context, req interface{}) error {
 		ctx,
 		&authz.IsRequest{
 			IdentityContext: m.Identity.build(ctx, req),
-			PolicyContext:   &m.policyContext,
+			PolicyContext:   policyContext,
 			ResourceContext: resource,
-			PolicyInstance:  &m.policyInstance,
+			PolicyInstance:  internal.DefaultPolicyInstance(m.policy),
 		},
 	)
 	if err != nil {

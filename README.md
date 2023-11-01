@@ -130,7 +130,7 @@ To create a directory client:
 import (
 	"context"
 	"github.com/aserto-dev/go-aserto/client"
-	"github.com/aserto-dev/go-aserto/client/directory/v2"
+	"github.com/aserto-dev/go-aserto/client/directory/v3"
 )
 
 ...
@@ -180,7 +180,7 @@ To create a directory client from configuration, call `Connect(context.Context)`
 import (
 	"context"
 
-	"github.com/aserto-dev/go-aserto/client/directory/v2"
+	"github.com/aserto-dev/go-aserto/client/directory/v3"
 	"github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 )
@@ -289,6 +289,10 @@ middleware.Identity.Subject().FromMetadata("identity")
 
 // Read identity from the context value "user". Middleware infers the identity type from the value.
 middleware.Identity.FromContext("user")
+
+// Manually pass the identity to the authorizer without resolving it to a user.
+// Manual identities are availabe in the authorizer's policy language through the "input.identity" variable.
+middleware.Manual().ID("object_id")
 ```
 
 In addition, it is possible to provide custom logic to specify the callers identity. For example, in HTTP middleware:
@@ -399,12 +403,12 @@ The default behavior of the gRPC middleware is:
 
 The HTTP middleware are available under the sub-package `middleware/http`.
 
-Several flavors are implemented:
+Two flavors are implemented:
 
-* Standard `net/http` middleware is implemented in `middleware/http/std`.
+* Standard `net/http` middleware with support for [gorilla/mux](https://pkg.go.dev/github.com/gorilla/mux) is implemented in `middleware/http/std`.
 * [Gin](https://github.com/gin-gonic/gin) middleware is implemented in `middleware/http/gin`.
 
-All middleware are constructed and configured in a similar way. They differ in the signature of their `Handler()`
+Both are constructed and configured in a similar way. They differ in the signature of their `Handler()`
 function, which is used to attach them to HTTP routes, and in the signatures of their mapper functions.
 
 #### net/http Middleware
@@ -483,6 +487,71 @@ The gin middleware looks and behaves just like the net/http middleware with the 
 		StructMapper func(*gin.Context) *structpb.Struct
 	)
   ```
+
+### Check Middleware (ReBAC)
+
+In addition to the pattern described above, in which each route is authorized by its own policy module,
+the HTTP middleware can be used to implement Relation-Based Access Control (rebac) in which authorization
+decisions are made by checking if a given subject has the necessary permission or relation to the object being accessed.
+
+This is achieved using the `Check` function on `http.Middleware`.
+
+A check call needs three pieces of information:
+
+* The type and key of the object.
+* The name of the relation or permission to look for.
+* The type and key of the subject. When omitted, the subject is derived from the middleware's [Identity](#identity)
+with type `"user"`.
+
+Example:
+```go
+router := mux.NewRouter()
+router.Handle(
+	"/items/{id}",
+	mw.Check(
+		std.WithObjectType("item"),
+		std.WithObjectIDFromVar("id"),
+		std.WithRelation("read"),
+	).HandlerFunc(GetItem),
+).Methods("GET")
+```
+
+`GetItem()` is an http handler function that serves GET request to the `/items/{id}` route.
+The `mw.Check` call only authorizes requests if the calling user has the `read` permission on an object of type `item`
+with the object ID extracted from the route's `{id}` parameter.
+
+#### Check Options
+
+The `Check()` function accepts options that configure the object, subject, and relation sent to the authorizer.
+
+`WithIdentityMapper(IdentityMapper)` can be used to override the identity context sent to the authorizer. The `mapper` is a
+function that takes an `http.Request` and a `middleware.Identity` and can set options on the `Identity` object based on
+information from the request.
+If an identity mapper isn't provided, the check call uses the identity configured on the middleware object on which
+the `Check` call is made.
+
+**`WithRelation(string)`** sets the relation name sent to the authorizer.
+
+**`WithRelationMapper(StringMapper)`** can be used in cases where the relation to be checked isn't known ahead of time. It
+receives a function that takes an `http.Request` object and returns the name of the relation.
+
+**`WithObjectType(string)`** sets the object type sent to the authorizer.
+
+**`WithObjectID(string)`** sets the object ID sent to the authorizer.
+
+**`WithObjectIDMapper(StringMapper)`** is used to determine the object ID sent to the authorizer at runtime. It receives
+a function that takes an `http.Request` object and returns an object ID.
+
+**`WithObjectIDFromVar(string)`** configures the check call to use the value of a path parameter as the object ID sent to
+the authorizer.
+
+**`WithObjectMapper(ObjectMapper)`** can be used to set both the object type and ID at runtime. It receives a function that
+takes an `http.Request` and returns a `(objectType string, objectID string)` pair.
+
+**`WithPolicyPath(string)`** sets the name of the policy module to evaluate in check calls. It defaults to `check`.
+If the `Policy` object used to construct the middleware contains the `Root` field, the root is used as a prefix.
+For example, if the root is set to `"myPolicy"`, the `Check` call looks for a policy module named `myPolicy.check`.
+
 
 ## Other Aserto Services
 

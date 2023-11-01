@@ -8,7 +8,6 @@ import (
 	httpmw "github.com/aserto-dev/go-aserto/middleware/http"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
-	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -36,7 +35,7 @@ type Middleware struct {
 	Identity *httpmw.IdentityBuilder
 
 	client          AuthorizerClient
-	policy          api.PolicyContext
+	policy          *Policy
 	policyMapper    StringMapper
 	resourceMappers []ResourceMapper
 }
@@ -56,7 +55,7 @@ type (
 // The new middleware is created with default identity and policy path mapper.
 // Those can be overridden using `Middleware.Identity` to specify the caller's identity, or using
 // the middleware's ".With...()" functions to set policy path and resource mappers.
-func New(client AuthorizerClient, policy Policy) *Middleware {
+func New(client AuthorizerClient, policy *Policy) *Middleware {
 	policyMapper := urlPolicyPathMapper("")
 	if policy.Path != "" {
 		policyMapper = nil
@@ -65,7 +64,7 @@ func New(client AuthorizerClient, policy Policy) *Middleware {
 	return &Middleware{
 		client:          client,
 		Identity:        (&httpmw.IdentityBuilder{}).FromHeader("Authorization"),
-		policy:          *internal.DefaultPolicyContext(policy),
+		policy:          policy,
 		resourceMappers: []ResourceMapper{defaultResourceMapper},
 		policyMapper:    policyMapper,
 	}
@@ -73,8 +72,9 @@ func New(client AuthorizerClient, policy Policy) *Middleware {
 
 // Handler is the middleware implementation. It is how an Authorizer is wired to a Gin router.
 func (m *Middleware) Handler(c *gin.Context) {
+	policyContext := internal.DefaultPolicyContext(m.policy)
 	if m.policyMapper != nil {
-		m.policy.Path = m.policyMapper(c)
+		policyContext.Path = m.policyMapper(c)
 	}
 
 	resource, err := m.resourceContext(c)
@@ -85,7 +85,7 @@ func (m *Middleware) Handler(c *gin.Context) {
 
 	isRequest := authz.IsRequest{
 		IdentityContext: m.Identity.Build(c.Request),
-		PolicyContext:   &m.policy,
+		PolicyContext:   policyContext,
 		ResourceContext: resource,
 	}
 

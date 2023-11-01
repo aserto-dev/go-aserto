@@ -87,7 +87,7 @@ func TestAuthorizer(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(
-			test.Name,
+			test.Case.Name,
 			testCase(test),
 		)
 	}

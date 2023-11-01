@@ -27,7 +27,7 @@ func main() {
 
 	mw := ginz.New(
 		authClient,
-		middleware.Policy{
+		&middleware.Policy{
 			Name:          "local",
 			Decision:      "allowed",
 			InstanceLabel: "label",
