@@ -87,6 +87,7 @@ func connect(ctx context.Context, conns *internal.Connections, cfg *Config) (*Cl
 		Writer:   newClient(writer, dws.NewWriterClient),
 		Importer: newClient(importer, dis.NewImporterClient),
 		Exporter: newClient(exporter, des.NewExporterClient),
+		conns:    conns.AsSlice(),
 	}, nil
 }
 

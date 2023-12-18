@@ -29,13 +29,18 @@ import (
 // The tenant ID is automatically sent to the backend on each request using a ClientInterceptor.
 type Connection struct {
 	// Conn is the underlying gRPC connection to the backend service.
-	Conn grpc.ClientConnInterface
+	Conn *grpc.ClientConn
 
 	// TenantID is the ID of the Aserto tenant making the connection.
 	TenantID string
 
 	// SessionID
 	SessionID string
+}
+
+// Close closes the underlying gRPC connection.
+func (c *Connection) Close() error {
+	return c.Conn.Close()
 }
 
 const defaultTimeout time.Duration = time.Duration(5) * time.Second
@@ -99,7 +104,7 @@ type dialer func(
 	callerCreds credentials.PerRPCCredentials,
 	connection *Connection,
 	options []grpc.DialOption,
-) (grpc.ClientConnInterface, error)
+) (*grpc.ClientConn, error)
 
 // dialContext is the default dialer that calls grpc.DialContext to establish a connection.
 func dialContext(
@@ -109,7 +114,7 @@ func dialContext(
 	callerCreds credentials.PerRPCCredentials,
 	connection *Connection,
 	options []grpc.DialOption,
-) (grpc.ClientConnInterface, error) {
+) (*grpc.ClientConn, error) {
 	if address == "" {
 		return nil, errors.Wrap(ErrInvalidOptions, "address not specified")
 	}

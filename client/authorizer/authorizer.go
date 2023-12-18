@@ -32,7 +32,12 @@ func New(ctx context.Context, opts ...client.ConnectionOption) (*Client, error) 
 	}, err
 }
 
+// Close closes the underlying connection.
+func (c *Client) Close() error {
+	return c.conn.Close()
+}
+
 // Connection returns the underlying grpc connection.
-func (c *Client) Connection() grpc.ClientConnInterface {
+func (c *Client) Connection() *grpc.ClientConn {
 	return c.conn.Conn
 }

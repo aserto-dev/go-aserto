@@ -8,6 +8,7 @@ require (
 	github.com/aserto-dev/header v0.0.4
 	github.com/gin-gonic/gin v1.8.1
 	github.com/gorilla/mux v1.8.0
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/lestrrat-go/jwx v1.2.25
 	github.com/magefile/mage v1.15.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
@@ -34,6 +35,7 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0 // indirect
+	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lestrrat-go/backoff/v2 v2.0.8 // indirect

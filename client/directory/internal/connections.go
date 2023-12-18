@@ -5,6 +5,8 @@ import (
 
 	"github.com/aserto-dev/go-aserto/client"
 	hs "github.com/mitchellh/hashstructure/v2"
+	"github.com/samber/lo"
+	"google.golang.org/grpc"
 )
 
 type Connections struct {
@@ -47,6 +49,12 @@ func (cb *Connections) Get(ctx context.Context, cfg *client.Config) (*client.Con
 	}
 
 	return conn, nil
+}
+
+func (cb *Connections) AsSlice() []*grpc.ClientConn {
+	return lo.MapToSlice(cb.conns, func(_ uint64, conn *client.Connection) *grpc.ClientConn {
+		return conn.Conn
+	})
 }
 
 // Used for testing.

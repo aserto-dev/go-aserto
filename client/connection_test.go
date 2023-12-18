@@ -44,7 +44,7 @@ func (d *dialRecorder) DialContext(
 	callerCreds credentials.PerRPCCredentials,
 	connection *client.Connection,
 	options []grpc.DialOption,
-) (grpc.ClientConnInterface, error) {
+) (*grpc.ClientConn, error) {
 	d.context = ctx
 	d.address = address
 	d.tlsConf = tlsConf
@@ -157,7 +157,7 @@ func TestWithTenantID(t *testing.T) {
 		"method",
 		"request",
 		"reply",
-		recorder.connection.Conn.(*grpc.ClientConn),
+		recorder.connection.Conn,
 		func(c context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, opts ...grpc.CallOption) error {
 			md, ok := metadata.FromOutgoingContext(c)
 			assert.True(t, ok)
@@ -177,7 +177,7 @@ func TestWithTenantID(t *testing.T) {
 	recorder.connection.InternalStream( //nolint: errcheck
 		ctx,
 		nil,
-		recorder.connection.Conn.(*grpc.ClientConn),
+		recorder.connection.Conn,
 		"method",
 		func(
 			c context.Context,
@@ -215,7 +215,7 @@ func TestWithSessionID(t *testing.T) {
 		"method",
 		"request",
 		"reply",
-		recorder.connection.Conn.(*grpc.ClientConn),
+		recorder.connection.Conn,
 		func(c context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, opts ...grpc.CallOption) error {
 			md, ok := metadata.FromOutgoingContext(c)
 			assert.True(t, ok)
@@ -235,7 +235,7 @@ func TestWithSessionID(t *testing.T) {
 	recorder.connection.InternalStream( //nolint: errcheck
 		ctx,
 		nil,
-		recorder.connection.Conn.(*grpc.ClientConn),
+		recorder.connection.Conn,
 		"method",
 		func(
 			c context.Context,
