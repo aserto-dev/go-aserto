@@ -42,12 +42,10 @@ func New(ctx context.Context, opts ...client.ConnectionOption) (*Client, error) 
 		options.Address = hosted.HostedDirectoryHostname + hosted.HostedDirectoryGRPCPort
 	}
 
-	connection, err := client.Connect(ctx, options)
+	conn, err := client.Connect(ctx, options)
 	if err != nil {
 		return nil, errors.Wrap(err, "create grpc client failed")
 	}
-
-	conn := connection.Conn
 
 	return &Client{
 		Reader:   drs.NewReaderClient(conn),

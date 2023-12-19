@@ -21,7 +21,7 @@ import (
 
 	"github.com/aserto-dev/go-aserto/client"
 	"github.com/aserto-dev/header"
-	"github.com/stretchr/testify/assert"
+	assrt "github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -33,7 +33,8 @@ type dialRecorder struct {
 	address     string
 	tlsConf     *tls.Config
 	callerCreds credentials.PerRPCCredentials
-	connection  *client.Connection
+	tenantID    string
+	sessionID   string
 	dialOptions []grpc.DialOption
 }
 
@@ -42,142 +43,155 @@ func (d *dialRecorder) DialContext(
 	address string,
 	tlsConf *tls.Config,
 	callerCreds credentials.PerRPCCredentials,
-	connection *client.Connection,
+	tenantID, sessionID string,
 	options []grpc.DialOption,
 ) (*grpc.ClientConn, error) {
 	d.context = ctx
 	d.address = address
 	d.tlsConf = tlsConf
 	d.callerCreds = callerCreds
-	d.connection = connection
+	d.tenantID = tenantID
+	d.sessionID = sessionID
 	d.dialOptions = options
 
 	return &grpc.ClientConn{}, nil
 }
 
 func TestWithAddr(t *testing.T) {
+	assert := assrt.New(t)
+
 	recorder := &dialRecorder{}
 	options, err := client.NewConnectionOptions(client.WithAddr("address"))
-	assert.NoError(t, err)
+	assert.NoError(err)
 
 	client.InternalNewConnection(context.TODO(), recorder.DialContext, options) //nolint: errcheck
 
-	assert.Equal(t, "address", recorder.address)
+	assert.Equal("address", recorder.address)
 }
 
 func TestWithURL(t *testing.T) {
+	assert := assrt.New(t)
 	recorder := &dialRecorder{}
 
 	const URL = "https://server.com:123"
 	svcURL, err := url.Parse(URL)
-	assert.NoError(t, err)
+	assert.NoError(err)
 
 	options, err := client.NewConnectionOptions(client.WithURL(svcURL))
-	assert.NoError(t, err)
+	assert.NoError(err)
 	client.InternalNewConnection(context.TODO(), recorder.DialContext, options) //nolint: errcheck
 
-	assert.Equal(t, URL, recorder.address)
+	assert.Equal(URL, recorder.address)
 }
 
 func TestAddrAndURL(t *testing.T) {
+	assert := assrt.New(t)
 	svcURL, err := url.Parse("https://server.com:123")
-	assert.NoError(t, err)
+	assert.NoError(err)
 
 	_, err = client.NewConnectionOptions(client.WithAddr("address"), client.WithURL(svcURL))
-	assert.Error(t, err)
+	assert.Error(err)
 }
 
 func TestWithInsecure(t *testing.T) {
+	assert := assrt.New(t)
 	recorder := &dialRecorder{}
 	options, err := client.NewConnectionOptions(client.WithInsecure(true))
-	assert.NoError(t, err)
+	assert.NoError(err)
 	client.InternalNewConnection(context.TODO(), recorder.DialContext, options) //nolint: errcheck
 
-	assert.True(t, recorder.tlsConf.InsecureSkipVerify)
+	assert.True(recorder.tlsConf.InsecureSkipVerify)
 }
 
 func TestWithTokenAuth(t *testing.T) {
+	assert := assrt.New(t)
 	recorder := &dialRecorder{}
 	options, err := client.NewConnectionOptions(client.WithTokenAuth("<token>"))
-	assert.NoError(t, err)
+	assert.NoError(err)
 	client.InternalNewConnection(context.TODO(), recorder.DialContext, options) //nolint: errcheck
 
 	md, err := recorder.callerCreds.GetRequestMetadata(context.TODO())
-	assert.NoError(t, err)
+	assert.NoError(err)
 
 	token, ok := md["authorization"]
-	assert.True(t, ok)
-	assert.Equal(t, "bearer <token>", token)
+	assert.True(ok)
+	assert.Equal("bearer <token>", token)
 }
 
 func TestWithBearerTokenAuth(t *testing.T) {
+	assert := assrt.New(t)
+
 	recorder := &dialRecorder{}
 	options, err := client.NewConnectionOptions(client.WithTokenAuth("bearer <token>"))
-	assert.NoError(t, err)
+	assert.NoError(err)
 	client.InternalNewConnection(context.TODO(), recorder.DialContext, options) //nolint: errcheck
 
 	md, err := recorder.callerCreds.GetRequestMetadata(context.TODO())
-	assert.NoError(t, err)
+	assert.NoError(err)
 
 	token, ok := md["authorization"]
-	assert.True(t, ok)
-	assert.Equal(t, "bearer <token>", token)
+	assert.True(ok)
+	assert.Equal("bearer <token>", token)
 }
 
 func TestWithAPIKey(t *testing.T) {
+	assert := assrt.New(t)
 	recorder := &dialRecorder{}
 	options, err := client.NewConnectionOptions(client.WithAPIKeyAuth("<apikey>"))
-	assert.NoError(t, err)
+	assert.NoError(err)
 	client.InternalNewConnection(context.TODO(), recorder.DialContext, options) //nolint: errcheck
 
 	md, err := recorder.callerCreds.GetRequestMetadata(context.TODO())
-	assert.NoError(t, err)
+	assert.NoError(err)
 
 	token, ok := md["authorization"]
-	assert.True(t, ok)
-	assert.Equal(t, "basic <apikey>", token)
+	assert.True(ok)
+	assert.Equal("basic <apikey>", token)
 }
 
 func TestTokenAndAPIKey(t *testing.T) {
 	_, err := client.NewConnectionOptions(client.WithAPIKeyAuth("<apikey>"), client.WithTokenAuth("<token>"))
-	assert.Error(t, err)
+	assrt.Error(t, err)
 }
 
 func TestWithTenantID(t *testing.T) {
+	assert := assrt.New(t)
 	recorder := &dialRecorder{}
 	options, err := client.NewConnectionOptions(client.WithTenantID("<tenantid>"))
-	assert.NoError(t, err)
-	client.InternalNewConnection(context.TODO(), recorder.DialContext, options) //nolint: errcheck
+	assert.NoError(err)
 
-	assert.Equal(t, "<tenantid>", recorder.connection.TenantID)
+	conn, err := client.InternalNewConnection(context.TODO(), recorder.DialContext, options) //nolint: errcheck
+	assert.NoError(err)
+
+	assert.Equal("<tenantid>", recorder.tenantID)
 
 	ctx := context.TODO()
-	recorder.connection.InternalUnary( //nolint: errcheck, dupl
+	err = client.InternalUnary("<tenantid>", "")(
 		ctx,
 		"method",
 		"request",
 		"reply",
-		recorder.connection.Conn,
+		conn,
 		func(c context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, opts ...grpc.CallOption) error {
 			md, ok := metadata.FromOutgoingContext(c)
-			assert.True(t, ok)
+			assert.True(ok)
 
 			tenantID := md.Get("aserto-tenant-id")
-			assert.Equal(t, 1, len(tenantID), "request should contain tenant ID metadata field")
-			assert.Equal(t, "<tenantid>", tenantID[0], "tenant ID metadata should have the expected value")
+			assert.Equal(1, len(tenantID), "request should contain tenant ID metadata field")
+			assert.Equal("<tenantid>", tenantID[0], "tenant ID metadata should have the expected value")
 
-			assert.Equal(t, "method", method, "'method' parameter should be a passthrough")
-			assert.Equal(t, "request", req, "'request' parameter should be a passthrough")
-			assert.Equal(t, "reply", reply, "'reply' parameter should be a passthrough")
-			assert.Equal(t, recorder.connection.Conn, cc)
+			assert.Equal("method", method, "'method' parameter should be a passthrough")
+			assert.Equal("request", req, "'request' parameter should be a passthrough")
+			assert.Equal("reply", reply, "'reply' parameter should be a passthrough")
 
 			return nil
 		})
+	assert.NoError(err)
 
-	recorder.connection.InternalStream( //nolint: errcheck
+	_, err = client.InternalStream("<tenantid>", "")(
 		ctx,
 		nil,
-		recorder.connection.Conn,
+		conn,
 		"method",
 		func(
 			c context.Context,
@@ -187,55 +201,58 @@ func TestWithTenantID(t *testing.T) {
 			opts ...grpc.CallOption,
 		) (grpc.ClientStream, error) {
 			md, ok := metadata.FromOutgoingContext(c)
-			assert.True(t, ok)
+			assert.True(ok)
 
 			tenantID := md.Get("aserto-tenant-id")
-			assert.Equal(t, 1, len(tenantID), "request should contain tenant ID metadata field")
-			assert.Equal(t, "<tenantid>", tenantID[0], "tenant ID metadata should have the expected value")
+			assert.Equal(1, len(tenantID), "request should contain tenant ID metadata field")
+			assert.Equal("<tenantid>", tenantID[0], "tenant ID metadata should have the expected value")
 
-			assert.Equal(t, "method", method, "'method' parameter should be a passthrough")
-			assert.Equal(t, recorder.connection.Conn, cc)
+			assert.Equal("method", method, "'method' parameter should be a passthrough")
 
 			return nil, nil
 		},
 	)
+	assert.NoError(err)
 }
 
 func TestWithSessionID(t *testing.T) {
+	assert := assrt.New(t)
 	recorder := &dialRecorder{}
 	options, err := client.NewConnectionOptions(client.WithSessionID("<sessionid>"))
-	assert.NoError(t, err)
-	client.InternalNewConnection(context.TODO(), recorder.DialContext, options) //nolint: errcheck
+	assert.NoError(err)
 
-	assert.Equal(t, "<sessionid>", recorder.connection.SessionID)
+	conn, err := client.InternalNewConnection(context.TODO(), recorder.DialContext, options) //nolint: errcheck
+	assert.NoError(err)
+
+	assert.Equal("<sessionid>", recorder.sessionID)
 
 	ctx := context.TODO()
-	recorder.connection.InternalUnary( //nolint: errcheck, dupl
+	err = client.InternalUnary("", "<sessionid>")(
 		ctx,
 		"method",
 		"request",
 		"reply",
-		recorder.connection.Conn,
+		conn,
 		func(c context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, opts ...grpc.CallOption) error {
 			md, ok := metadata.FromOutgoingContext(c)
-			assert.True(t, ok)
+			assert.True(ok)
 
 			sessionID := md.Get("aserto-session-id")
-			assert.Equal(t, 1, len(sessionID), "request should contain session ID metadata field")
-			assert.Equal(t, "<sessionid>", sessionID[0], "session ID metadata should have the expected value")
+			assert.Equal(1, len(sessionID), "request should contain session ID metadata field")
+			assert.Equal("<sessionid>", sessionID[0], "session ID metadata should have the expected value")
 
-			assert.Equal(t, "method", method, "'method' parameter should be a passthrough")
-			assert.Equal(t, "request", req, "'request' parameter should be a passthrough")
-			assert.Equal(t, "reply", reply, "'reply' parameter should be a passthrough")
-			assert.Equal(t, recorder.connection.Conn, cc)
+			assert.Equal("method", method, "'method' parameter should be a passthrough")
+			assert.Equal("request", req, "'request' parameter should be a passthrough")
+			assert.Equal("reply", reply, "'reply' parameter should be a passthrough")
 
 			return nil
 		})
+	assert.NoError(err)
 
-	recorder.connection.InternalStream( //nolint: errcheck
+	_, err = client.InternalStream("", "<sessionid>")(
 		ctx,
 		nil,
-		recorder.connection.Conn,
+		conn,
 		"method",
 		func(
 			c context.Context,
@@ -245,40 +262,41 @@ func TestWithSessionID(t *testing.T) {
 			opts ...grpc.CallOption,
 		) (grpc.ClientStream, error) {
 			md, ok := metadata.FromOutgoingContext(c)
-			assert.True(t, ok)
+			assert.True(ok)
 
 			sessionID := md.Get(string(header.HeaderAsertoSessionID))
-			assert.Equal(t, 1, len(sessionID), "request should contain session ID metadata field")
-			assert.Equal(t, "<sessionid>", sessionID[0], "session ID metadata should have the expected value")
+			assert.Equal(1, len(sessionID), "request should contain session ID metadata field")
+			assert.Equal("<sessionid>", sessionID[0], "session ID metadata should have the expected value")
 
-			assert.Equal(t, "method", method, "'method' parameter should be a passthrough")
-			assert.Equal(t, recorder.connection.Conn, cc)
+			assert.Equal("method", method, "'method' parameter should be a passthrough")
 
 			return nil, nil
 		},
 	)
+	assert.NoError(err)
 }
 
 const CertSubjectName = "Testing Inc."
 
 func TestWithCACertPath(t *testing.T) {
+	assert := assrt.New(t)
 	tempdir := t.TempDir()
 	caPath := fmt.Sprintf("%s/ca.pem", tempdir)
 
 	file, err := os.OpenFile(caPath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0666)
-	assert.NoError(t, err, "Failed to create CA file")
+	assert.NoError(err, "Failed to create CA file")
 
 	defer file.Close()
 
 	caCert, err := generateCACert(CertSubjectName)
-	assert.NoError(t, err, "Failed to generate test certificate")
+	assert.NoError(err, "Failed to generate test certificate")
 
 	_, err = file.Write(caCert)
-	assert.NoError(t, err, "Failed to save certificate")
+	assert.NoError(err, "Failed to save certificate")
 
 	recorder := &dialRecorder{}
 	options, err := client.NewConnectionOptions(client.WithCACertPath(caPath))
-	assert.NoError(t, err)
+	assert.NoError(err)
 	client.InternalNewConnection(context.TODO(), recorder.DialContext, options) //nolint: errcheck
 
 	inPool, err := subjectInCertPool(recorder.tlsConf.RootCAs, CertSubjectName)
@@ -286,41 +304,43 @@ func TestWithCACertPath(t *testing.T) {
 		t.Errorf("Failed to read root CAs: %s", err)
 	}
 
-	assert.True(t, inPool, "Aserto cert should be in root CAs")
+	assert.True(inPool, "Aserto cert should be in root CAs")
 }
 
 func TestWithCACertPathAndInsecure(t *testing.T) {
+	assert := assrt.New(t)
 	tempdir := t.TempDir()
 	caPath := fmt.Sprintf("%s/ca.pem", tempdir)
 
 	file, err := os.OpenFile(caPath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0666)
-	assert.NoError(t, err, "Failed to create CA file")
+	assert.NoError(err, "Failed to create CA file")
 
 	defer file.Close()
 
 	caCert, err := generateCACert(CertSubjectName)
-	assert.NoError(t, err, "Failed to generate test certificate")
+	assert.NoError(err, "Failed to generate test certificate")
 
 	_, err = file.Write(caCert)
-	assert.NoError(t, err, "Failed to save certificate")
+	assert.NoError(err, "Failed to save certificate")
 
 	recorder := &dialRecorder{}
 	options, err := client.NewConnectionOptions(client.WithCACertPath(caPath), client.WithInsecure(true))
-	assert.NoError(t, err)
+	assert.NoError(err)
 	client.InternalNewConnection(context.TODO(), recorder.DialContext, options) //nolint: errcheck
 
-	assert.Nil(t, recorder.tlsConf.RootCAs, "Aserto cert should be nil")
-	assert.True(t, recorder.tlsConf.InsecureSkipVerify)
+	assert.Nil(recorder.tlsConf.RootCAs, "Aserto cert should be nil")
+	assert.True(recorder.tlsConf.InsecureSkipVerify)
 }
 
 func TestWithDialOptions(t *testing.T) {
+	assert := assrt.New(t)
 	recorder := &dialRecorder{}
 	creds := grpc.WithTransportCredentials(insecure.NewCredentials())
 
 	options, err := client.NewConnectionOptions(client.WithDialOptions(creds))
-	assert.NoError(t, err)
+	assert.NoError(err)
 	client.InternalNewConnection(context.TODO(), recorder.DialContext, options) //nolint: errcheck
-	assert.Contains(t, recorder.dialOptions, creds)
+	assert.Contains(recorder.dialOptions, creds)
 }
 
 func generateCACert(subjectName string) ([]byte, error) {

@@ -13,7 +13,7 @@ import (
 
 // Client provides access to the Aserto authorization services.
 type Client struct {
-	conn *client.Connection
+	conn *grpc.ClientConn
 
 	// Authorizer provides methods for performing authorization requests.
 	Authorizer authz.AuthorizerClient
@@ -21,14 +21,14 @@ type Client struct {
 
 // NewClient creates a Client with the specified connection options.
 func New(ctx context.Context, opts ...client.ConnectionOption) (*Client, error) {
-	connection, err := client.NewConnection(ctx, opts...)
+	conn, err := client.NewConnection(ctx, opts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "create grpc client failed")
 	}
 
 	return &Client{
-		conn:       connection,
-		Authorizer: authz.NewAuthorizerClient(connection.Conn),
+		conn:       conn,
+		Authorizer: authz.NewAuthorizerClient(conn),
 	}, err
 }
 
@@ -38,6 +38,6 @@ func (c *Client) Close() error {
 }
 
 // Connection returns the underlying grpc connection.
-func (c *Client) Connection() *grpc.ClientConn {
-	return c.conn.Conn
+func (c *Client) Connection() grpc.ClientConnInterface {
+	return c.conn
 }

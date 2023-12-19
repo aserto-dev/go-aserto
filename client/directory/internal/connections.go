@@ -10,18 +10,18 @@ import (
 )
 
 type Connections struct {
-	conns   map[uint64]*client.Connection
-	Connect func(context.Context, ...client.ConnectionOption) (*client.Connection, error)
+	conns   map[uint64]*grpc.ClientConn
+	Connect func(context.Context, ...client.ConnectionOption) (*grpc.ClientConn, error)
 }
 
 func NewConnections() *Connections {
 	return &Connections{
-		conns:   make(map[uint64]*client.Connection),
+		conns:   make(map[uint64]*grpc.ClientConn),
 		Connect: client.NewConnection,
 	}
 }
 
-func (cb *Connections) Get(ctx context.Context, cfg *client.Config) (*client.Connection, error) {
+func (cb *Connections) Get(ctx context.Context, cfg *client.Config) (*grpc.ClientConn, error) {
 	if cfg == nil {
 		return nil, nil
 	}
@@ -52,9 +52,7 @@ func (cb *Connections) Get(ctx context.Context, cfg *client.Config) (*client.Con
 }
 
 func (cb *Connections) AsSlice() []*grpc.ClientConn {
-	return lo.MapToSlice(cb.conns, func(_ uint64, conn *client.Connection) *grpc.ClientConn {
-		return conn.Conn
-	})
+	return lo.Values(cb.conns)
 }
 
 // Used for testing.
@@ -62,7 +60,7 @@ type ConnectCounter struct {
 	Count int
 }
 
-func (cc *ConnectCounter) Connect(context.Context, ...client.ConnectionOption) (*client.Connection, error) {
+func (cc *ConnectCounter) Connect(context.Context, ...client.ConnectionOption) (*grpc.ClientConn, error) {
 	cc.Count++
-	return &client.Connection{}, nil
+	return &grpc.ClientConn{}, nil
 }
