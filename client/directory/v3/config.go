@@ -97,6 +97,7 @@ func connect(ctx context.Context, conns *internal.Connections, cfg *Config) (*Cl
 		Importer: newClient(importer, dis.NewImporterClient),
 		Exporter: newClient(exporter, des.NewExporterClient),
 		Model:    newClient(model, dms.NewModelClient),
+		conns:    conns.AsSlice(),
 	}, nil
 }
 
@@ -109,7 +110,7 @@ func getConnection(
 	ctx context.Context,
 	conns *internal.Connections,
 	cfg, fallback *client.Config,
-) (*client.Connection, error) {
+) (*grpc.ClientConn, error) {
 	if cfg != nil {
 		return conns.Get(ctx, cfg)
 	}
@@ -121,11 +122,11 @@ func getConnection(
 	return nil, nil
 }
 
-func newClient[T any](conn *client.Connection, factory func(conn grpc.ClientConnInterface) T) T {
+func newClient[T any](conn *grpc.ClientConn, factory func(conn grpc.ClientConnInterface) T) T {
 	if conn == nil {
 		var t T
 		return t
 	}
 
-	return factory(conn.Conn)
+	return factory(conn)
 }
