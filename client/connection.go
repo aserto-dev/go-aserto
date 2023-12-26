@@ -24,20 +24,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// Connection represents a gRPC connection with an Aserto tenant ID.
-//
-// The tenant ID is automatically sent to the backend on each request using a ClientInterceptor.
-type Connection struct {
-	// Conn is the underlying gRPC connection to the backend service.
-	Conn grpc.ClientConnInterface
-
-	// TenantID is the ID of the Aserto tenant making the connection.
-	TenantID string
-
-	// SessionID
-	SessionID string
-}
-
 const defaultTimeout time.Duration = time.Duration(5) * time.Second
 
 /*
@@ -72,7 +58,7 @@ context, the default connection timeout is 5 seconds. For example, to increase t
 		aserto.WithTenantID("<Tenant ID>"),
 	)
 */
-func NewConnection(ctx context.Context, opts ...ConnectionOption) (*Connection, error) {
+func NewConnection(ctx context.Context, opts ...ConnectionOption) (*grpc.ClientConn, error) {
 	options, err := NewConnectionOptions(opts...)
 	if err != nil {
 		return nil, err
@@ -86,7 +72,7 @@ func NewConnection(ctx context.Context, opts ...ConnectionOption) (*Connection, 
 	return Connect(ctx, options)
 }
 
-func Connect(ctx context.Context, options *ConnectionOptions) (*Connection, error) {
+func Connect(ctx context.Context, options *ConnectionOptions) (*grpc.ClientConn, error) {
 	return newConnection(ctx, dialContext, options)
 }
 
@@ -97,9 +83,9 @@ type dialer func(
 	address string,
 	tlsConf *tls.Config,
 	callerCreds credentials.PerRPCCredentials,
-	connection *Connection,
+	tenantID, sessionID string,
 	options []grpc.DialOption,
-) (grpc.ClientConnInterface, error)
+) (*grpc.ClientConn, error)
 
 // dialContext is the default dialer that calls grpc.DialContext to establish a connection.
 func dialContext(
@@ -107,9 +93,9 @@ func dialContext(
 	address string,
 	tlsConf *tls.Config,
 	callerCreds credentials.PerRPCCredentials,
-	connection *Connection,
+	tenantID, sessionID string,
 	options []grpc.DialOption,
-) (grpc.ClientConnInterface, error) {
+) (*grpc.ClientConn, error) {
 	if address == "" {
 		return nil, errors.Wrap(ErrInvalidOptions, "address not specified")
 	}
@@ -117,8 +103,8 @@ func dialContext(
 	dialOptions := []grpc.DialOption{
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)),
 		grpc.WithBlock(),
-		grpc.WithChainUnaryInterceptor(connection.unary),
-		grpc.WithChainStreamInterceptor(connection.stream),
+		grpc.WithChainUnaryInterceptor(unary(tenantID, sessionID)),
+		grpc.WithChainStreamInterceptor(stream(tenantID, sessionID)),
 	}
 	if callerCreds != nil {
 		dialOptions = append(dialOptions, grpc.WithPerRPCCredentials(callerCreds))
@@ -133,15 +119,10 @@ func dialContext(
 	)
 }
 
-func newConnection(ctx context.Context, dialContext dialer, options *ConnectionOptions) (*Connection, error) {
+func newConnection(ctx context.Context, dialContext dialer, options *ConnectionOptions) (*grpc.ClientConn, error) {
 	tlsConf, err := tlsconf.TLSConfig(options.Insecure, options.CACertPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to setup tls configuration")
-	}
-
-	connection := &Connection{
-		TenantID:  options.TenantID,
-		SessionID: options.SessionID,
 	}
 
 	if _, ok := ctx.Deadline(); !ok {
@@ -159,44 +140,41 @@ func newConnection(ctx context.Context, dialContext dialer, options *ConnectionO
 
 	dialOptions = append(dialOptions, options.DialOptions...)
 
-	conn, err := dialContext(
+	return dialContext(
 		ctx,
 		options.ServerAddress(),
 		tlsConf,
 		options.Creds,
-		connection,
+		options.TenantID,
+		options.SessionID,
 		dialOptions,
 	)
+}
 
-	if err != nil {
-		return nil, err
+func unary(tenantID, sessionID string) grpc.UnaryClientInterceptor {
+	return func(
+		ctx context.Context,
+		method string,
+		req, reply interface{},
+		cc *grpc.ClientConn,
+		invoker grpc.UnaryInvoker,
+		opts ...grpc.CallOption,
+	) error {
+		return invoker(SetTenantContext(SetSessionContext(ctx, sessionID), tenantID), method, req, reply, cc, opts...)
 	}
-
-	connection.Conn = conn
-
-	return connection, nil
 }
 
-func (c *Connection) unary(
-	ctx context.Context,
-	method string,
-	req, reply interface{},
-	cc *grpc.ClientConn,
-	invoker grpc.UnaryInvoker,
-	opts ...grpc.CallOption,
-) error {
-	return invoker(SetTenantContext(SetSessionContext(ctx, c.SessionID), c.TenantID), method, req, reply, cc, opts...)
-}
-
-func (c *Connection) stream(
-	ctx context.Context,
-	desc *grpc.StreamDesc,
-	cc *grpc.ClientConn,
-	method string,
-	streamer grpc.Streamer,
-	opts ...grpc.CallOption,
-) (grpc.ClientStream, error) {
-	return streamer(SetTenantContext(SetSessionContext(ctx, c.SessionID), c.TenantID), desc, cc, method, opts...)
+func stream(tenantID, sessionID string) grpc.StreamClientInterceptor {
+	return func(
+		ctx context.Context,
+		desc *grpc.StreamDesc,
+		cc *grpc.ClientConn,
+		method string,
+		streamer grpc.Streamer,
+		opts ...grpc.CallOption,
+	) (grpc.ClientStream, error) {
+		return streamer(SetTenantContext(SetSessionContext(ctx, sessionID), tenantID), desc, cc, method, opts...)
+	}
 }
 
 // SetTenantContext returns a new context with the provided tenant ID embedded as metadata.
