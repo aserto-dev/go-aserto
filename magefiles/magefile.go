@@ -4,7 +4,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -69,7 +68,7 @@ func ListExamples() error {
 		return errors.Wrap(err, "unable to locate examples directory")
 	}
 
-	files, err := ioutil.ReadDir(filepath.Join(exPath, "http"))
+	files, err := os.ReadDir(filepath.Join(exPath, "http"))
 	if err != nil {
 		return errors.Wrapf(err, "unable to list examples under '%s'", exPath)
 	}
