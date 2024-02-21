@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/aserto-dev/go-authorizer v0.20.5
-	github.com/aserto-dev/go-directory v0.30.7
+	github.com/aserto-dev/go-directory v0.31.0
 	github.com/aserto-dev/header v0.0.6
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gorilla/mux v1.8.1
@@ -63,8 +63,8 @@ require (
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	google.golang.org/genproto v0.0.0-20231030173426-d783a09b4405 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20231106174013-bbf56f31fb17 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231030173426-d783a09b4405 // indirect
+	google.golang.org/genproto v0.0.0-20231211222908-989df2bf70f3 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20231212172506-995d672761c0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231211222908-989df2bf70f3 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
