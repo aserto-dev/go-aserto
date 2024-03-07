@@ -7,7 +7,7 @@ import (
 	"github.com/aserto-dev/go-aserto/middleware"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
-	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
 // IdentityMapper is the type of callback functions that can inspect incoming HTTP requests
