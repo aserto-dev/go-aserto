@@ -17,13 +17,6 @@ GOLANGCI-LINT_VERSION := 1.56.2
 GORELEASER_VERSION := 1.24.0
 WIRE_VERSION	:= 0.6.0
 
-BUF_USER		:= $(shell vault kv get -field ASERTO_BUF_USER kv/buf.build)
-BUF_TOKEN		:= $(shell vault kv get -field ASERTO_BUF_TOKEN kv/buf.build)
-BUF_REPO		:= "buf.build/aserto-dev/directory"
-BUF_LATEST		:= $(shell BUF_BETA_SUPPRESS_WARNINGS=1 buf beta registry tag list buf.build/aserto-dev/directory --format json --reverse | jq -r '.results[0].name')
-BUF_DEV_IMAGE	:= "../pb-directory/bin/directory.bin"
-BUF_VERSION 	:= 1.30.0
-
 RELEASE_TAG		:= $$(svu)
 
 BIN_DIR			:= ./bin
@@ -32,7 +25,7 @@ EXT_BIN_DIR		:= ${EXT_DIR}/bin
 EXT_TMP_DIR		:= ${EXT_DIR}/tmp
 
 .PHONY: deps
-deps: info install-vault install-buf install-svu install-golangci-lint install-gotestsum
+deps: info install-svu install-golangci-lint install-gotestsum
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
 
 build:
@@ -52,48 +45,6 @@ vault-login:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
 	@vault login -method=github token=$$(gh auth token)
 
-.PHONY: buf-login
-buf-login:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@echo ${BUF_TOKEN} | ${EXT_BIN_DIR}/buf registry login --username ${BUF_USER} --token-stdin
-
-.PHONY: buf-lint
-buf-lint:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/buf lint proto
-
-.PHONY: buf-breaking
-buf-breaking:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/buf breaking proto --against "https://github.com/d5s-io/directory.git#branch=main"
-
-.PHONY: buf-build
-buf-build: ${BIN_DIR}
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/buf build proto --output ${BIN_DIR}/directory.bin
-
-.PHONY: buf-push
-buf-push:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/buf push proto --tag ${RELEASE_TAG}
-
-.PHONY: buf-mod-update
-buf-mod-update:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/buf mod update .
-
-.PHONY: buf-generate
-buf-generate:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/buf mod update .
-	@${EXT_BIN_DIR}/buf generate ${BUF_REPO}:${BUF_LATEST}
-
-.PHONY: buf-generate-dev
-buf-generate-dev:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/buf mod update .
-	@${EXT_BIN_DIR}/buf generate "../pb-directory/bin/directory.bin"
-
 .PHONY: info
 info:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
@@ -104,8 +55,6 @@ info:
 	@echo "EXT_BIN_DIR: ${EXT_BIN_DIR}"
 	@echo "EXT_TMP_DIR: ${EXT_TMP_DIR}"
 	@echo "RELEASE_TAG: ${RELEASE_TAG}"
-	@echo "BUF_REPO:    ${BUF_REPO}"
-	@echo "BUF_LATEST:  ${BUF_LATEST}"
 
 .PHONY: install-vault
 install-vault: ${EXT_BIN_DIR} ${EXT_TMP_DIR}
