@@ -28,6 +28,7 @@ func TLSConfig(insecure bool, caCertPath string) (*tls.Config, error) {
 	} else {
 		certPool = x509.NewCertPool()
 		caCertBytes, err := os.ReadFile(caCertPath)
+
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to read ca cert [%s]", caCertPath)
 		}

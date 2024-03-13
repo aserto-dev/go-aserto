@@ -9,25 +9,12 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
-
-	"github.com/aserto-dev/mage-loot/common"
-	"github.com/aserto-dev/mage-loot/deps"
 )
 
 const asertoCLI = "aserto"
 
-// Lint runs linting for the entire project.
-func Lint() error {
-	return common.Lint()
-}
-
-// Test runs all tests and generates a code coverage report.
-func Test() error {
-	return common.Test()
-}
-
-func Deps() {
-	deps.GetAllDeps()
+func init() {
+	os.Setenv("GO_VERSION", "1.22")
 }
 
 // SetupExamples starts the aserto one-box with a sample policy used by middleware examples.

@@ -155,6 +155,7 @@ func (c *Check) Handler(next http.Handler) http.Handler {
 		policyContext := c.policyContext(r)
 		identityContext := c.identityContext(r)
 		resourceContext, err := c.resourceContext(r)
+
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
