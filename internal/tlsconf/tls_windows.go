@@ -19,6 +19,7 @@ func TLSConfig(insecure bool, caCertPath string) (*tls.Config, error) {
 	if caCertPath != "" {
 		certPool := x509.NewCertPool()
 		caCertBytes, err := os.ReadFile(caCertPath)
+
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to read ca cert [%s]", caCertPath)
 		}
@@ -26,6 +27,7 @@ func TLSConfig(insecure bool, caCertPath string) (*tls.Config, error) {
 		if !certPool.AppendCertsFromPEM(caCertBytes) {
 			return nil, errors.Wrapf(err, "failed to append client ca cert [%s]", caCertPath)
 		}
+
 		tlsConf.RootCAs = certPool
 	}
 
