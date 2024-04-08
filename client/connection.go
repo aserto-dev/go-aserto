@@ -112,8 +112,7 @@ func dialContext(
 
 	dialOptions = append(dialOptions, options...)
 
-	return grpc.DialContext(
-		ctx,
+	return grpc.NewClient(
 		address,
 		dialOptions...,
 	)
