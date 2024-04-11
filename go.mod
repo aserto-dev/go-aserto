@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/aserto-dev/go-authorizer v0.20.5
-	github.com/aserto-dev/go-directory v0.31.3-0.20240408164215-c780aaf1f43a
+	github.com/aserto-dev/go-directory v0.31.3
 	github.com/aserto-dev/header v0.0.7
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gorilla/mux v1.8.1

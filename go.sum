@@ -4,8 +4,8 @@ github.com/aserto-dev/errors v0.0.7 h1:pBn9RhP2iiDl30oAWsf8aLxvt4yCpLKZOCJRIaeRM
 github.com/aserto-dev/errors v0.0.7/go.mod h1:wiQ68oKTyAQVAv+SvB5GyuAD6PewalA/D6Fq30gNUbQ=
 github.com/aserto-dev/go-authorizer v0.20.5 h1:ne5EvWO8Yqs7lMgZom7nGuGNMP5TOftHu0rS7ws1HSw=
 github.com/aserto-dev/go-authorizer v0.20.5/go.mod h1:cwuPKELMmzTwLMYYoIKFwtf9psNYsDXefOGywtTm094=
-github.com/aserto-dev/go-directory v0.31.3-0.20240408164215-c780aaf1f43a h1:TAkMNrNZtM+6C2LI6sfaNmC6iiNBfev1fqEPZuSCOLk=
-github.com/aserto-dev/go-directory v0.31.3-0.20240408164215-c780aaf1f43a/go.mod h1:IRbWuhDwrl23zN7AM0i52EGg+OQZFPy4KrddXU6MLuc=
+github.com/aserto-dev/go-directory v0.31.3 h1:Twiulwykm+ivko+H73TMVSvSlE2urIN3XiGK1F2bz1U=
+github.com/aserto-dev/go-directory v0.31.3/go.mod h1:Pjb9QcswMnuIPl8iDexG4d2AcFtLWDpVisGodrKuvC0=
 github.com/aserto-dev/header v0.0.7 h1:hlo5/zYsBOsxzPxtve7LRbXyBbQmKSPAyOfmPhGgirM=
 github.com/aserto-dev/header v0.0.7/go.mod h1:wDF2S9k2q3lbilNb9q20vPpX8uvlSLYGa4F7p9GtGy4=
 github.com/bytedance/sonic v1.5.0/go.mod h1:ED5hyg4y6t3/9Ku1R6dU/4KyJ48DZ4jPhfY1O2AihPM=
