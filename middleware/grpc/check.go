@@ -22,6 +22,8 @@ type CheckMiddleware struct {
 	dsReader             ds3.ReaderClient
 	subjType             string
 	objType              string
+	defaultObjType       string
+	defaultObjID         string
 	subjMapper           Mapper
 	objMapper            Mapper
 	permissionFromMethod bool
@@ -36,6 +38,16 @@ func (c *CheckMiddleware) WithSubjectType(value string) *CheckMiddleware {
 
 func (c *CheckMiddleware) WithObjectType(value string) *CheckMiddleware {
 	c.objType = value
+	return c
+}
+
+func (c *CheckMiddleware) WithDefaultObjectType(value string) *CheckMiddleware {
+	c.defaultObjType = value
+	return c
+}
+
+func (c *CheckMiddleware) WithDefaultObjectID(value string) *CheckMiddleware {
+	c.defaultObjID = value
 	return c
 }
 
@@ -85,6 +97,7 @@ func NewCheckMiddleware(reader ds3.ReaderClient) *CheckMiddleware {
 		dsReader:             reader,
 		ignoredMethods:       []string{},
 		permissionFromMethod: true,
+		defaultObjType:       DefaultObjType,
 		ignoreCtx:            map[interface{}][]string{},
 	}
 }
@@ -132,10 +145,21 @@ func (c *CheckMiddleware) authorize(ctx context.Context, req interface{}) error 
 		}
 	}
 
-	subject := c.subjMapper(ctx, req)
-	object := c.objMapper(ctx, req)
+	objectID := c.objMapper(ctx, req)
+	objectType := c.objectType()
 
+	if objectID == "" {
+		objectID = c.defaultObjID
+		objectType = c.defaultObjType
+	}
+
+	if objectID == "" {
+		return errors.New("object ID is empty")
+	}
+
+	subjectID := c.subjMapper(ctx, req)
 	permission := ""
+
 	if c.permissionFromMethod {
 		permission = methodResource(ctx)
 		for _, path := range c.ignoredMethods {
@@ -147,9 +171,9 @@ func (c *CheckMiddleware) authorize(ctx context.Context, req interface{}) error 
 
 	allowed, err := c.dsReader.CheckPermission(ctx, &ds3.CheckPermissionRequest{
 		SubjectType: c.subjectType(),
-		SubjectId:   subject,
-		ObjectType:  c.objectType(),
-		ObjectId:    object,
+		SubjectId:   subjectID,
+		ObjectType:  objectType,
+		ObjectId:    objectID,
 		Permission:  permission})
 	if err != nil {
 		return errors.Wrap(err, "failed to check permission for identity")
