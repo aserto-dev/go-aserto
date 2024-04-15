@@ -16,19 +16,18 @@ const (
 	DefaultObjType  = "tenant"
 )
 
-type Mapper func(ctx context.Context, req interface{}) (id string)
+type TypeIDMapper func(ctx context.Context, req interface{}) (objectType, objectID string)
+type PermissionMapper func(ctx context.Context, req interface{}) (permission string)
 
 type CheckMiddleware struct {
-	dsReader             ds3.ReaderClient
-	subjType             string
-	objType              string
-	defaultObjType       string
-	defaultObjID         string
-	subjMapper           Mapper
-	objMapper            Mapper
-	permissionFromMethod bool
-	ignoredMethods       []string
-	ignoreCtx            map[interface{}][]string
+	dsReader         ds3.ReaderClient
+	subjType         string
+	objType          string
+	subjMapper       TypeIDMapper
+	objMapper        TypeIDMapper
+	permissionMapper PermissionMapper
+	ignoredMethods   []string
+	ignoreCtx        map[interface{}][]string
 }
 
 func (c *CheckMiddleware) WithSubjectType(value string) *CheckMiddleware {
@@ -41,43 +40,33 @@ func (c *CheckMiddleware) WithObjectType(value string) *CheckMiddleware {
 	return c
 }
 
-func (c *CheckMiddleware) WithDefaultObjectType(value string) *CheckMiddleware {
-	c.defaultObjType = value
-	return c
-}
-
-func (c *CheckMiddleware) WithDefaultObjectID(value string) *CheckMiddleware {
-	c.defaultObjID = value
-	return c
-}
-
-func (c *CheckMiddleware) WithPermissionFromMethod() *CheckMiddleware {
-	c.permissionFromMethod = true
-	return c
-}
-
 func (c *CheckMiddleware) WithSubjectFromContextValue(ctxKey interface{}) *CheckMiddleware {
-	c.subjMapper = func(ctx context.Context, _ interface{}) string {
-		return internal.ValueOrEmpty(ctx, ctxKey)
+	c.subjMapper = func(ctx context.Context, _ interface{}) (string, string) {
+		return c.subjType, internal.ValueOrEmpty(ctx, ctxKey)
 	}
 
 	return c
 }
 
 func (c *CheckMiddleware) WithObjectFromContextValue(ctxKey interface{}) *CheckMiddleware {
-	c.objMapper = func(ctx context.Context, _ interface{}) string {
-		return internal.ValueOrEmpty(ctx, ctxKey)
+	c.objMapper = func(ctx context.Context, _ interface{}) (string, string) {
+		return c.objType, internal.ValueOrEmpty(ctx, ctxKey)
 	}
 
 	return c
 }
 
-func (c *CheckMiddleware) WithSubjectMapper(subjectMapper Mapper) *CheckMiddleware {
+func (c *CheckMiddleware) WithPermissionMapper(permissionMapper PermissionMapper) *CheckMiddleware {
+	c.permissionMapper = permissionMapper
+	return c
+}
+
+func (c *CheckMiddleware) WithSubjectMapper(subjectMapper TypeIDMapper) *CheckMiddleware {
 	c.subjMapper = subjectMapper
 	return c
 }
 
-func (c *CheckMiddleware) WithObjectMapper(objectMapper Mapper) *CheckMiddleware {
+func (c *CheckMiddleware) WithObjectMapper(objectMapper TypeIDMapper) *CheckMiddleware {
 	c.objMapper = objectMapper
 	return c
 }
@@ -94,11 +83,11 @@ func (c *CheckMiddleware) WithAutoAuthorizedContextValues(ctxKey interface{}, va
 
 func NewCheckMiddleware(reader ds3.ReaderClient) *CheckMiddleware {
 	return &CheckMiddleware{
-		dsReader:             reader,
-		ignoredMethods:       []string{},
-		permissionFromMethod: true,
-		defaultObjType:       DefaultObjType,
-		ignoreCtx:            map[interface{}][]string{},
+		dsReader:       reader,
+		ignoredMethods: []string{},
+		subjType:       DefaultSubjType,
+		objType:        DefaultObjType,
+		ignoreCtx:      map[interface{}][]string{},
 	}
 }
 
@@ -145,32 +134,28 @@ func (c *CheckMiddleware) authorize(ctx context.Context, req interface{}) error 
 		}
 	}
 
-	objectID := c.objMapper(ctx, req)
-	objectType := c.objectType()
-
-	if objectID == "" {
-		objectID = c.defaultObjID
-		objectType = c.defaultObjType
-	}
-
+	objectType, objectID := c.object(ctx, req)
 	if objectID == "" {
 		return errors.New("object ID is empty")
 	}
 
-	subjectID := c.subjMapper(ctx, req)
-	permission := ""
+	subjectType, subjectID := c.subject(ctx, req)
 
-	if c.permissionFromMethod {
+	permission := ""
+	if c.permissionMapper != nil {
+		permission = c.permissionMapper(ctx, req)
+	} else {
 		permission = methodResource(ctx)
-		for _, path := range c.ignoredMethods {
-			if strings.EqualFold(path, permission) {
-				return nil
-			}
+	}
+
+	for _, path := range c.ignoredMethods {
+		if strings.EqualFold(path, permission) {
+			return nil
 		}
 	}
 
 	allowed, err := c.dsReader.CheckPermission(ctx, &ds3.CheckPermissionRequest{
-		SubjectType: c.subjectType(),
+		SubjectType: subjectType,
 		SubjectId:   subjectID,
 		ObjectType:  objectType,
 		ObjectId:    objectID,
@@ -185,18 +170,31 @@ func (c *CheckMiddleware) authorize(ctx context.Context, req interface{}) error 
 
 	return nil
 }
-func (c *CheckMiddleware) objectType() string {
-	if c.objType == "" {
-		return DefaultObjType
+
+func (c *CheckMiddleware) object(ctx context.Context, req interface{}) (string, string) {
+	var objectType, objectID string
+
+	if c.objMapper != nil {
+		objectType, objectID = c.objMapper(ctx, req)
 	}
 
-	return c.objType
+	if c.objType == "" {
+		objectType = c.objType
+	}
+
+	return objectType, objectID
 }
 
-func (c *CheckMiddleware) subjectType() string {
-	if c.subjType == "" {
-		return DefaultSubjType
+func (c *CheckMiddleware) subject(ctx context.Context, req interface{}) (string, string) {
+	var subjectType, subjectID string
+
+	if c.subjMapper != nil {
+		subjectType, subjectID = c.subjMapper(ctx, req)
 	}
 
-	return c.subjType
+	if c.subjType == "" {
+		subjectType = c.subjType
+	}
+
+	return subjectType, subjectID
 }
