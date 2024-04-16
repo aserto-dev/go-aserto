@@ -18,8 +18,12 @@ const (
 
 type Mapper func(ctx context.Context, req interface{}) (id string)
 
+type CheckClient interface {
+	Check(ctx context.Context, in *ds3.CheckRequest, opts ...grpc.CallOption) (*ds3.CheckResponse, error)
+}
+
 type CheckMiddleware struct {
-	dsReader             ds3.ReaderClient
+	dsClient             CheckClient
 	subjType             string
 	objType              string
 	defaultObjType       string
@@ -92,9 +96,9 @@ func (c *CheckMiddleware) WithAutoAuthorizedContextValues(ctxKey interface{}, va
 	return c
 }
 
-func NewCheckMiddleware(reader ds3.ReaderClient) *CheckMiddleware {
+func NewCheckMiddleware(client CheckClient) *CheckMiddleware {
 	return &CheckMiddleware{
-		dsReader:             reader,
+		dsClient:             client,
 		ignoredMethods:       []string{},
 		permissionFromMethod: true,
 		defaultObjType:       DefaultObjType,
@@ -169,12 +173,12 @@ func (c *CheckMiddleware) authorize(ctx context.Context, req interface{}) error 
 		}
 	}
 
-	allowed, err := c.dsReader.CheckPermission(ctx, &ds3.CheckPermissionRequest{
+	allowed, err := c.dsClient.Check(ctx, &ds3.CheckRequest{
 		SubjectType: c.subjectType(),
 		SubjectId:   subjectID,
 		ObjectType:  objectType,
 		ObjectId:    objectID,
-		Permission:  permission})
+		Relation:    permission})
 	if err != nil {
 		return errors.Wrap(err, "failed to check permission for identity")
 	}
