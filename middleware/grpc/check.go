@@ -2,12 +2,12 @@ package grpc
 
 import (
 	"context"
-	"strings"
 
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	"github.com/aserto-dev/go-authorizer/pkg/aerr"
 	ds3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"google.golang.org/grpc"
 )
 
@@ -16,93 +16,195 @@ const (
 	DefaultObjType  = "tenant"
 )
 
-type Mapper func(ctx context.Context, req interface{}) (id string)
+type ObjectMapper func(ctx context.Context, req any) (objType, id string)
+type Filter func(ctx context.Context, req any) bool
 
 type CheckClient interface {
 	Check(ctx context.Context, in *ds3.CheckRequest, opts ...grpc.CallOption) (*ds3.CheckResponse, error)
 }
 
+type CheckOption func(*CheckOptions)
+
+type objectSpecifier struct {
+	id       string
+	objType  string
+	idMapper StringMapper
+	mapper   ObjectMapper
+}
+
+func (os *objectSpecifier) resolve(ctx context.Context, req any) (string, string) {
+	objType := os.objType
+	objID := os.id
+
+	switch {
+	case os.mapper != nil:
+		objType, objID = os.mapper(ctx, req)
+	case os.idMapper != nil:
+		objID = os.idMapper(ctx, req)
+	}
+
+	return objType, objID
+}
+
+// CheckOptions is used to configure the check middleware.
+type CheckOptions struct {
+	obj  objectSpecifier
+	subj objectSpecifier
+	rel  struct {
+		name   string
+		mapper StringMapper
+	}
+	filters []Filter
+}
+
+func (o *CheckOptions) object(ctx context.Context, req any) (string, string) {
+	return o.obj.resolve(ctx, req)
+}
+
+func (o *CheckOptions) subject(ctx context.Context, req any) (string, string) {
+	return o.subj.resolve(ctx, req)
+}
+
+func (o *CheckOptions) relation(ctx context.Context, req any) string {
+	relation := o.rel.name
+	if o.rel.mapper != nil {
+		relation = o.rel.mapper(ctx, req)
+	}
+
+	return relation
+}
+
+// WithRelation sets the relation/permission to check. If not specified, the relation is determined from the incoming request.
+func WithRelation(name string) CheckOption {
+	return func(o *CheckOptions) {
+		o.rel.name = name
+	}
+}
+
+// WithRelation takes a function that is used to determine the relation/permission to check from the incoming request.
+func WithRelationMapper(mapper StringMapper) CheckOption {
+	return func(o *CheckOptions) {
+		o.rel.mapper = mapper
+	}
+}
+
+// WithObjectType sets the object type to check.
+func WithObjectType(objType string) CheckOption {
+	return func(o *CheckOptions) {
+		o.obj.objType = objType
+	}
+}
+
+// WithObjectID set the id of the object to check.
+func WithObjectID(id string) CheckOption {
+	return func(o *CheckOptions) {
+		o.obj.id = id
+	}
+}
+
+// WithObjectIDFromContextValue takes the specified context value from the incoming request context and uses it as the object id to check.
+func WithObjectIDFromContextValue(ctxKey any) CheckOption {
+	return func(o *CheckOptions) {
+		o.obj.idMapper = func(ctx context.Context, _ any) string {
+			return internal.ValueOrEmpty(ctx, ctxKey)
+		}
+	}
+}
+
+// WithObjectIDMapper takes a function that is used to determine the object id to check from the incoming request.
+func WithObjectIDMapper(mapper StringMapper) CheckOption {
+	return func(o *CheckOptions) {
+		o.obj.idMapper = mapper
+	}
+}
+
+// WithObjectMapper takes a function that is used to determine the object type and id to check from the incoming request.
+func WithObjectMapper(mapper ObjectMapper) CheckOption {
+	return func(o *CheckOptions) {
+		o.obj.mapper = mapper
+	}
+}
+
+// WithSubjectType sets the subject type to check. Default is "user".
+func WithSubjectType(subjType string) CheckOption {
+	return func(o *CheckOptions) {
+		o.subj.objType = subjType
+	}
+}
+
+// WithSubjectID set the id of the subject to check.
+func WithSubjectID(id string) CheckOption {
+	return func(o *CheckOptions) {
+		o.subj.id = id
+	}
+}
+
+// WithSubjectIDFromContextValue takes the specified context value from the incoming request context and uses it as the
+// subject id to check.
+func WithSubjectIDFromContextValue(ctxKey any) CheckOption {
+	return func(o *CheckOptions) {
+		o.subj.idMapper = func(ctx context.Context, _ any) string {
+			return internal.ValueOrEmpty(ctx, ctxKey)
+		}
+	}
+}
+
+// WithSubjectIDMapper takes a function that is used to determine the subject id to check from the incoming request.
+func WithSubjectIDMapper(mapper StringMapper) CheckOption {
+	return func(o *CheckOptions) {
+		o.subj.idMapper = mapper
+	}
+}
+
+// WithSubjectMapper takes a function that is used to determine the subject type and id to check from the incoming request.
+func WithSubjectMapper(mapper ObjectMapper) CheckOption {
+	return func(o *CheckOptions) {
+		o.subj.mapper = mapper
+	}
+}
+
+func WithMethodFilter(methods ...string) CheckOption {
+	return func(o *CheckOptions) {
+		o.filters = append(o.filters, func(ctx context.Context, _ any) bool {
+			method, _ := grpc.Method(ctx)
+			return lo.Contains(methods, method)
+		})
+	}
+}
+
+func WithContextValueFilter(ctxKey any, values ...string) CheckOption {
+	return func(o *CheckOptions) {
+		o.filters = append(o.filters, func(ctx context.Context, _ any) bool {
+			value := internal.ValueOrEmpty(ctx, ctxKey)
+			return lo.Contains(values, value)
+		})
+	}
+}
+
+func WithFilter(filter Filter) CheckOption {
+	return func(o *CheckOptions) {
+		o.filters = append(o.filters, filter)
+	}
+}
+
 type CheckMiddleware struct {
-	dsClient             CheckClient
-	subjType             string
-	objType              string
-	defaultObjType       string
-	defaultObjID         string
-	subjMapper           Mapper
-	objMapper            Mapper
-	permissionFromMethod bool
-	ignoredMethods       []string
-	ignoreCtx            map[interface{}][]string
+	dsClient CheckClient
+	opts     *CheckOptions
 }
 
-func (c *CheckMiddleware) WithSubjectType(value string) *CheckMiddleware {
-	c.subjType = value
-	return c
-}
-
-func (c *CheckMiddleware) WithObjectType(value string) *CheckMiddleware {
-	c.objType = value
-	return c
-}
-
-func (c *CheckMiddleware) WithDefaultObjectType(value string) *CheckMiddleware {
-	c.defaultObjType = value
-	return c
-}
-
-func (c *CheckMiddleware) WithDefaultObjectID(value string) *CheckMiddleware {
-	c.defaultObjID = value
-	return c
-}
-
-func (c *CheckMiddleware) WithPermissionFromMethod() *CheckMiddleware {
-	c.permissionFromMethod = true
-	return c
-}
-
-func (c *CheckMiddleware) WithSubjectFromContextValue(ctxKey interface{}) *CheckMiddleware {
-	c.subjMapper = func(ctx context.Context, _ interface{}) string {
-		return internal.ValueOrEmpty(ctx, ctxKey)
+func NewCheckMiddleware(client CheckClient, options ...CheckOption) *CheckMiddleware {
+	opts := &CheckOptions{}
+	for _, o := range options {
+		o(opts)
 	}
 
-	return c
-}
-
-func (c *CheckMiddleware) WithObjectFromContextValue(ctxKey interface{}) *CheckMiddleware {
-	c.objMapper = func(ctx context.Context, _ interface{}) string {
-		return internal.ValueOrEmpty(ctx, ctxKey)
+	if opts.rel.name == "" && opts.rel.mapper == nil {
+		opts.rel.mapper = relationFromMethod
 	}
 
-	return c
-}
-
-func (c *CheckMiddleware) WithSubjectMapper(subjectMapper Mapper) *CheckMiddleware {
-	c.subjMapper = subjectMapper
-	return c
-}
-
-func (c *CheckMiddleware) WithObjectMapper(objectMapper Mapper) *CheckMiddleware {
-	c.objMapper = objectMapper
-	return c
-}
-
-func (c *CheckMiddleware) WithIgnoredMethods(methods []string) *CheckMiddleware {
-	c.ignoredMethods = methods
-	return c
-}
-
-func (c *CheckMiddleware) WithAutoAuthorizedContextValues(ctxKey interface{}, values []string) *CheckMiddleware {
-	c.ignoreCtx[ctxKey] = values
-	return c
-}
-
-func NewCheckMiddleware(client CheckClient) *CheckMiddleware {
 	return &CheckMiddleware{
-		dsClient:             client,
-		ignoredMethods:       []string{},
-		permissionFromMethod: true,
-		defaultObjType:       DefaultObjType,
-		ignoreCtx:            map[interface{}][]string{},
+		dsClient: client,
+		opts:     opts,
 	}
 }
 
@@ -141,44 +243,35 @@ func (c *CheckMiddleware) Stream() grpc.StreamServerInterceptor {
 }
 
 func (c *CheckMiddleware) authorize(ctx context.Context, req interface{}) error {
-	for ctxKey, values := range c.ignoreCtx {
-		for _, value := range values {
-			if internal.ValueOrEmpty(ctx, ctxKey) == value {
-				return nil
-			}
+	for _, filter := range c.opts.filters {
+		if filter(ctx, req) {
+			return nil
 		}
 	}
 
-	objectID := c.objMapper(ctx, req)
-	objectType := c.objectType()
-
-	if objectID == "" {
-		objectID = c.defaultObjID
-		objectType = c.defaultObjType
-	}
-
-	if objectID == "" {
+	objType, objID := c.opts.object(ctx, req)
+	if objID == "" {
 		return errors.New("object ID is empty")
 	}
+	if objType == "" {
+		return errors.New("object type is empty")
+	}
 
-	subjectID := c.subjMapper(ctx, req)
-	permission := ""
-
-	if c.permissionFromMethod {
-		permission = methodResource(ctx)
-		for _, path := range c.ignoredMethods {
-			if strings.EqualFold(path, permission) {
-				return nil
-			}
-		}
+	subjType, subjID := c.opts.subject(ctx, req)
+	if subjID == "" {
+		return errors.New("subject ID is empty")
+	}
+	if subjType == "" {
+		return errors.New("subject type is empty")
 	}
 
 	allowed, err := c.dsClient.Check(ctx, &ds3.CheckRequest{
-		SubjectType: c.subjectType(),
-		SubjectId:   subjectID,
-		ObjectType:  objectType,
-		ObjectId:    objectID,
-		Relation:    permission})
+		ObjectType:  objType,
+		ObjectId:    objID,
+		Relation:    c.opts.relation(ctx, req),
+		SubjectType: subjType,
+		SubjectId:   subjID,
+	})
 	if err != nil {
 		return errors.Wrap(err, "failed to check permission for identity")
 	}
@@ -189,18 +282,7 @@ func (c *CheckMiddleware) authorize(ctx context.Context, req interface{}) error 
 
 	return nil
 }
-func (c *CheckMiddleware) objectType() string {
-	if c.objType == "" {
-		return DefaultObjType
-	}
 
-	return c.objType
-}
-
-func (c *CheckMiddleware) subjectType() string {
-	if c.subjType == "" {
-		return DefaultSubjType
-	}
-
-	return c.subjType
+func relationFromMethod(ctx context.Context, _ any) string {
+	return methodResource(ctx)
 }
