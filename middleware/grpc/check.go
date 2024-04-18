@@ -253,6 +253,7 @@ func (c *CheckMiddleware) authorize(ctx context.Context, req interface{}) error 
 	if objID == "" {
 		return errors.New("object ID is empty")
 	}
+
 	if objType == "" {
 		return errors.New("object type is empty")
 	}
@@ -261,6 +262,7 @@ func (c *CheckMiddleware) authorize(ctx context.Context, req interface{}) error 
 	if subjID == "" {
 		return errors.New("subject ID is empty")
 	}
+
 	if subjType == "" {
 		return errors.New("subject type is empty")
 	}
