@@ -12,13 +12,11 @@ import (
 
 type DialOptionsProvider func(*Config) ([]grpc.DialOption, error)
 
-func NewDialOptionsProvider() DialOptionsProvider {
+func NewDialOptionsProvider(dialopts ...grpc.DialOption) DialOptionsProvider {
 	return func(cfg *Config) ([]grpc.DialOption, error) {
 		if (cfg.ClientCertPath != "") != (cfg.ClientKeyPath != "") {
 			return nil, errors.New("both client cert and key must be specified, or both must be empty")
 		}
-
-		dialopts := []grpc.DialOption{}
 
 		if cfg.ClientCertPath != "" {
 			certificate, err := tls.LoadX509KeyPair(cfg.ClientCertPath, cfg.ClientKeyPath)
