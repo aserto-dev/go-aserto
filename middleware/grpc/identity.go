@@ -2,10 +2,12 @@ package grpc
 
 import (
 	"context"
+	"strings"
 
 	"github.com/aserto-dev/go-aserto/middleware"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -73,7 +75,7 @@ func (b *IdentityBuilder) FromMetadata(field string) *IdentityBuilder {
 		if md, ok := metadata.FromIncomingContext(ctx); ok {
 			id := md.Get(field)
 			if len(id) > 0 {
-				identity.ID(id[0])
+				identity.ID(b.fromAuthzHeader(id[0]))
 			}
 		}
 	}
@@ -104,4 +106,18 @@ func (b *IdentityBuilder) build(ctx context.Context, req interface{}) *api.Ident
 	}
 
 	return identity.Context()
+}
+
+func (b *IdentityBuilder) fromAuthzHeader(value string) string {
+	// Authorization header is special. Need to remove "Bearer" auth scheme.
+	value = strings.TrimSpace(strings.TrimPrefix(value, "Bearer"))
+	if b.identityType == api.IdentityType_IDENTITY_TYPE_SUB {
+		// Try to parse subject out of token
+		token, err := jwt.ParseString(value, jwt.WithVerify(false))
+		if err == nil {
+			value = token.Subject()
+		}
+	}
+
+	return value
 }
