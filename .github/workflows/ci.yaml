@@ -40,12 +40,12 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v6
         with:
           version: ${{ env.GO_LANGCI_LINT_VERSION }}
           args: --timeout=2m
       - name: Test Setup
-        uses: autero1/action-gotestsum@v2.0.0
+        uses: gertd/action-gotestsum@v3.0.0
         with:
           gotestsum_version: ${{ env.GO_TESTSUM_VERSION }}
       - name: Test
