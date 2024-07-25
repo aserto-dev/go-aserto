@@ -102,7 +102,6 @@ func dialContext(
 
 	dialOptions := []grpc.DialOption{
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)),
-		grpc.WithBlock(),
 		grpc.WithChainUnaryInterceptor(unary(tenantID, sessionID)),
 		grpc.WithChainStreamInterceptor(stream(tenantID, sessionID)),
 	}
