@@ -3,8 +3,8 @@ module github.com/aserto-dev/go-aserto
 go 1.21
 
 require (
-	github.com/aserto-dev/go-authorizer v0.20.7
-	github.com/aserto-dev/go-directory v0.31.6
+	github.com/aserto-dev/go-authorizer v0.20.8
+	github.com/aserto-dev/go-directory v0.31.9
 	github.com/aserto-dev/header v0.0.7
 	github.com/gin-gonic/gin v1.10.0
 	github.com/gorilla/mux v1.8.1
@@ -24,7 +24,6 @@ require (
 	github.com/aserto-dev/errors v0.0.9 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
-	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
