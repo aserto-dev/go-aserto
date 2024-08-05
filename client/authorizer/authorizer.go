@@ -21,7 +21,7 @@ type Client struct {
 
 // NewClient creates a Client with the specified connection options.
 func New(ctx context.Context, opts ...client.ConnectionOption) (*Client, error) {
-	conn, err := client.NewConnection(ctx, opts...)
+	conn, err := client.NewConnection(opts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "create grpc client failed")
 	}

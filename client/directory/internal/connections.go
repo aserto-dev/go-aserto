@@ -1,8 +1,6 @@
 package internal
 
 import (
-	"context"
-
 	"github.com/aserto-dev/go-aserto/client"
 	hs "github.com/mitchellh/hashstructure/v2"
 	"github.com/samber/lo"
@@ -11,7 +9,7 @@ import (
 
 type Connections struct {
 	conns   map[uint64]*grpc.ClientConn
-	Connect func(context.Context, ...client.ConnectionOption) (*grpc.ClientConn, error)
+	Connect func(...client.ConnectionOption) (*grpc.ClientConn, error)
 }
 
 func NewConnections() *Connections {
@@ -21,7 +19,7 @@ func NewConnections() *Connections {
 	}
 }
 
-func (cb *Connections) Get(ctx context.Context, cfg *client.Config) (*grpc.ClientConn, error) {
+func (cb *Connections) Get(cfg *client.Config) (*grpc.ClientConn, error) {
 	if cfg == nil {
 		return nil, nil
 	}
@@ -40,7 +38,7 @@ func (cb *Connections) Get(ctx context.Context, cfg *client.Config) (*grpc.Clien
 			return nil, err
 		}
 
-		conn, err = cb.Connect(ctx, opts...)
+		conn, err = cb.Connect(opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -60,7 +58,7 @@ type ConnectCounter struct {
 	Count int
 }
 
-func (cc *ConnectCounter) Connect(context.Context, ...client.ConnectionOption) (*grpc.ClientConn, error) {
+func (cc *ConnectCounter) Connect(...client.ConnectionOption) (*grpc.ClientConn, error) {
 	cc.Count++
 	return &grpc.ClientConn{}, nil
 }

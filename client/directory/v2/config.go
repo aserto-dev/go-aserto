@@ -1,8 +1,6 @@
 package directory
 
 import (
-	"context"
-
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"google.golang.org/grpc"
@@ -39,8 +37,8 @@ type Config struct {
 }
 
 // Connect create a new directory client from the specified configuration.
-func (c *Config) Connect(ctx context.Context) (*Client, error) {
-	return connect(ctx, internal.NewConnections(), c)
+func (c *Config) Connect() (*Client, error) {
+	return connect(internal.NewConnections(), c)
 }
 
 // Validate returns an error if the configuration is invalid.
@@ -57,27 +55,27 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func connect(ctx context.Context, conns *internal.Connections, cfg *Config) (*Client, error) {
+func connect(conns *internal.Connections, cfg *Config) (*Client, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
 
-	reader, err := getConnection(ctx, conns, cfg.Reader, cfg.Config)
+	reader, err := getConnection(conns, cfg.Reader, cfg.Config)
 	if err != nil {
 		return nil, errors.Wrap(err, "reader connection failed")
 	}
 
-	writer, err := getConnection(ctx, conns, cfg.Writer, cfg.Config)
+	writer, err := getConnection(conns, cfg.Writer, cfg.Config)
 	if err != nil {
 		return nil, errors.Wrap(err, "writer connection failed")
 	}
 
-	importer, err := getConnection(ctx, conns, cfg.Importer, cfg.Config)
+	importer, err := getConnection(conns, cfg.Importer, cfg.Config)
 	if err != nil {
 		return nil, errors.Wrap(err, "importer connection failed")
 	}
 
-	exporter, err := getConnection(ctx, conns, cfg.Exporter, cfg.Config)
+	exporter, err := getConnection(conns, cfg.Exporter, cfg.Config)
 	if err != nil {
 		return nil, errors.Wrap(err, "exporter connection failed")
 	}
@@ -97,16 +95,15 @@ func allNil[T any](slice []*T) bool {
 }
 
 func getConnection(
-	ctx context.Context,
 	conns *internal.Connections,
 	cfg, fallback *client.Config,
 ) (*grpc.ClientConn, error) {
 	if cfg != nil {
-		return conns.Get(ctx, cfg)
+		return conns.Get(cfg)
 	}
 
 	if fallback != nil {
-		return conns.Get(ctx, fallback)
+		return conns.Get(fallback)
 	}
 
 	return nil, nil

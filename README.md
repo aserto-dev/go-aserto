@@ -69,22 +69,6 @@ The options below can be specified to override default behaviors:
 **`WithCACertPath()`** - adds the specified PEM certificate file to the connection's list of trusted root CAs.
 
 
-#### Connection Timeout
-
-
-Connection timeout can be set on the specified context using context.WithTimeout. If no timeout is set on the
-context, the default connection timeout is 5 seconds. For example, to increase the timeout to 10 seconds:
-
-```go
-ctx := context.Background()
-
-authorizer, err := grpc.New(
-	context.WithTimeout(ctx, time.Duration(10) * time.Second),
-	aserto.WithAPIKeyAuth("<API Key>"),
-)
-```
-
-
 ### Making Authorization Calls
 
 Use the client's `Is()` method to request authorization decisions from the Aserto authorizer service.
@@ -128,14 +112,13 @@ To create a directory client:
 ```go
 
 import (
-	"context"
 	"github.com/aserto-dev/go-aserto/client"
 	"github.com/aserto-dev/go-aserto/client/directory/v3"
 )
 
 ...
 
-dir, err := directory.New(context.Background(), client.WithAPIKeyAuth('<api key>'))
+dir, err := directory.New(client.WithAPIKeyAuth('<api key>'))
 ```
 
 [Connection options](#connection-options) are the same as those for the authorizer client.
@@ -174,7 +157,7 @@ type Config struct {
 The embedded `*client.Config` acts as a fallback. If no configuration is provided for a specific service, the fallback
 configuration is used. If no fallback is provided, the client for that service is nil.
 
-To create a directory client from configuration, call `Connect(context.Context)` on the config struct:
+To create a directory client from configuration, call `Connect()` on the config struct:
 
 ```go
 import (
@@ -190,12 +173,12 @@ import (
 // Use the same address for all services.
 cfg := &directory.Config{Address: "localhost:9292"}
 
-dir, err := cfg.Connect(context.Background())
+dir, err := cfg.Connect()
 if err != nil {
 	panic(err)
 }
 
-resp, err := dir.Reader.GetObjects(&reader.GetObjectsRequest{})
+resp, err := dir.Reader.GetObjects(context.Background(), &reader.GetObjectsRequest{})
 ```
 
 **Examples**

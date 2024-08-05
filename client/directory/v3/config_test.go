@@ -1,7 +1,6 @@
 package directory // nolint:testpackage
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -69,8 +68,6 @@ func TestUnmarshalConfig(t *testing.T) {
 }
 
 func TestConnect(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("base only", func(t *testing.T) { // nolint:dupl
 		assert := asserts.New(t)
 
@@ -80,7 +77,7 @@ func TestConnect(t *testing.T) {
 			Config: &client.Config{Address: "localhost:8282"},
 		}
 
-		dir, err := connect(ctx, conns, cfg)
+		dir, err := connect(conns, cfg)
 		assert.NoError(err)
 		assert.NotNil(dir)
 		assert.NotNil(dir.Reader)
@@ -100,7 +97,7 @@ func TestConnect(t *testing.T) {
 			Reader: &client.Config{Address: "localhost:4321"},
 		}
 
-		dir, err := connect(ctx, conns, cfg)
+		dir, err := connect(conns, cfg)
 		assert.NoError(err)
 		assert.NotNil(dir)
 		assert.NotNil(dir.Reader)
@@ -119,7 +116,7 @@ func TestConnect(t *testing.T) {
 			Reader: &client.Config{Address: "localhost:9292"},
 		}
 
-		dir, err := connect(ctx, conns, cfg)
+		dir, err := connect(conns, cfg)
 		assert.NoError(err)
 		assert.NotNil(dir)
 		assert.NotNil(dir.Reader)

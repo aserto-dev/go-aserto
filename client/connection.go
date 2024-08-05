@@ -13,7 +13,6 @@ import (
 	"context"
 	"crypto/tls"
 	"strings"
-	"time"
 
 	"github.com/aserto-dev/go-aserto/internal/hosted"
 	"github.com/aserto-dev/go-aserto/internal/tlsconf"
@@ -23,8 +22,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 )
-
-const defaultTimeout time.Duration = time.Duration(5) * time.Second
 
 /*
 NewConnection establishes a gRPC connection.
@@ -58,7 +55,7 @@ context, the default connection timeout is 5 seconds. For example, to increase t
 		aserto.WithTenantID("<Tenant ID>"),
 	)
 */
-func NewConnection(ctx context.Context, opts ...ConnectionOption) (*grpc.ClientConn, error) {
+func NewConnection(opts ...ConnectionOption) (*grpc.ClientConn, error) {
 	options, err := NewConnectionOptions(opts...)
 	if err != nil {
 		return nil, err
@@ -69,17 +66,16 @@ func NewConnection(ctx context.Context, opts ...ConnectionOption) (*grpc.ClientC
 		options.Address = hosted.HostedAuthorizerHostname + hosted.HostedAuthorizerGRPCPort
 	}
 
-	return Connect(ctx, options)
+	return Connect(options)
 }
 
-func Connect(ctx context.Context, options *ConnectionOptions) (*grpc.ClientConn, error) {
-	return newConnection(ctx, dialContext, options)
+func Connect(options *ConnectionOptions) (*grpc.ClientConn, error) {
+	return newConnection(newClient, options)
 }
 
-// dialer is introduced in order to test the logic responsible for configuring the underlying gRPC connection
+// connectionFactory is introduced in order to test the logic responsible for configuring the underlying gRPC connection
 // without really attempting a connection.
-type dialer func(
-	ctx context.Context,
+type connectionFactory func(
 	address string,
 	tlsConf *tls.Config,
 	callerCreds credentials.PerRPCCredentials,
@@ -87,9 +83,8 @@ type dialer func(
 	options []grpc.DialOption,
 ) (*grpc.ClientConn, error)
 
-// dialContext is the default dialer that calls grpc.DialContext to establish a connection.
-func dialContext(
-	ctx context.Context,
+// newClient is the default dialer that calls grpc.DialContext to establish a connection.
+func newClient(
 	address string,
 	tlsConf *tls.Config,
 	callerCreds credentials.PerRPCCredentials,
@@ -117,18 +112,10 @@ func dialContext(
 	)
 }
 
-func newConnection(ctx context.Context, dialContext dialer, options *ConnectionOptions) (*grpc.ClientConn, error) {
+func newConnection(dialContext connectionFactory, options *ConnectionOptions) (*grpc.ClientConn, error) {
 	tlsConf, err := tlsconf.TLSConfig(options.Insecure, options.CACertPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to setup tls configuration")
-	}
-
-	if _, ok := ctx.Deadline(); !ok {
-		// Set the default timeout if the context already have a timeout.
-		var cancel context.CancelFunc
-
-		ctx, cancel = context.WithTimeout(ctx, defaultTimeout)
-		defer cancel()
 	}
 
 	dialOptions := []grpc.DialOption{
@@ -139,7 +126,6 @@ func newConnection(ctx context.Context, dialContext dialer, options *ConnectionO
 	dialOptions = append(dialOptions, options.DialOptions...)
 
 	return dialContext(
-		ctx,
 		options.ServerAddress(),
 		tlsConf,
 		options.Creds,

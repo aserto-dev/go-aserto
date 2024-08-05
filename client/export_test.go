@@ -1,16 +1,11 @@
 package client
 
 import (
-	"context"
-
 	"google.golang.org/grpc"
 )
 
-func InternalNewConnection(ctx context.Context,
-	dialContext dialer,
-	options *ConnectionOptions,
-) (*grpc.ClientConn, error) {
-	return newConnection(ctx, dialContext, options)
+func InternalNewConnection(dialContext connectionFactory, options *ConnectionOptions) (*grpc.ClientConn, error) {
+	return newConnection(dialContext, options)
 }
 
 func InternalUnary(tenantID, sessionID string) grpc.UnaryClientInterceptor {

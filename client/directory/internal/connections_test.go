@@ -1,7 +1,6 @@
 package internal_test
 
 import (
-	"context"
 	"testing"
 
 	asserts "github.com/stretchr/testify/assert"
@@ -11,8 +10,6 @@ import (
 )
 
 func TestConnections(t *testing.T) {
-	ctx := context.Background()
-
 	counter := &internal.ConnectCounter{}
 	conns := internal.NewConnections()
 	conns.Connect = counter.Connect
@@ -22,7 +19,7 @@ func TestConnections(t *testing.T) {
 	t.Run("new connection", func(t *testing.T) {
 		assert := asserts.New(t)
 
-		conn, err := conns.Get(ctx, cfg)
+		conn, err := conns.Get(cfg)
 		assert.NoError(err)
 		assert.NotNil(conn)
 		assert.Equal(1, counter.Count)
@@ -30,7 +27,7 @@ func TestConnections(t *testing.T) {
 
 	t.Run("cached connection", func(t *testing.T) {
 		assert := asserts.New(t)
-		conn, err := conns.Get(ctx, cfg)
+		conn, err := conns.Get(cfg)
 		assert.NoError(err)
 		assert.NotNil(conn)
 		assert.Equal(1, counter.Count) // no new calls to `connect`
@@ -40,7 +37,7 @@ func TestConnections(t *testing.T) {
 		assert := asserts.New(t)
 		cfg := &client.Config{Address: "localhost:8282", TenantID: "foobar"}
 
-		conn, err := conns.Get(ctx, cfg)
+		conn, err := conns.Get(cfg)
 		assert.NoError(err)
 		assert.NotNil(conn)
 		assert.Equal(2, counter.Count) // new call to `connect`
