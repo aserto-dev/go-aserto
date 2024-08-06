@@ -1,4 +1,4 @@
-package directory // nolint:testpackage
+package ds // nolint:testpackage
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	asserts "github.com/stretchr/testify/assert"
 
 	"github.com/aserto-dev/go-aserto"
-	"github.com/aserto-dev/go-aserto/directory/internal"
+	"github.com/aserto-dev/go-aserto/ds/internal"
 )
 
 const (

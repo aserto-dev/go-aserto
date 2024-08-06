@@ -1,4 +1,4 @@
-package grpc
+package grpcz
 
 import (
 	"context"

@@ -1,4 +1,4 @@
-package grpc_test
+package grpcz_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/aserto-dev/go-aserto/middleware/grpc"
+	"github.com/aserto-dev/go-aserto/middleware/grpcz"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 )
 
@@ -29,18 +29,18 @@ func TestTypeAssignment(t *testing.T) {
 	assert.Equal(
 		t,
 		JWT(),
-		(&grpc.IdentityBuilder{}).JWT().ID(username).InternalBuild(context.TODO(), nil),
+		(&grpcz.IdentityBuilder{}).JWT().ID(username).InternalBuild(context.TODO(), nil),
 		"Expected JWT identity type",
 	)
 }
 
 func TestAssignmentOverride(t *testing.T) {
-	identity := (&grpc.IdentityBuilder{}).JWT().None().InternalBuild(context.TODO(), nil)
+	identity := (&grpcz.IdentityBuilder{}).JWT().None().InternalBuild(context.TODO(), nil)
 
 	assert.Equal(
 		t,
 		Anon(),
-		(&grpc.IdentityBuilder{}).JWT().None().InternalBuild(context.TODO(), nil),
+		(&grpcz.IdentityBuilder{}).JWT().None().InternalBuild(context.TODO(), nil),
 		identity.Type,
 		"Expected NONE identity to override JWT",
 	)
@@ -49,8 +49,8 @@ func TestAssignmentOverride(t *testing.T) {
 func TestAssignmentOrder(t *testing.T) {
 	assert.Equal(
 		t,
-		(&grpc.IdentityBuilder{}).ID("id").Subject(),
-		(&grpc.IdentityBuilder{}).Subject().ID("id"),
+		(&grpcz.IdentityBuilder{}).ID("id").Subject(),
+		(&grpcz.IdentityBuilder{}).Subject().ID("id"),
 		"Assignment order shouldn't matter",
 	)
 }
@@ -59,13 +59,13 @@ func TestNoneClearsIdentity(t *testing.T) {
 	assert.Equal(
 		t,
 		Anon(),
-		(&grpc.IdentityBuilder{}).ID("id").None().InternalBuild(context.TODO(), nil),
+		(&grpcz.IdentityBuilder{}).ID("id").None().InternalBuild(context.TODO(), nil),
 		"WithNone should override previously assigned identity",
 	)
 }
 
 func TestIdentityFromMetadata(t *testing.T) {
-	builder := &grpc.IdentityBuilder{}
+	builder := &grpcz.IdentityBuilder{}
 	builder.JWT().FromMetadata("authorization")
 
 	md := metadata.New(map[string]string{"authorization": username})
@@ -80,7 +80,7 @@ func TestIdentityFromMetadata(t *testing.T) {
 }
 
 func TestIdentityFromMissingMetadata(t *testing.T) {
-	builder := &grpc.IdentityBuilder{}
+	builder := &grpcz.IdentityBuilder{}
 	builder.JWT().FromMetadata("authorization")
 
 	md := metadata.New(map[string]string{"wrongKey": username})
@@ -95,7 +95,7 @@ func TestIdentityFromMissingMetadata(t *testing.T) {
 }
 
 func TestIdentityFromMissingMetadataValue(t *testing.T) {
-	builder := &grpc.IdentityBuilder{}
+	builder := &grpcz.IdentityBuilder{}
 	builder.JWT().FromMetadata("authorization")
 
 	assert.Equal(
@@ -109,7 +109,7 @@ func TestIdentityFromMissingMetadataValue(t *testing.T) {
 type user struct{}
 
 func TestIdentityFromContextValue(t *testing.T) {
-	builder := &grpc.IdentityBuilder{}
+	builder := &grpcz.IdentityBuilder{}
 	builder.Subject().FromContextValue(user{})
 
 	ctx := context.WithValue(context.TODO(), user{}, "george")
@@ -123,7 +123,7 @@ func TestIdentityFromContextValue(t *testing.T) {
 }
 
 func TestMissingContextValue(t *testing.T) {
-	builder := &grpc.IdentityBuilder{}
+	builder := &grpcz.IdentityBuilder{}
 	builder.Subject().FromContextValue(user{})
 
 	assert.Equal(

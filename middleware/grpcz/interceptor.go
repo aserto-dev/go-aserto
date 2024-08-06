@@ -4,14 +4,14 @@ Package grpc provides authorization middleware for gRPC servers.
 The middleware intercepts incoming requests/streams and calls the Aserto authorizer service to
 determine if access should be granted or denied.
 */
-package grpc
+package grpcz
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/aserto-dev/go-aserto/middleware"
-	"github.com/aserto-dev/go-aserto/middleware/grpc/internal/pbutil"
+	"github.com/aserto-dev/go-aserto/middleware/grpcz/internal/pbutil"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/aserto-dev/go-authorizer/pkg/aerr"

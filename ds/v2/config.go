@@ -1,4 +1,4 @@
-package directory
+package ds
 
 import (
 	"github.com/pkg/errors"
@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/aserto-dev/go-aserto"
-	"github.com/aserto-dev/go-aserto/directory/internal"
+	"github.com/aserto-dev/go-aserto/ds/internal"
 	des "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
 	dis "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
 	drs "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"

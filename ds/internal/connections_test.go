@@ -6,7 +6,7 @@ import (
 	asserts "github.com/stretchr/testify/assert"
 
 	"github.com/aserto-dev/go-aserto"
-	"github.com/aserto-dev/go-aserto/directory/internal"
+	"github.com/aserto-dev/go-aserto/ds/internal"
 )
 
 func TestConnections(t *testing.T) {

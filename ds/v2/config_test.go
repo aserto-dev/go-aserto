@@ -1,4 +1,4 @@
-package directory_test
+package ds_test
 
 import (
 	"encoding/json"
@@ -7,8 +7,8 @@ import (
 	asserts "github.com/stretchr/testify/assert"
 
 	"github.com/aserto-dev/go-aserto"
-	"github.com/aserto-dev/go-aserto/directory/internal"
-	"github.com/aserto-dev/go-aserto/directory/v2"
+	"github.com/aserto-dev/go-aserto/ds/internal"
+	"github.com/aserto-dev/go-aserto/ds/v2"
 )
 
 const (
@@ -21,7 +21,7 @@ func TestUnmarshalConfig(t *testing.T) {
 	t.Run("base only", func(t *testing.T) {
 		assert := asserts.New(t)
 
-		cfg := directory.Config{}
+		cfg := ds.Config{}
 		if err := json.Unmarshal([]byte(base), &cfg); err != nil {
 			assert.FailNow("failed to unmarshal config", err)
 		}
@@ -36,7 +36,7 @@ func TestUnmarshalConfig(t *testing.T) {
 	t.Run("no base", func(t *testing.T) {
 		assert := asserts.New(t)
 
-		var cfg directory.Config
+		var cfg ds.Config
 		if err := json.Unmarshal([]byte(noBase), &cfg); err != nil {
 			assert.FailNow("failed to unmarshal config", err)
 		}
@@ -53,7 +53,7 @@ func TestUnmarshalConfig(t *testing.T) {
 	t.Run("overrides", func(t *testing.T) {
 		assert := asserts.New(t)
 
-		var cfg directory.Config
+		var cfg ds.Config
 		if err := json.Unmarshal([]byte(overrides), &cfg); err != nil {
 			assert.FailNow("failed to unmarshal config", err)
 		}
@@ -74,11 +74,11 @@ func TestConnect(t *testing.T) {
 
 		conns, counter := mockConns()
 
-		cfg := &directory.Config{
+		cfg := &ds.Config{
 			Config: &aserto.Config{Address: "localhost:8282"},
 		}
 
-		dir, err := directory.InternalConnect(conns, cfg)
+		dir, err := ds.InternalConnect(conns, cfg)
 		assert.NoError(err)
 		assert.NotNil(dir)
 		assert.NotNil(dir.Reader)
@@ -93,12 +93,12 @@ func TestConnect(t *testing.T) {
 
 		conns, counter := mockConns()
 
-		cfg := &directory.Config{
+		cfg := &ds.Config{
 			Config: &aserto.Config{Address: "localhost:1234"},
 			Reader: &aserto.Config{Address: "localhost:4321"},
 		}
 
-		dir, err := directory.InternalConnect(conns, cfg)
+		dir, err := ds.InternalConnect(conns, cfg)
 		assert.NoError(err)
 		assert.NotNil(dir)
 		assert.NotNil(dir.Reader)
@@ -113,11 +113,11 @@ func TestConnect(t *testing.T) {
 
 		conns, counter := mockConns()
 
-		cfg := &directory.Config{
+		cfg := &ds.Config{
 			Reader: &aserto.Config{Address: "localhost:9292"},
 		}
 
-		dir, err := directory.InternalConnect(conns, cfg)
+		dir, err := ds.InternalConnect(conns, cfg)
 		assert.NoError(err)
 		assert.NotNil(dir)
 		assert.NotNil(dir.Reader)

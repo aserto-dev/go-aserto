@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/aserto-dev/go-aserto/middleware/grpc/internal/pbutil"
+	"github.com/aserto-dev/go-aserto/middleware/grpcz/internal/pbutil"
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"

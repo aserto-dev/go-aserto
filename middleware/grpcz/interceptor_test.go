@@ -1,11 +1,11 @@
-package grpc_test
+package grpcz_test
 
 import (
 	"context"
 	"fmt"
 	"testing"
 
-	grpcmw "github.com/aserto-dev/go-aserto/middleware/grpc"
+	grpcmw "github.com/aserto-dev/go-aserto/middleware/grpcz"
 	"github.com/aserto-dev/go-aserto/middleware/internal/mock"
 	"github.com/aserto-dev/go-aserto/middleware/internal/test"
 	"github.com/aserto-dev/go-authorizer/pkg/aerr"
