@@ -6,16 +6,14 @@ AuthorizerClient is the low-level interface that exposes the raw authorization A
 package grpc
 
 import (
-	"context"
-
 	"github.com/aserto-dev/go-aserto/client"
 	"github.com/aserto-dev/go-aserto/client/authorizer"
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 )
 
 // New returns a new gRPC AuthorizerClient with the specified options.
-func New(ctx context.Context, opts ...client.ConnectionOption) (authz.AuthorizerClient, error) {
-	c, err := authorizer.New(ctx, opts...)
+func New(opts ...client.ConnectionOption) (authz.AuthorizerClient, error) {
+	c, err := authorizer.New(opts...)
 	if err != nil {
 		return nil, err
 	}

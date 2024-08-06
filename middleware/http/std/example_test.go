@@ -1,7 +1,6 @@
 package std_test
 
 import (
-	"context"
 	"log"
 	"net/http"
 	"time"
@@ -18,11 +17,8 @@ func Hello(w http.ResponseWriter, _ *http.Request) {
 }
 
 func Example() {
-	ctx := context.Background()
-
 	// Create authorizer client.
 	authorizer, err := grpc.New(
-		ctx,
 		client.WithAPIKeyAuth("<Aserto authorizer API Key>"),
 		client.WithTenantID("<Aserto tenant ID>"),
 	)

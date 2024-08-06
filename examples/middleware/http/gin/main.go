@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,9 +15,7 @@ import (
 const port = 8080
 
 func main() {
-	ctx := context.Background()
 	authClient, err := grpc.New(
-		ctx,
 		client.WithAddr("localhost:8282"),
 	)
 	if err != nil {

@@ -1,8 +1,6 @@
 package authorizer
 
 import (
-	"context"
-
 	"github.com/aserto-dev/go-aserto/client"
 	"google.golang.org/grpc"
 
@@ -20,7 +18,7 @@ type Client struct {
 }
 
 // NewClient creates a Client with the specified connection options.
-func New(ctx context.Context, opts ...client.ConnectionOption) (*Client, error) {
+func New(opts ...client.ConnectionOption) (*Client, error) {
 	conn, err := client.NewConnection(opts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "create grpc client failed")

@@ -13,11 +13,8 @@ import (
 )
 
 func Example() {
-	ctx := context.Background()
-
 	// Create new authorizer client.
 	authorizer, err := grpc.New(
-		ctx,
 		client.WithAPIKeyAuth("<Aserto authorizer API key"),
 	)
 	if err != nil {
@@ -26,7 +23,7 @@ func Example() {
 
 	// Make an authorization call.
 	result, err := authorizer.Is(
-		ctx,
+		context.Background(),
 		&authz.IsRequest{
 			PolicyContext: &api.PolicyContext{
 				Path:      "<Policy path (e.g. 'peoplefinder.GET.users')",
