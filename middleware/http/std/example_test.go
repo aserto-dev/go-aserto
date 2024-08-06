@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aserto-dev/go-aserto/authorizer/grpc"
 	"github.com/aserto-dev/go-aserto/client"
+	"github.com/aserto-dev/go-aserto/client/authorizer"
 	mw "github.com/aserto-dev/go-aserto/middleware/http/std"
 )
 
@@ -17,18 +17,19 @@ func Hello(w http.ResponseWriter, _ *http.Request) {
 }
 
 func Example() {
-	// Create authorizer client.
-	authorizer, err := grpc.New(
+	// Create azClient client.
+	azClient, err := authorizer.New(
 		client.WithAPIKeyAuth("<Aserto authorizer API Key>"),
 		client.WithTenantID("<Aserto tenant ID>"),
 	)
 	if err != nil {
 		log.Fatal("Failed to create authorizer client:", err)
 	}
+	defer azClient.Close()
 
 	// Create HTTP middleware.
 	middleware := mw.New(
-		authorizer,
+		azClient.Authorizer,
 		&mw.Policy{
 			Name:          "<Aserto policy Name>",
 			Decision:      "<authorization decision (e.g. 'allowed')",
@@ -47,5 +48,7 @@ func Example() {
 		Addr:              ":8080",
 		ReadHeaderTimeout: 2 * time.Second,
 	}
-	log.Fatal(server.ListenAndServe())
+	if err := server.ListenAndServe(); err != nil {
+		log.Println("Failed to start server:", err)
+	}
 }

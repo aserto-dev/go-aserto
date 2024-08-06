@@ -18,37 +18,27 @@ go get -u github.com/aserto-dev/go-aserto
 
 ## Authorizer
 
-The [Authorizer](https://docs.aserto.com/docs/overview/authorizer) service is is an [open source authorization engine](https://www.topaz.sh)
+The [Authorizer](https://www.topaz.sh/docs/authorizer-guide/overview) service is is an [open source authorization engine](https://www.topaz.sh)
 which uses the [Open Policy Agent](https://www.openpolicyagent.org) (OPA) to make decisions by computing authorization
 policies.
-
-
-### AuthorizerClient
 
 The `AuthorizerClient` interface, defined in
 [`github.com/aserto-dev/go-authorizer/aserto/authorizer/v2`](https://github.com/aserto-dev/go-authorizer/blob/main/aserto/authorizer/v2/authorizer_grpc.pb.go#L34),
 describes the operations exposed by the Aserto authorizer service.
 
-Two implementation of `AuthorizerClient` are available:
 
-1. `authorizer/grpc` provides a client that communicates with the authorizer using gRPC.
+### Client
 
-2. `authorizer/http` provides a client that communicates with the authorizer over its REST HTTP endpoints.
-
-
-Create a new client using `New()` in either package.
-
-The snippet below creates an authorizer client that talks to Aserto's hosted authorizer over gRPC:
+The snippet below creates an authorizer client that connects to a topaz instance running locally:
 
 ```go
 import (
 	"github.com/aserto-dev/go-aserto/client"
-	"github.com/aserto-dev/go-aserto/authorizer/grpc"
+	"github.com/aserto-dev/go-aserto/client/authorizer"
 )
 ...
-authorizer, err := grpc.New(
-	ctx,
-	client.WithAPIKeyAuth("<API Key>"),
+azClient, err := authorizer.New(
+	client.WithAddr("localhost:8282"),
 )
 ```
 
@@ -75,11 +65,15 @@ Use the client's `Is()` method to request authorization decisions from the Asert
 
 ```go
 import (
-	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
+	"context"
+	...
+	azv2 "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 )
 
-resp, err := authorizer.Is(c.Context, &authz.IsRequest{
+ctx := context.Background()
+
+resp, err := azClient.Authorizer.Is(ctx, &azv2.IsRequest{
 	PolicyContext: &api.PolicyContext{
 		Path:      		"peoplefinder.GET.users.__id",
 		Decisions: 		"allowed",
