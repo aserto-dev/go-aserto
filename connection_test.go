@@ -1,4 +1,4 @@
-package client_test
+package aserto_test
 
 import (
 	"bytes"
@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aserto-dev/go-aserto/client"
+	"github.com/aserto-dev/go-aserto"
 	"github.com/aserto-dev/header"
 	assrt "github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
@@ -58,10 +58,10 @@ func TestWithAddr(t *testing.T) {
 	assert := assrt.New(t)
 
 	recorder := &connectionRecorder{}
-	options, err := client.NewConnectionOptions(client.WithAddr("address"))
+	options, err := aserto.NewConnectionOptions(aserto.WithAddr("address"))
 	assert.NoError(err)
 
-	client.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
+	aserto.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
 
 	assert.Equal("address", recorder.address)
 }
@@ -74,9 +74,9 @@ func TestWithURL(t *testing.T) {
 	svcURL, err := url.Parse(URL)
 	assert.NoError(err)
 
-	options, err := client.NewConnectionOptions(client.WithURL(svcURL))
+	options, err := aserto.NewConnectionOptions(aserto.WithURL(svcURL))
 	assert.NoError(err)
-	client.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
+	aserto.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
 
 	assert.Equal(URL, recorder.address)
 }
@@ -86,16 +86,16 @@ func TestAddrAndURL(t *testing.T) {
 	svcURL, err := url.Parse("https://server.com:123")
 	assert.NoError(err)
 
-	_, err = client.NewConnectionOptions(client.WithAddr("address"), client.WithURL(svcURL))
+	_, err = aserto.NewConnectionOptions(aserto.WithAddr("address"), aserto.WithURL(svcURL))
 	assert.Error(err)
 }
 
 func TestWithInsecure(t *testing.T) {
 	assert := assrt.New(t)
 	recorder := &connectionRecorder{}
-	options, err := client.NewConnectionOptions(client.WithInsecure(true))
+	options, err := aserto.NewConnectionOptions(aserto.WithInsecure(true))
 	assert.NoError(err)
-	client.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
+	aserto.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
 
 	assert.True(recorder.tlsConf.InsecureSkipVerify)
 }
@@ -103,9 +103,9 @@ func TestWithInsecure(t *testing.T) {
 func TestWithTokenAuth(t *testing.T) {
 	assert := assrt.New(t)
 	recorder := &connectionRecorder{}
-	options, err := client.NewConnectionOptions(client.WithTokenAuth("<token>"))
+	options, err := aserto.NewConnectionOptions(aserto.WithTokenAuth("<token>"))
 	assert.NoError(err)
-	client.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
+	aserto.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
 
 	md, err := recorder.callerCreds.GetRequestMetadata(context.TODO())
 	assert.NoError(err)
@@ -119,9 +119,9 @@ func TestWithBearerTokenAuth(t *testing.T) {
 	assert := assrt.New(t)
 
 	recorder := &connectionRecorder{}
-	options, err := client.NewConnectionOptions(client.WithTokenAuth("bearer <token>"))
+	options, err := aserto.NewConnectionOptions(aserto.WithTokenAuth("bearer <token>"))
 	assert.NoError(err)
-	client.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
+	aserto.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
 
 	md, err := recorder.callerCreds.GetRequestMetadata(context.TODO())
 	assert.NoError(err)
@@ -134,9 +134,9 @@ func TestWithBearerTokenAuth(t *testing.T) {
 func TestWithAPIKey(t *testing.T) {
 	assert := assrt.New(t)
 	recorder := &connectionRecorder{}
-	options, err := client.NewConnectionOptions(client.WithAPIKeyAuth("<apikey>"))
+	options, err := aserto.NewConnectionOptions(aserto.WithAPIKeyAuth("<apikey>"))
 	assert.NoError(err)
-	client.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
+	aserto.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
 
 	md, err := recorder.callerCreds.GetRequestMetadata(context.TODO())
 	assert.NoError(err)
@@ -147,23 +147,23 @@ func TestWithAPIKey(t *testing.T) {
 }
 
 func TestTokenAndAPIKey(t *testing.T) {
-	_, err := client.NewConnectionOptions(client.WithAPIKeyAuth("<apikey>"), client.WithTokenAuth("<token>"))
+	_, err := aserto.NewConnectionOptions(aserto.WithAPIKeyAuth("<apikey>"), aserto.WithTokenAuth("<token>"))
 	assrt.Error(t, err)
 }
 
 func TestWithTenantID(t *testing.T) {
 	assert := assrt.New(t)
 	recorder := &connectionRecorder{}
-	options, err := client.NewConnectionOptions(client.WithTenantID("<tenantid>"))
+	options, err := aserto.NewConnectionOptions(aserto.WithTenantID("<tenantid>"))
 	assert.NoError(err)
 
-	conn, err := client.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
+	conn, err := aserto.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
 	assert.NoError(err)
 
 	assert.Equal("<tenantid>", recorder.tenantID)
 
 	ctx := context.TODO()
-	err = client.InternalUnary("<tenantid>", "")(
+	err = aserto.InternalUnary("<tenantid>", "")(
 		ctx,
 		"method",
 		"request",
@@ -185,7 +185,7 @@ func TestWithTenantID(t *testing.T) {
 		})
 	assert.NoError(err)
 
-	_, err = client.InternalStream("<tenantid>", "")(
+	_, err = aserto.InternalStream("<tenantid>", "")(
 		ctx,
 		nil,
 		conn,
@@ -215,16 +215,16 @@ func TestWithTenantID(t *testing.T) {
 func TestWithSessionID(t *testing.T) {
 	assert := assrt.New(t)
 	recorder := &connectionRecorder{}
-	options, err := client.NewConnectionOptions(client.WithSessionID("<sessionid>"))
+	options, err := aserto.NewConnectionOptions(aserto.WithSessionID("<sessionid>"))
 	assert.NoError(err)
 
-	conn, err := client.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
+	conn, err := aserto.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
 	assert.NoError(err)
 
 	assert.Equal("<sessionid>", recorder.sessionID)
 
 	ctx := context.TODO()
-	err = client.InternalUnary("", "<sessionid>")(
+	err = aserto.InternalUnary("", "<sessionid>")(
 		ctx,
 		"method",
 		"request",
@@ -246,7 +246,7 @@ func TestWithSessionID(t *testing.T) {
 		})
 	assert.NoError(err)
 
-	_, err = client.InternalStream("", "<sessionid>")(
+	_, err = aserto.InternalStream("", "<sessionid>")(
 		ctx,
 		nil,
 		conn,
@@ -292,9 +292,9 @@ func TestWithCACertPath(t *testing.T) {
 	assert.NoError(err, "Failed to save certificate")
 
 	recorder := &connectionRecorder{}
-	options, err := client.NewConnectionOptions(client.WithCACertPath(caPath))
+	options, err := aserto.NewConnectionOptions(aserto.WithCACertPath(caPath))
 	assert.NoError(err)
-	client.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
+	aserto.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
 
 	inPool, err := subjectInCertPool(recorder.tlsConf.RootCAs, CertSubjectName)
 	if err != nil {
@@ -321,9 +321,9 @@ func TestWithCACertPathAndInsecure(t *testing.T) {
 	assert.NoError(err, "Failed to save certificate")
 
 	recorder := &connectionRecorder{}
-	options, err := client.NewConnectionOptions(client.WithCACertPath(caPath), client.WithInsecure(true))
+	options, err := aserto.NewConnectionOptions(aserto.WithCACertPath(caPath), aserto.WithInsecure(true))
 	assert.NoError(err)
-	client.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
+	aserto.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
 
 	assert.Nil(recorder.tlsConf.RootCAs, "Aserto cert should be nil")
 	assert.True(recorder.tlsConf.InsecureSkipVerify)
@@ -334,9 +334,9 @@ func TestWithDialOptions(t *testing.T) {
 	recorder := &connectionRecorder{}
 	creds := grpc.WithTransportCredentials(insecure.NewCredentials())
 
-	options, err := client.NewConnectionOptions(client.WithDialOptions(creds))
+	options, err := aserto.NewConnectionOptions(aserto.WithDialOptions(creds))
 	assert.NoError(err)
-	client.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
+	aserto.InternalNewConnection(recorder.Connect, options) //nolint: errcheck
 	assert.Contains(recorder.dialOptions, creds)
 }
 

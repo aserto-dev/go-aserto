@@ -6,8 +6,8 @@ import (
 
 	asserts "github.com/stretchr/testify/assert"
 
-	"github.com/aserto-dev/go-aserto/client"
-	"github.com/aserto-dev/go-aserto/client/directory/internal"
+	"github.com/aserto-dev/go-aserto"
+	"github.com/aserto-dev/go-aserto/directory/internal"
 )
 
 const (
@@ -74,7 +74,7 @@ func TestConnect(t *testing.T) {
 		conns, counter := mockConns()
 
 		cfg := &Config{
-			Config: &client.Config{Address: "localhost:8282"},
+			Config: &aserto.Config{Address: "localhost:8282"},
 		}
 
 		dir, err := connect(conns, cfg)
@@ -93,8 +93,8 @@ func TestConnect(t *testing.T) {
 		conns, counter := mockConns()
 
 		cfg := &Config{
-			Config: &client.Config{Address: "localhost:1234"},
-			Reader: &client.Config{Address: "localhost:4321"},
+			Config: &aserto.Config{Address: "localhost:1234"},
+			Reader: &aserto.Config{Address: "localhost:4321"},
 		}
 
 		dir, err := connect(conns, cfg)
@@ -113,7 +113,7 @@ func TestConnect(t *testing.T) {
 		conns, counter := mockConns()
 
 		cfg := &Config{
-			Reader: &client.Config{Address: "localhost:9292"},
+			Reader: &aserto.Config{Address: "localhost:9292"},
 		}
 
 		dir, err := connect(conns, cfg)

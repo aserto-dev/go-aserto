@@ -5,13 +5,12 @@ import (
 	"github.com/samber/lo"
 	"google.golang.org/grpc"
 
-	"github.com/aserto-dev/go-aserto/client"
-	"github.com/aserto-dev/go-aserto/client/directory/internal"
-	des "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
-	dis "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
-	dms "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
-	drs "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
-	dws "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
+	"github.com/aserto-dev/go-aserto"
+	"github.com/aserto-dev/go-aserto/directory/internal"
+	des "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
+	dis "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
+	drs "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dws "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 )
 
 var (
@@ -22,22 +21,19 @@ var (
 type Config struct {
 	// Base configuration. If non-nil, this configuration is used for any client that doesn't have its own configuration.
 	// If nil, only clients that have their own configuration will be created.
-	*client.Config
+	*aserto.Config
 
 	// Reader configuration.
-	Reader *client.Config `json:"reader"`
+	Reader *aserto.Config `json:"reader"`
 
 	// Writer configuration.
-	Writer *client.Config `json:"writer"`
+	Writer *aserto.Config `json:"writer"`
 
 	// Importer configuration.
-	Importer *client.Config `json:"importer"`
+	Importer *aserto.Config `json:"importer"`
 
 	// Exporter configuration.
-	Exporter *client.Config `json:"exporter"`
-
-	// Model configuration.
-	Model *client.Config `json:"model"`
+	Exporter *aserto.Config `json:"exporter"`
 }
 
 // Connect create a new directory client from the specified configuration.
@@ -52,7 +48,7 @@ func (c *Config) Validate() error {
 	}
 
 	// At least one client config must be non-nil.
-	if allNil([]*client.Config{c.Config, c.Reader, c.Writer, c.Importer, c.Exporter}) {
+	if allNil([]*aserto.Config{c.Config, c.Reader, c.Writer, c.Importer, c.Exporter}) {
 		return ErrInvalidConfig
 	}
 
@@ -84,17 +80,11 @@ func connect(conns *internal.Connections, cfg *Config) (*Client, error) {
 		return nil, errors.Wrap(err, "exporter connection failed")
 	}
 
-	model, err := getConnection(conns, cfg.Model, cfg.Config)
-	if err != nil {
-		return nil, errors.Wrap(err, "model connection failed")
-	}
-
 	return &Client{
 		Reader:   newClient(reader, drs.NewReaderClient),
 		Writer:   newClient(writer, dws.NewWriterClient),
 		Importer: newClient(importer, dis.NewImporterClient),
 		Exporter: newClient(exporter, des.NewExporterClient),
-		Model:    newClient(model, dms.NewModelClient),
 		conns:    conns.AsSlice(),
 	}, nil
 }
@@ -106,7 +96,7 @@ func allNil[T any](slice []*T) bool {
 
 func getConnection(
 	conns *internal.Connections,
-	cfg, fallback *client.Config,
+	cfg, fallback *aserto.Config,
 ) (*grpc.ClientConn, error) {
 	if cfg != nil {
 		return conns.Get(cfg)

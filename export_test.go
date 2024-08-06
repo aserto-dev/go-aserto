@@ -1,4 +1,4 @@
-package client
+package aserto
 
 import (
 	"google.golang.org/grpc"

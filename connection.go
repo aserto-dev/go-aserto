@@ -7,7 +7,7 @@ There are two groups of services:
 
 2. client/tenant provides access to the Aserto control plane services.
 */
-package client
+package aserto
 
 import (
 	"context"

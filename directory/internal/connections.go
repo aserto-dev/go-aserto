@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"github.com/aserto-dev/go-aserto/client"
+	"github.com/aserto-dev/go-aserto"
 	hs "github.com/mitchellh/hashstructure/v2"
 	"github.com/samber/lo"
 	"google.golang.org/grpc"
@@ -9,17 +9,17 @@ import (
 
 type Connections struct {
 	conns   map[uint64]*grpc.ClientConn
-	Connect func(...client.ConnectionOption) (*grpc.ClientConn, error)
+	Connect func(...aserto.ConnectionOption) (*grpc.ClientConn, error)
 }
 
 func NewConnections() *Connections {
 	return &Connections{
 		conns:   make(map[uint64]*grpc.ClientConn),
-		Connect: client.NewConnection,
+		Connect: aserto.NewConnection,
 	}
 }
 
-func (cb *Connections) Get(cfg *client.Config) (*grpc.ClientConn, error) {
+func (cb *Connections) Get(cfg *aserto.Config) (*grpc.ClientConn, error) {
 	if cfg == nil {
 		return nil, nil
 	}
@@ -31,7 +31,7 @@ func (cb *Connections) Get(cfg *client.Config) (*grpc.ClientConn, error) {
 
 	conn := cb.conns[hash]
 	if conn == nil {
-		dop := client.NewDialOptionsProvider()
+		dop := aserto.NewDialOptionsProvider()
 
 		opts, err := cfg.ToConnectionOptions(dop)
 		if err != nil {
@@ -58,7 +58,7 @@ type ConnectCounter struct {
 	Count int
 }
 
-func (cc *ConnectCounter) Connect(...client.ConnectionOption) (*grpc.ClientConn, error) {
+func (cc *ConnectCounter) Connect(...aserto.ConnectionOption) (*grpc.ClientConn, error) {
 	cc.Count++
 	return &grpc.ClientConn{}, nil
 }

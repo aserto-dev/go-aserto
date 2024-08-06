@@ -1,4 +1,4 @@
-package client
+package aserto
 
 import "github.com/pkg/errors"
 

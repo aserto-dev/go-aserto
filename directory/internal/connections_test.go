@@ -5,8 +5,8 @@ import (
 
 	asserts "github.com/stretchr/testify/assert"
 
-	"github.com/aserto-dev/go-aserto/client"
-	"github.com/aserto-dev/go-aserto/client/directory/internal"
+	"github.com/aserto-dev/go-aserto"
+	"github.com/aserto-dev/go-aserto/directory/internal"
 )
 
 func TestConnections(t *testing.T) {
@@ -14,7 +14,7 @@ func TestConnections(t *testing.T) {
 	conns := internal.NewConnections()
 	conns.Connect = counter.Connect
 
-	cfg := &client.Config{Address: "localhost:8282"}
+	cfg := &aserto.Config{Address: "localhost:8282"}
 
 	t.Run("new connection", func(t *testing.T) {
 		assert := asserts.New(t)
@@ -35,7 +35,7 @@ func TestConnections(t *testing.T) {
 
 	t.Run("second connection", func(t *testing.T) {
 		assert := asserts.New(t)
-		cfg := &client.Config{Address: "localhost:8282", TenantID: "foobar"}
+		cfg := &aserto.Config{Address: "localhost:8282", TenantID: "foobar"}
 
 		conn, err := conns.Get(cfg)
 		assert.NoError(err)

@@ -33,12 +33,12 @@ The snippet below creates an authorizer client that connects to a topaz instance
 
 ```go
 import (
-	"github.com/aserto-dev/go-aserto/client"
-	"github.com/aserto-dev/go-aserto/client/authorizer"
+	"github.com/aserto-dev/go-aserto"
+	"github.com/aserto-dev/go-aserto/authorizer"
 )
 ...
 azClient, err := authorizer.New(
-	client.WithAddr("localhost:8282"),
+	aserto.WithAddr("localhost:8282"),
 )
 ```
 
@@ -106,13 +106,13 @@ To create a directory client:
 ```go
 
 import (
-	"github.com/aserto-dev/go-aserto/client"
-	"github.com/aserto-dev/go-aserto/client/directory/v3"
+	"github.com/aserto-dev/go-aserto"
+	"github.com/aserto-dev/go-aserto/directory/v3"
 )
 
 ...
 
-dir, err := directory.New(client.WithAPIKeyAuth('<api key>'))
+dir, err := directory.New(aserto.WithAPIKeyAuth('<api key>'))
 ```
 
 [Connection options](#connection-options) are the same as those for the authorizer client.
@@ -157,7 +157,7 @@ To create a directory client from configuration, call `Connect()` on the config 
 import (
 	"context"
 
-	"github.com/aserto-dev/go-aserto/client/directory/v3"
+	"github.com/aserto-dev/go-aserto/directory/v3"
 	"github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 )

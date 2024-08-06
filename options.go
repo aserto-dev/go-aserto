@@ -1,10 +1,10 @@
-package client
+package aserto
 
 import (
 	"net/url"
 	"strings"
 
-	"github.com/aserto-dev/go-aserto/client/internal"
+	"github.com/aserto-dev/go-aserto/internal/client"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -72,7 +72,7 @@ func WithTokenAuth(token string) ConnectionOption {
 			return errors.Wrap(ErrInvalidOptions, "only one set of credentials allowed")
 		}
 
-		options.Creds = internal.NewTokenAuth(token)
+		options.Creds = client.NewTokenAuth(token)
 
 		return nil
 	}
@@ -85,7 +85,7 @@ func WithAPIKeyAuth(key string) ConnectionOption {
 			return errors.Wrap(ErrInvalidOptions, "only one set of credentials allowed")
 		}
 
-		options.Creds = internal.NewAPIKeyAuth(key)
+		options.Creds = client.NewAPIKeyAuth(key)
 
 		return nil
 	}

@@ -1,7 +1,7 @@
 package directory
 
 import (
-	"github.com/aserto-dev/go-aserto/client/directory/internal"
+	"github.com/aserto-dev/go-aserto/directory/internal"
 )
 
 func InternalConnect(conns *internal.Connections, cfg *Config) (*Client, error) {

@@ -7,8 +7,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/aserto-dev/go-aserto/client"
-	"github.com/aserto-dev/go-aserto/client/authorizer"
+	"github.com/aserto-dev/go-aserto"
+	"github.com/aserto-dev/go-aserto/authorizer"
 	"github.com/aserto-dev/go-aserto/middleware"
 	"github.com/aserto-dev/go-aserto/middleware/http/std"
 )
@@ -17,7 +17,7 @@ const port = 8080
 
 func main() {
 	azClient, err := authorizer.New(
-		client.WithAddr("localhost:8282"),
+		aserto.WithAddr("localhost:8282"),
 	)
 	if err != nil {
 		log.Fatalln("Failed to create authorizer client:", err)
