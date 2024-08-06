@@ -1,4 +1,4 @@
-package authorizer
+package az
 
 import (
 	"github.com/aserto-dev/go-aserto"

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/aserto-dev/go-aserto"
-	"github.com/aserto-dev/go-aserto/authorizer"
+	"github.com/aserto-dev/go-aserto/az"
 	mw "github.com/aserto-dev/go-aserto/middleware/http/std"
 )
 
@@ -18,7 +18,7 @@ func Hello(w http.ResponseWriter, _ *http.Request) {
 
 func Example() {
 	// Create azClient client.
-	azClient, err := authorizer.New(
+	azClient, err := az.New(
 		aserto.WithAPIKeyAuth("<Aserto authorizer API Key>"),
 		aserto.WithTenantID("<Aserto tenant ID>"),
 	)
