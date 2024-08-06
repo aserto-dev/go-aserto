@@ -7,6 +7,7 @@ import (
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 type Authorizer struct {
@@ -40,7 +41,11 @@ func (c *Authorizer) Is(
 	in *authz.IsRequest,
 	_ ...grpc.CallOption,
 ) (*authz.IsResponse, error) {
+	// For some reason, assert.Equal here returns false even when the messages are equal.
+	// But calling proto.Equal first causes assert.Equal to return true. ¯\_(ツ)_/¯
+	assert.True(c.t, proto.Equal(c.expected, in))
 	assert.Equal(c.t, c.expected, in)
+
 	return &c.response, nil
 }
 

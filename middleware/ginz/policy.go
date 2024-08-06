@@ -1,14 +1,19 @@
 package ginz
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
+	cerr "github.com/aserto-dev/errors"
 	"github.com/aserto-dev/go-aserto/middleware"
 	httpmw "github.com/aserto-dev/go-aserto/middleware/httpz"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
+	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
+	"github.com/aserto-dev/go-authorizer/pkg/aerr"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -71,37 +76,42 @@ func New(client AuthorizerClient, policy *Policy) *Middleware {
 }
 
 // Handler is the middleware implementation. It is how an Authorizer is wired to a Gin router.
-func (m *Middleware) Handler(c *gin.Context) {
-	policyContext := internal.DefaultPolicyContext(m.policy)
+func (m *Middleware) Handler(g *gin.Context) {
+	policyContext := m.policyContext()
+
 	if m.policyMapper != nil {
-		policyContext.Path = m.policyMapper(c)
+		policyContext.Path = m.policyMapper(g)
 	}
 
-	resource, err := m.resourceContext(c)
+	resource, err := m.resourceContext(g)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err) //nolint: errcheck
+		_ = g.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	isRequest := authz.IsRequest{
-		IdentityContext: m.Identity.Build(c.Request),
-		PolicyContext:   policyContext,
-		ResourceContext: resource,
+	allowed, err := m.is(g.Request.Context(), m.Identity.Build(g.Request), policyContext, resource)
+	if err != nil {
+		_ = g.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
 
-	resp, err := m.client.Is(
-		c,
-		&isRequest,
-	)
-	if err == nil && len(resp.Decisions) == 1 {
-		if resp.Decisions[0].Is {
-			c.Next()
-		} else {
-			c.AbortWithStatus(http.StatusForbidden)
-		}
-	} else {
-		c.AbortWithError(http.StatusInternalServerError, err) //nolint: errcheck
+	if !allowed {
+		g.AbortWithStatus(http.StatusForbidden)
+		return
 	}
+
+	g.Next()
+}
+
+// Check returns a new Check middleware object that can be used to make ReBAC authorization decisions for individual
+// routes.
+// A check call returns true if a given relation exists between an object and a subject.
+func (m *Middleware) Check(options ...CheckOption) *Check {
+	return newCheck(m, options...)
+}
+
+func (m *Middleware) policyContext() *api.PolicyContext {
+	return internal.DefaultPolicyContext(m.policy)
 }
 
 func (m *Middleware) resourceContext(g *gin.Context) (*structpb.Struct, error) {
@@ -111,6 +121,39 @@ func (m *Middleware) resourceContext(g *gin.Context) (*structpb.Struct, error) {
 	}
 
 	return structpb.NewStruct(res)
+}
+
+func (m *Middleware) is(
+	ctx context.Context,
+	identityContext *api.IdentityContext,
+	policyContext *api.PolicyContext,
+	resourceContext *structpb.Struct,
+) (bool, error) {
+	isRequest := &authz.IsRequest{
+		IdentityContext: identityContext,
+		PolicyContext:   policyContext,
+		ResourceContext: resourceContext,
+		PolicyInstance:  internal.DefaultPolicyInstance(m.policy),
+	}
+
+	logger := zerolog.Ctx(ctx).With().Interface("is_request", isRequest).Logger()
+	logger.Debug().Msg("authorizing request")
+	ctx = logger.WithContext(ctx)
+
+	resp, err := m.client.Is(ctx, isRequest)
+
+	switch {
+	case err != nil:
+		return false, cerr.WithContext(err, ctx)
+	case len(resp.Decisions) != 1:
+		return false, cerr.WithContext(aerr.ErrInvalidDecision, ctx)
+	}
+
+	if !resp.Decisions[0].Is {
+		logger.Info().Msg("authorization failed")
+	}
+
+	return resp.Decisions[0].Is, nil
 }
 
 // WithPolicyFromURL instructs the middleware to construct the policy path from the path segment
@@ -155,19 +198,19 @@ func (m *Middleware) WithResourceMapper(mapper ResourceMapper) *Middleware {
 	return m
 }
 
-func defaultResourceMapper(c *gin.Context, resource map[string]interface{}) {
-	for _, param := range c.Params {
+func defaultResourceMapper(g *gin.Context, resource map[string]interface{}) {
+	for _, param := range g.Params {
 		resource[param.Key] = param.Value
 	}
 }
 
 func urlPolicyPathMapper(prefix string) StringMapper {
-	return func(c *gin.Context) string {
-		policyPath := []string{c.Request.Method}
+	return func(g *gin.Context) string {
+		policyPath := []string{g.Request.Method}
 
-		segments := getPathSegments(c)
+		segments := getPathSegments(g)
 
-		if len(c.Params) > 0 {
+		if len(g.Params) > 0 {
 			for i, segment := range segments {
 				if strings.HasPrefix(segment, ":") {
 					segments[i] = "__" + segment[1:]
@@ -185,10 +228,10 @@ func urlPolicyPathMapper(prefix string) StringMapper {
 	}
 }
 
-func getPathSegments(c *gin.Context) []string {
-	path := c.Request.URL.Path
-	if len(c.Params) > 0 {
-		path = c.FullPath()
+func getPathSegments(g *gin.Context) []string {
+	path := g.Request.URL.Path
+	if len(g.Params) > 0 {
+		path = g.FullPath()
 	}
 
 	return strings.Split(strings.Trim(path, "/"), "/")

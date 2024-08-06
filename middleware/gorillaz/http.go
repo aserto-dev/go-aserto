@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strings"
 
+	cerr "github.com/aserto-dev/errors"
 	"github.com/aserto-dev/go-aserto/middleware"
 	httpmw "github.com/aserto-dev/go-aserto/middleware/httpz"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
@@ -18,6 +19,7 @@ import (
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 	aerr "github.com/aserto-dev/go-authorizer/pkg/aerr"
 	"github.com/gorilla/mux"
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -139,20 +141,28 @@ func (m *Middleware) is(
 	policyContext *api.PolicyContext,
 	resourceContext *structpb.Struct,
 ) (bool, error) {
-	isRequest := authz.IsRequest{
+	isRequest := &authz.IsRequest{
 		IdentityContext: identityContext,
 		PolicyContext:   policyContext,
 		ResourceContext: resourceContext,
 		PolicyInstance:  internal.DefaultPolicyInstance(m.policy),
 	}
 
-	resp, err := m.client.Is(ctx, &isRequest)
+	logger := zerolog.Ctx(ctx).With().Interface("is_request", isRequest).Logger()
+	logger.Debug().Msg("authorizing request")
+	ctx = logger.WithContext(ctx)
+
+	resp, err := m.client.Is(ctx, isRequest)
 
 	switch {
 	case err != nil:
-		return false, err
+		return false, cerr.WithContext(err, ctx)
 	case len(resp.Decisions) != 1:
-		return false, aerr.ErrInvalidDecision
+		return false, cerr.WithContext(aerr.ErrInvalidDecision, ctx)
+	}
+
+	if !resp.Decisions[0].Is {
+		logger.Info().Msg("authorization failed")
 	}
 
 	return resp.Decisions[0].Is, nil

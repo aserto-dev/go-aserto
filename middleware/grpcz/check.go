@@ -3,10 +3,12 @@ package grpcz
 import (
 	"context"
 
+	cerr "github.com/aserto-dev/errors"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	"github.com/aserto-dev/go-authorizer/pkg/aerr"
 	ds3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 	"google.golang.org/grpc"
 )
@@ -267,19 +269,25 @@ func (c *CheckMiddleware) authorize(ctx context.Context, req interface{}) error 
 		return errors.New("subject type is empty")
 	}
 
-	allowed, err := c.dsClient.Check(ctx, &ds3.CheckRequest{
+	check := &ds3.CheckRequest{
 		ObjectType:  objType,
 		ObjectId:    objID,
 		Relation:    c.opts.relation(ctx, req),
 		SubjectType: subjType,
 		SubjectId:   subjID,
-	})
+	}
+
+	logger := zerolog.Ctx(ctx).With().Interface("check_request", check).Logger()
+	logger.Debug().Msg("authorizing request")
+	ctx = logger.WithContext(ctx)
+
+	allowed, err := c.dsClient.Check(ctx, check)
 	if err != nil {
-		return errors.Wrap(err, "failed to check permission for identity")
+		return cerr.WrapContext(err, ctx, "check call failed")
 	}
 
 	if !allowed.Check {
-		return aerr.ErrAuthorizationFailed
+		return cerr.WithContext(aerr.ErrAuthorizationFailed, ctx)
 	}
 
 	return nil

@@ -10,12 +10,13 @@ import (
 	"context"
 	"fmt"
 
+	cerr "github.com/aserto-dev/errors"
 	"github.com/aserto-dev/go-aserto/middleware"
 	"github.com/aserto-dev/go-aserto/middleware/grpcz/internal/pbutil"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/aserto-dev/go-authorizer/pkg/aerr"
-	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -218,36 +219,39 @@ func (m *Middleware) authorize(ctx context.Context, req interface{}) error {
 		policyContext.Path = m.policyMapper(ctx, req)
 	}
 
-	resource, err := m.resourceContext(ctx, req)
-	if err != nil {
-		return errors.Wrap(err, "failed to apply resource mapper")
-	}
-
 	for _, path := range m.ignoredMethods {
 		if policyContext.Path == path {
 			return nil
 		}
 	}
 
-	resp, err := m.client.Is(
-		ctx,
-		&authz.IsRequest{
-			IdentityContext: m.Identity.build(ctx, req),
-			PolicyContext:   policyContext,
-			ResourceContext: resource,
-			PolicyInstance:  internal.DefaultPolicyInstance(m.policy),
-		},
-	)
+	resource, err := m.resourceContext(ctx, req)
 	if err != nil {
-		return errors.Wrap(err, "authorization call failed")
+		return cerr.WrapContext(err, ctx, "failed to apply resource mapper")
+	}
+
+	isReq := &authz.IsRequest{
+		IdentityContext: m.Identity.build(ctx, req),
+		PolicyContext:   policyContext,
+		ResourceContext: resource,
+		PolicyInstance:  internal.DefaultPolicyInstance(m.policy),
+	}
+
+	logger := zerolog.Ctx(ctx).With().Interface("is", isReq).Logger()
+	logger.Debug().Msg("authorizing request")
+	ctx = logger.WithContext(ctx)
+
+	resp, err := m.client.Is(ctx, isReq)
+	if err != nil {
+		return cerr.WrapContext(err, ctx, "authorization call failed")
 	}
 
 	if len(resp.Decisions) == 0 {
-		return aerr.ErrInvalidDecision
+		return cerr.WithContext(aerr.ErrInvalidDecision, ctx)
 	}
 
 	if !resp.Decisions[0].Is {
-		return aerr.ErrAuthorizationFailed
+		return cerr.WithContext(aerr.ErrAuthorizationFailed, ctx)
 	}
 
 	return nil
