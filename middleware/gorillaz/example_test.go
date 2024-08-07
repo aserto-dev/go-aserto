@@ -1,4 +1,4 @@
-package std_test
+package gorillaz_test
 
 import (
 	"log"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/aserto-dev/go-aserto"
 	"github.com/aserto-dev/go-aserto/az"
-	mw "github.com/aserto-dev/go-aserto/middleware/http/std"
+	mw "github.com/aserto-dev/go-aserto/middleware/gorillaz"
 )
 
 func Hello(w http.ResponseWriter, _ *http.Request) {

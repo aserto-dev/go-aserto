@@ -1,11 +1,11 @@
-package std_test
+package gorillaz_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	httpmw "github.com/aserto-dev/go-aserto/middleware/http/std"
+	httpmw "github.com/aserto-dev/go-aserto/middleware/gorillaz"
 	"github.com/aserto-dev/go-aserto/middleware/internal/test"
 	assert "github.com/stretchr/testify/require"
 )

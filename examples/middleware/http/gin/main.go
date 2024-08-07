@@ -8,7 +8,7 @@ import (
 	"github.com/aserto-dev/go-aserto"
 	"github.com/aserto-dev/go-aserto/az"
 	"github.com/aserto-dev/go-aserto/middleware"
-	"github.com/aserto-dev/go-aserto/middleware/http/ginz"
+	"github.com/aserto-dev/go-aserto/middleware/ginz"
 	"github.com/gin-gonic/gin"
 )
 

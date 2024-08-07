@@ -10,7 +10,7 @@ import (
 	"github.com/aserto-dev/go-aserto"
 	"github.com/aserto-dev/go-aserto/az"
 	"github.com/aserto-dev/go-aserto/middleware"
-	"github.com/aserto-dev/go-aserto/middleware/http/std"
+	"github.com/aserto-dev/go-aserto/middleware/gorillaz"
 )
 
 const port = 8080
@@ -24,7 +24,7 @@ func main() {
 	}
 	defer azClient.Close()
 
-	mw := std.New(
+	mw := gorillaz.New(
 		azClient.Authorizer,
 		&middleware.Policy{
 			Name:          "local",

@@ -1,9 +1,9 @@
-package http_test
+package httpz_test
 
 import (
 	"testing"
 
-	"github.com/aserto-dev/go-aserto/middleware/http"
+	"github.com/aserto-dev/go-aserto/middleware/httpz"
 	"gotest.tools/assert"
 )
 
@@ -30,7 +30,7 @@ func TestHostnameSegment(t *testing.T) {
 
 func hostnameSegmentTest(test TestCase) func(*testing.T) {
 	return func(t *testing.T) {
-		actual := http.InternalHostnameSegment(test.hostname, test.level)
+		actual := httpz.InternalHostnameSegment(test.hostname, test.level)
 		assert.Equal(t, test.expected, actual)
 	}
 }

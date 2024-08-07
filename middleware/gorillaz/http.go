@@ -1,10 +1,10 @@
 /*
-Package std provides authorization middleware for HTTP servers built on top of the standard net/http.
+Package gorillaz provides authorization middleware for HTTP servers built on top of the standard net/http.
 
 The middleware intercepts incoming requests and calls the Aserto authorizer service to determine if access should
 be allowed or denied.
 */
-package std
+package gorillaz
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/aserto-dev/go-aserto/middleware"
-	httpmw "github.com/aserto-dev/go-aserto/middleware/http"
+	httpmw "github.com/aserto-dev/go-aserto/middleware/httpz"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"

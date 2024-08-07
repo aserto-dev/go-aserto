@@ -1,10 +1,10 @@
-package std
+package gorillaz
 
 import (
 	"fmt"
 	"net/http"
 
-	httpmw "github.com/aserto-dev/go-aserto/middleware/http"
+	httpmw "github.com/aserto-dev/go-aserto/middleware/httpz"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 	"github.com/gorilla/mux"
