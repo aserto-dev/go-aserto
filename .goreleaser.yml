@@ -13,9 +13,9 @@ before:
 
 builds:
   # https://goreleaser.com/customization/build/
-  - id: gin_middleware
+  - id: gin_example
     main: ./examples/middleware/http/gin/main.go
-    binary: gin_middleware
+    binary: gin_example
     tags: []
     goos:
       - darwin
@@ -36,9 +36,9 @@ builds:
       - -X github.com/{{ .Env.ORG }}/{{ .Env.REPO }}/pkg/version.commit={{.ShortCommit}}
       - -X github.com/{{ .Env.ORG }}/{{ .Env.REPO }}/pkg/version.date={{.Date}}
     mod_timestamp: "{{ .CommitTimestamp }}"
-  - id: gorilla_middleware
+  - id: gorilla_example
     main: ./examples/middleware/http/gorilla/main.go
-    binary: gorilla_middleware
+    binary: gorilla_example
     tags: []
     goos:
       - darwin
@@ -64,8 +64,8 @@ archives:
   # https://goreleaser.com/customization/archive/
   - format: zip
     builds:
-    - gin_middleware
-    - gorilla_middleware
+    - gin_example
+    - gorilla_example
     files:
       - LICENSE
       - README.md
