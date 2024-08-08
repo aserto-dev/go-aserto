@@ -27,9 +27,8 @@ func main() {
 	mw := gorillaz.New(
 		azClient.Authorizer,
 		&middleware.Policy{
-			Name:          "local",
-			Decision:      "allowed",
-			InstanceLabel: "label",
+			Name:     "local",
+			Decision: "allowed",
 		},
 	)
 	mw.Identity.Mapper(func(r *http.Request, identity middleware.Identity) {

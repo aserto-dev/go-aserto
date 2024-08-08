@@ -240,9 +240,6 @@ type Policy struct {
 
 	// Decision is the authorization rule to use.
 	Decision string
-
-	// Label name of the aserto policy's instance being queried for authorization.
-	InstanceLabel string
 }
 ```
 
