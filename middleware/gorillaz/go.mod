@@ -4,14 +4,12 @@ go 1.21
 
 replace github.com/aserto-dev/go-aserto => ../../
 
-replace github.com/aserto-dev/go-aserto/middleware/httpz => ../httpz
-
 require (
 	github.com/aserto-dev/errors v0.0.9
-	github.com/aserto-dev/go-aserto v0.32.0
-	github.com/aserto-dev/go-aserto/middleware/httpz v0.32.0
+	github.com/aserto-dev/go-aserto v0.31.5
 	github.com/aserto-dev/go-authorizer v0.20.8
 	github.com/gorilla/mux v1.8.1
+	github.com/lestrrat-go/jwx/v2 v2.1.1
 	github.com/rs/zerolog v1.33.0
 	github.com/stretchr/testify v1.9.0
 	google.golang.org/protobuf v1.34.2
@@ -29,7 +27,6 @@ require (
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.6 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
-	github.com/lestrrat-go/jwx/v2 v2.1.1 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

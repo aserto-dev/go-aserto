@@ -118,8 +118,7 @@ func (b *IdentityBuilder) FromContextValue(key string) *IdentityBuilder {
 // FromHostname(-3) return the value "user".
 func (b *IdentityBuilder) FromHostname(segment int) *IdentityBuilder {
 	b.mapper = func(c *gin.Context, identity middleware.Identity) {
-		hostname := c.Request.URL.Hostname()
-		identity.ID(hostnameSegment(hostname, segment))
+		identity.ID(internal.HostnameSegment(c.Request.URL, segment))
 	}
 
 	return b
@@ -154,18 +153,4 @@ func (b *IdentityBuilder) fromAuthzHeader(value string) string {
 	}
 
 	return value
-}
-
-func hostnameSegment(hostname string, level int) string {
-	parts := strings.Split(hostname, ".")
-
-	if level < 0 {
-		level += len(parts)
-	}
-
-	if level >= 0 && level < len(parts) {
-		return parts[level]
-	}
-
-	return ""
 }

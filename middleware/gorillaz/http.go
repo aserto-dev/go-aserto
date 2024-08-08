@@ -13,7 +13,6 @@ import (
 
 	cerr "github.com/aserto-dev/errors"
 	"github.com/aserto-dev/go-aserto/middleware"
-	httpmw "github.com/aserto-dev/go-aserto/middleware/httpz"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
@@ -43,7 +42,7 @@ The values for these parameters can be set globally or extracted dynamically fro
 */
 type Middleware struct {
 	// Identity determines the caller identity used in authorization calls.
-	Identity *httpmw.IdentityBuilder
+	Identity *IdentityBuilder
 
 	client          AuthorizerClient
 	policy          *Policy
@@ -72,7 +71,7 @@ func New(client AuthorizerClient, policy *Policy) *Middleware {
 	}
 
 	return &Middleware{
-		Identity:        (&httpmw.IdentityBuilder{}).FromHeader("Authorization"),
+		Identity:        (&IdentityBuilder{}).FromHeader("Authorization"),
 		client:          client,
 		policy:          policy,
 		resourceMappers: []ResourceMapper{defaultResourceMapper},

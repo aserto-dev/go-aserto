@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	httpmw "github.com/aserto-dev/go-aserto/middleware/httpz"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 	"github.com/gorilla/mux"
@@ -18,7 +17,7 @@ type CheckOption func(*CheckOptions)
 type ObjectMapper func(r *http.Request) (objType string, id string)
 
 // WithIdentityMapper takes an identity mapper function that is used to determine the subject id for the check call.
-func WithIdentityMapper(mapper httpmw.IdentityMapper) CheckOption {
+func WithIdentityMapper(mapper IdentityMapper) CheckOption {
 	return func(o *CheckOptions) {
 		o.subj.mapper = mapper
 	}
@@ -96,7 +95,7 @@ type CheckOptions struct {
 	}
 	subj struct {
 		subjType string
-		mapper   httpmw.IdentityMapper
+		mapper   IdentityMapper
 	}
 	policy struct {
 		path   string

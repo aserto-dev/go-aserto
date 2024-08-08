@@ -1,4 +1,4 @@
-package httpz
+package gorillaz
 
 import (
 	"net/http"
@@ -118,8 +118,7 @@ func (b *IdentityBuilder) FromContextValue(key interface{}) *IdentityBuilder {
 // FromHostname(-3) return the value "user".
 func (b *IdentityBuilder) FromHostname(segment int) *IdentityBuilder {
 	b.mapper = func(r *http.Request, identity middleware.Identity) {
-		hostname := r.URL.Hostname()
-		identity.ID(hostnameSegment(hostname, segment))
+		identity.ID(internal.HostnameSegment(r.URL, segment))
 	}
 
 	return b
@@ -154,18 +153,4 @@ func (b *IdentityBuilder) fromAuthzHeader(value string) string {
 	}
 
 	return value
-}
-
-func hostnameSegment(hostname string, level int) string {
-	parts := strings.Split(hostname, ".")
-
-	if level < 0 {
-		level += len(parts)
-	}
-
-	if level >= 0 && level < len(parts) {
-		return parts[level]
-	}
-
-	return ""
 }
