@@ -1,14 +1,18 @@
 package ginz
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
+	cerr "github.com/aserto-dev/errors"
 	"github.com/aserto-dev/go-aserto/middleware"
-	httpmw "github.com/aserto-dev/go-aserto/middleware/httpz"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
+	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
+	"github.com/aserto-dev/go-authorizer/pkg/aerr"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -32,7 +36,7 @@ The values for these parameters can be set globally or extracted dynamically fro
 */
 type Middleware struct {
 	// Identity determines the caller identity used in authorization calls.
-	Identity *httpmw.IdentityBuilder
+	Identity *IdentityBuilder
 
 	client          AuthorizerClient
 	policy          *Policy
@@ -63,7 +67,7 @@ func New(client AuthorizerClient, policy *Policy) *Middleware {
 
 	return &Middleware{
 		client:          client,
-		Identity:        (&httpmw.IdentityBuilder{}).FromHeader("Authorization"),
+		Identity:        (&IdentityBuilder{}).FromHeader("Authorization"),
 		policy:          policy,
 		resourceMappers: []ResourceMapper{defaultResourceMapper},
 		policyMapper:    policyMapper,
@@ -72,45 +76,85 @@ func New(client AuthorizerClient, policy *Policy) *Middleware {
 
 // Handler is the middleware implementation. It is how an Authorizer is wired to a Gin router.
 func (m *Middleware) Handler(c *gin.Context) {
-	policyContext := internal.DefaultPolicyContext(m.policy)
+	policyContext := m.policyContext()
+
 	if m.policyMapper != nil {
 		policyContext.Path = m.policyMapper(c)
 	}
 
 	resource, err := m.resourceContext(c)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err) //nolint: errcheck
+		_ = c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	isRequest := authz.IsRequest{
-		IdentityContext: m.Identity.Build(c.Request),
-		PolicyContext:   policyContext,
-		ResourceContext: resource,
+	allowed, err := m.is(c.Request.Context(), m.Identity.Build(c), policyContext, resource)
+	if err != nil {
+		_ = c.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
 
-	resp, err := m.client.Is(
-		c,
-		&isRequest,
-	)
-	if err == nil && len(resp.Decisions) == 1 {
-		if resp.Decisions[0].Is {
-			c.Next()
-		} else {
-			c.AbortWithStatus(http.StatusForbidden)
-		}
-	} else {
-		c.AbortWithError(http.StatusInternalServerError, err) //nolint: errcheck
+	if !allowed {
+		c.AbortWithStatus(http.StatusForbidden)
+		return
+	}
+
+	c.Next()
+}
+
+// Check returns a new middleware handler that can be used to make ReBAC authorization decisions for individual
+// routes.
+// The check handler authorizers requests if the caller has a given relation to or permission on a specified object.
+func (m *Middleware) Check(options ...CheckOption) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		newCheck(m, options...).Handler(c)
 	}
 }
 
-func (m *Middleware) resourceContext(g *gin.Context) (*structpb.Struct, error) {
+func (m *Middleware) policyContext() *api.PolicyContext {
+	return internal.DefaultPolicyContext(m.policy)
+}
+
+func (m *Middleware) resourceContext(c *gin.Context) (*structpb.Struct, error) {
 	res := map[string]interface{}{}
 	for _, mapper := range m.resourceMappers {
-		mapper(g, res)
+		mapper(c, res)
 	}
 
 	return structpb.NewStruct(res)
+}
+
+func (m *Middleware) is(
+	ctx context.Context,
+	identityContext *api.IdentityContext,
+	policyContext *api.PolicyContext,
+	resourceContext *structpb.Struct,
+) (bool, error) {
+	isRequest := &authz.IsRequest{
+		IdentityContext: identityContext,
+		PolicyContext:   policyContext,
+		ResourceContext: resourceContext,
+		PolicyInstance:  internal.DefaultPolicyInstance(m.policy),
+	}
+
+	logger := zerolog.Ctx(ctx).With().Interface("is_request", isRequest).Logger()
+	logger.Debug().Msg("authorizing request")
+	ctx = logger.WithContext(ctx)
+
+	resp, err := m.client.Is(ctx, isRequest)
+
+	switch {
+	case err != nil:
+		return false, cerr.WithContext(err, ctx)
+	case len(resp.Decisions) != 1:
+		return false, cerr.WithContext(aerr.ErrInvalidDecision, ctx)
+	}
+
+	if !resp.Decisions[0].Is {
+		logger.Info().Msg("authorization failed")
+	}
+
+	return resp.Decisions[0].Is, nil
 }
 
 // WithPolicyFromURL instructs the middleware to construct the policy path from the path segment

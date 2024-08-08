@@ -1,10 +1,10 @@
 /*
-Package gorillaz provides authorization middleware for HTTP servers built on top of the standard net/http.
+Package httpz provides authorization middleware for HTTP servers built on top of the standard net/http.
 
 The middleware intercepts incoming requests and calls the Aserto authorizer service to determine if access should
 be allowed or denied.
 */
-package gorillaz
+package httpz
 
 import (
 	"context"
@@ -17,7 +17,6 @@ import (
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 	aerr "github.com/aserto-dev/go-authorizer/pkg/aerr"
-	"github.com/gorilla/mux"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -74,7 +73,7 @@ func New(client AuthorizerClient, policy *Policy) *Middleware {
 		Identity:        (&IdentityBuilder{}).FromHeader("Authorization"),
 		client:          client,
 		policy:          policy,
-		resourceMappers: []ResourceMapper{defaultResourceMapper},
+		resourceMappers: []ResourceMapper{},
 		policyMapper:    policyMapper,
 	}
 }
@@ -170,19 +169,18 @@ func (m *Middleware) is(
 // WithPolicyFromURL instructs the middleware to construct the policy path from the path segment
 // of the incoming request's URL.
 //
-// Path separators ('/') are replaced with dots ('.'). If the request uses gorilla/mux to define path
-// parameters, those are added to the path with two leading underscores.
+// Path separators ('/') are replaced with dots ('.').
 // An optional prefix can be specified to be included in all paths.
 //
 // # Example
 //
 // Using 'WithPolicyFromURL("myapp")', the route
 //
-//	POST /products/{id}
+//	POST /api/products/
 //
 // becomes the policy path
 //
-//	"myapp.POST.products.__id"
+//	"myapp.POST.api.products"
 func (m *Middleware) WithPolicyFromURL(prefix string) *Middleware {
 	m.policyMapper = urlPolicyPathMapper(prefix)
 	return m
@@ -209,27 +207,9 @@ func (m *Middleware) WithResourceMapper(mapper ResourceMapper) *Middleware {
 	return m
 }
 
-func defaultResourceMapper(r *http.Request, resource map[string]interface{}) {
-	for k, v := range mux.Vars(r) {
-		resource[k] = v
-	}
-}
-
 func urlPolicyPathMapper(prefix string) StringMapper {
 	return func(r *http.Request) string {
-		policyPath := []string{r.Method}
-
-		segments := getPathSegments(r)
-
-		if len(mux.Vars(r)) > 0 {
-			for i, segment := range segments {
-				if strings.HasPrefix(segment, "{") && strings.HasSuffix(segment, "}") {
-					segments[i] = "__" + segment[1:len(segment)-1]
-				}
-			}
-		}
-
-		policyPath = append(policyPath, segments...)
+		policyPath := append([]string{r.Method}, getPathSegments(r)...)
 
 		if prefix != "" {
 			policyPath = append([]string{strings.Trim(prefix, ".")}, policyPath...)
@@ -240,16 +220,5 @@ func urlPolicyPathMapper(prefix string) StringMapper {
 }
 
 func getPathSegments(r *http.Request) []string {
-	path := r.URL.Path
-
-	if len(mux.Vars(r)) > 0 {
-		var err error
-
-		path, err = mux.CurrentRoute(r).GetPathTemplate()
-		if err != nil {
-			path = ""
-		}
-	}
-
-	return strings.Split(strings.Trim(path, "/"), "/")
+	return strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 }

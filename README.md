@@ -215,10 +215,10 @@ Only a reader and writer are configured. `Client.Importer` and `Client.Exporter`
 To easily integrate Aserto authorization into your own services middleware implementations for common
 frameworks are available as submodules of `go-aserto/middleware`.
 
+* `middleware/httpz` provides middleware for HTTP servers using the standard [net/http](https://pkg.go.dev/net/http) package.
+* `middleware/gorillaz` provides middleware for HTTP servers using [gorilla/mux](https://github.com/gorilla/mux).
+* `middleware/ginz` provides middleware for HTTP servers using the [Gin web framework](https://gin-gonic.com).
 * `middleware/grpcz` provides middleware for gRPC servers.
-* `middleware/gorillaz` provides middleware for HTTP servers using [gorilla/mux](https://github.com/gorilla/mux)
-   or the standard `net/http` package.
-* `middleware/ginz` provides middleware for HTTP servers using the [Gin](https://gin-gonic.com) web framework.
 
 When authorization middleware is configured and attached to a server, it examines incoming requests, extracts
 authorization parameters such as the caller's identity, calls the Aserto authorizers, and rejects requests if their
@@ -240,9 +240,6 @@ type Policy struct {
 
 	// Decision is the authorization rule to use.
 	Decision string
-
-	// Label name of the aserto policy's instance being queried for authorization.
-	InstanceLabel string
 }
 ```
 
@@ -324,6 +321,165 @@ or remove fields from the resoruce context. Mappers are called in the order in w
 
 In addition to these, each middleware has built-in mappers that can handle common use-cases.
 
+
+### HTTP Middleware
+
+Two flavors of HTTP middleware are available:
+
+* `middleware/httpz`: Middleware for HTTP servers using the standard [net/http](https://pkg.go.dev/net/http) package.
+* `middleware/gorillaz`: Middleware with support for [gorilla/mux](https://pkg.go.dev/github.com/gorilla/mux).
+* `middleware/ginz`: Middleware for the [Gin](https://github.com/gin-gonic/gin) web framework.
+
+Both are constructed and configured in a similar way. They differ in the signature of their `Handler()`
+function, which is used to attach them to HTTP routes, and in the signatures of their mapper functions.
+
+#### net/http Middleware
+
+```go
+import (
+	"github.com/aserto-dev/go-aserto/middleware"
+	"github.com/aserto-dev/go-aserto/middleware/httpz"
+)
+...
+mw := httpz.New(
+	azClient,
+	middleware.Policy{
+		Decision:	   "allowed",
+	},
+)
+```
+
+Adding the created authorization middleware to a basic `net/http` server may look something like this:
+
+```go
+http.Handle("/users", mw.HandlerFunc(usersHandler))
+```
+
+The default behavior of the HTTP middleware is:
+
+* Identity is retrieved from the "Authorization" HTTP Header, if present.
+* Policy path is retrieved from the request URL and method to form a path of the form `METHOD.path.to.endpoint`.
+* No resource context is included in authorization calls by default.
+
+
+#### gorilla/mux Middleware
+
+```go
+import (
+	"github.com/aserto-dev/go-aserto/middleware"
+	"github.com/aserto-dev/go-aserto/middleware/gorillaz"
+)
+...
+mw := gorillaz.New(
+	azClient,
+	middleware.Policy{
+		Decision:	   "allowed",
+	},
+)
+```
+
+Adding the created authorization middleware to a basic `net/http` server may look something like this:
+
+```go
+http.Handle("/users", mw.Handler(usersHandler))
+```
+
+The popular [`gorilla/mux`](https://github.com/gorilla/mux) package provides a powerful and flexible HTTP router
+with support for URL path paremeters.
+Attaching the standard authorization middleware to a `gorilla/mux` server is as simple as:
+
+```go
+router := mux.NewRouter()
+router.Use(mw.Handler)
+
+router.HandleFunc("/users/{id}", userHandler).Methods("GET")
+```
+
+The default behavior of the gorilla/mux middleware is:
+
+* Identity is retrieved from the "Authorization" HTTP Header, if present.
+* Policy path is retrieved from the request URL and method to form a path of the form `METHOD.path.to.endpoint`.
+  If the route contains path parameters (e.g. `"api/products/{id}"`), the surrounding braces are replaced with a
+  double-underscore prefix. For example, a request to `GET api/products/{id}` gets the policy path `GET.api.products.__id`.
+* All path parameters are included in the resource context.
+  For example, if the route is defined as `"api/products/{id}"` and the incoming request URL path is
+  `"api/products/123"` then the resource context will be `{"id": "123"}`.
+
+
+#### Gin Middleware
+
+The gin middleware looks and behaves just like the net/http middleware but uses `gin.Context` instead of `http.Request`.
+
+
+### Relation-Based Access Control (ReBAC)
+
+In addition to the pattern described above, in which each route is authorized by its own policy module,
+the HTTP middleware can be used to implement Relation-Based Access Control (ReBAC) in which authorization
+decisions are made by checking if a given subject has the necessary permission or relation to the object being accessed.
+
+See [here](https://www.topaz.sh/docs/directory) for a more in-depth overview of ReBAC in Aserto.
+
+The canonical policy for ReBAC is [ghcr.io/aserto-policies/policy-rebac](https://github.com/aserto-templates/policy-rebac/tree/main/content).
+
+The `Check()` function on HTTP middleware (`httpz`, `gorillaz`, or `ginz`) to annotate individual routes with
+instructions for populating the resource context for ReBAC checks.
+
+A check call needs three pieces of information:
+
+* The type and ID of the object being accessed.
+* The name of the relation or permission to check.
+* The type and ID of the subject attempting to access the object.
+
+Example:
+```go
+router := mux.NewRouter()
+router.Handle(
+	"/items/{id}",
+	mw.Check(
+		std.WithObjectType("item"),
+		std.WithObjectIDFromVar("id"),
+		std.WithRelation("read"),
+	).HandlerFunc(GetItem),
+).Methods("GET")
+```
+
+`GetItem()` is an http handler function that serves GET request to the `/items/{id}` route.
+The `mw.Check` call only authorizes requests if the calling user has the `read` permission on an object of type `item`
+with the object ID extracted from the route's `{id}` parameter.
+The subject type is `user` by default and the subject ID is inferred from the `Authorization` header.
+
+#### Check Options
+
+The `Check()` function accepts options that configure the object, subject, and relation sent to the authorizer.
+
+**`WithIdentityMapper(IdentityMapper)`** can be used to override the identity context sent to the authorizer. The `mapper` is a
+function that takes the incoming request and a `middleware.Identity` and can set options on the `Identity` object based on
+information from the request.
+If an identity mapper isn't provided, the check call uses the identity configured on the middleware object on which
+the `Check` call is made.
+
+**`WithRelation(string)`** sets the relation name sent to the authorizer.
+
+**`WithRelationMapper(StringMapper)`** can be used in cases where the relation to be checked isn't known ahead of time. It
+receives a function that takes the incoming request and returns the name of the relation or permission to check.
+
+**`WithObjectType(string)`** sets the object type sent to the authorizer.
+
+**`WithObjectID(string)`** sets the object ID sent to the authorizer.
+
+**`WithObjectIDMapper(StringMapper)`** is used to determine the object ID sent to the authorizer at runtime. It receives
+a function that takes the incoming request and returns an object ID.
+
+**`WithObjectIDFromVar(string)`** (only in `gorillaz` and `ginz` middleware) configures the check call to use the value of
+a path parameter as the object ID sent to the authorizer.
+
+**`WithObjectMapper(ObjectMapper)`** can be used to set both the object type and ID at runtime. It receives a function that
+takes the incoming request and returns a `(objectType string, objectID string)` pair.
+
+**`WithPolicyPath(string)`** sets the name of the policy module to evaluate in check calls. It defaults to `check`.
+If the `Policy` object used to construct the middleware contains the `Root` field, the root is used as a prefix.
+For example, if the root is set to `"myPolicy"`, the `Check` call looks for a policy module named `myPolicy.check`.
+
 ### gRPC Middleware
 
 The gRPC middleware is available in the sub-package `middleware/grpcz`.
@@ -370,131 +526,3 @@ The default behavior of the gRPC middleware is:
 * Identity is pulled form the `"authorization"` metadata field (i.e. `middleware.Identity.FromMetadata("authorization")`).
 * Policy path is constructed from `grpc.Method()` with dots (`.`) replacing path delimiters (`/`).
 * No Resource Context is included in authorization calls by default.
-
-
-### HTTP Middleware
-
-Two flavors of HTTP middleware are available:
-
-* `middleware/gorillaz`: Standard `net/http` middleware with support for [gorilla/mux](https://pkg.go.dev/github.com/gorilla/mux).
-* `middleware/ginz`: Middleware for the [Gin](https://github.com/gin-gonic/gin) web framework.
-
-Both are constructed and configured in a similar way. They differ in the signature of their `Handler()`
-function, which is used to attach them to HTTP routes, and in the signatures of their mapper functions.
-
-#### net/http Middleware
-
-```go
-import (
-	"github.com/aserto-dev/go-aserto/middleware"
-	"github.com/aserto-dev/go-aserto/middleware/gorillaz"
-)
-...
-mw := gorillaz.New(
-	azClient,
-	middleware.Policy{
-		Decision:	   "allowed",
-	},
-)
-```
-
-Adding the created authorization middleware to a basic `net/http` server may look something like this:
-
-```go
-http.Handle("/users", mw.Handler(usersHandler))
-```
-
-The popular [`gorilla/mux`](https://github.com/gorilla/mux) package provides a powerful and flexible HTTP router
-with support for URL path paremeters.
-Attaching the standard authorization middleware to a `gorilla/mux` server is as simple as:
-
-```go
-router := mux.NewRouter()
-router.Use(mw.Handler)
-
-router.HandleFunc("/users/{id}", userHandler).Methods("GET")
-```
-
-
-#### Mappers
-
-The default behavior of the HTTP middleware is:
-
-* Identity is retrieved from the "Authorization" HTTP Header, if present.
-* Policy path is retrieved from the request URL and method to form a path of the form `METHOD.path.to.endpoint`.
-  If the server uses [`gorilla/mux`](https://github.com/gorilla/mux) and
-  the route contains path parameters (e.g. `"api/products/{id}"`), the surrounding braces are replaced with a
-  double-underscore prefix. For example, with policy root `"myApp"`, a request to `GET api/products/{id}` gets the
-  policy path `myApp.GET.api.products.__id`.
-* Any path parameters defined using [`gorilla/mux`](https://github.com/gorilla/mux) are included in the resource
-  context. For example, if the route is defined as `"api/products/{id}"` and the incoming request URL path is
-  `"api/products/123"` then the resource context will be `{"id": "123"}`.
-
-
-#### Gin Middleware
-
-The gin middleware looks and behaves just like the net/http middleware but uses `gin.Context` instead of `http.Request`.
-
-### Check Middleware (ReBAC)
-
-In addition to the pattern described above, in which each route is authorized by its own policy module,
-the HTTP middleware can be used to implement Relation-Based Access Control (rebac) in which authorization
-decisions are made by checking if a given subject has the necessary permission or relation to the object being accessed.
-
-This is achieved using the `Check` function on `http.Middleware`.
-
-A check call needs three pieces of information:
-
-* The type and key of the object.
-* The name of the relation or permission to look for.
-* The type and key of the subject. When omitted, the subject is derived from the middleware's [Identity](#identity)
-with type `"user"`.
-
-Example:
-```go
-router := mux.NewRouter()
-router.Handle(
-	"/items/{id}",
-	mw.Check(
-		std.WithObjectType("item"),
-		std.WithObjectIDFromVar("id"),
-		std.WithRelation("read"),
-	).HandlerFunc(GetItem),
-).Methods("GET")
-```
-
-`GetItem()` is an http handler function that serves GET request to the `/items/{id}` route.
-The `mw.Check` call only authorizes requests if the calling user has the `read` permission on an object of type `item`
-with the object ID extracted from the route's `{id}` parameter.
-
-#### Check Options
-
-The `Check()` function accepts options that configure the object, subject, and relation sent to the authorizer.
-
-`WithIdentityMapper(IdentityMapper)` can be used to override the identity context sent to the authorizer. The `mapper` is a
-function that takes an `http.Request` and a `middleware.Identity` and can set options on the `Identity` object based on
-information from the request.
-If an identity mapper isn't provided, the check call uses the identity configured on the middleware object on which
-the `Check` call is made.
-
-**`WithRelation(string)`** sets the relation name sent to the authorizer.
-
-**`WithRelationMapper(StringMapper)`** can be used in cases where the relation to be checked isn't known ahead of time. It
-receives a function that takes an `http.Request` object and returns the name of the relation.
-
-**`WithObjectType(string)`** sets the object type sent to the authorizer.
-
-**`WithObjectID(string)`** sets the object ID sent to the authorizer.
-
-**`WithObjectIDMapper(StringMapper)`** is used to determine the object ID sent to the authorizer at runtime. It receives
-a function that takes an `http.Request` object and returns an object ID.
-
-**`WithObjectIDFromVar(string)`** configures the check call to use the value of a path parameter as the object ID sent to
-the authorizer.
-
-**`WithObjectMapper(ObjectMapper)`** can be used to set both the object type and ID at runtime. It receives a function that
-takes an `http.Request` and returns a `(objectType string, objectID string)` pair.
-
-**`WithPolicyPath(string)`** sets the name of the policy module to evaluate in check calls. It defaults to `check`.
-If the `Policy` object used to construct the middleware contains the `Root` field, the root is used as a prefix.
-For example, if the root is set to `"myPolicy"`, the `Check` call looks for a policy module named `myPolicy.check`.

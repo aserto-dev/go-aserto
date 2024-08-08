@@ -13,10 +13,9 @@ import (
 const (
 	DefaultIdentityType = api.IdentityType_IDENTITY_TYPE_SUB
 
-	DefaultUsername      = "username"
-	DefaultPolicyName    = "policyName"
-	DefaultDecision      = "allowed"
-	DefaultInstanceLabel = "label"
+	DefaultUsername   = "username"
+	DefaultPolicyName = "policyName"
+	DefaultDecision   = "allowed"
 
 	OverridePolicyPath = "override.policy.path"
 )
@@ -48,10 +47,9 @@ func NewTest(t *testing.T, name string, options *Options) *Case {
 
 func Policy(path string) *middleware.Policy {
 	return &middleware.Policy{
-		Name:          DefaultPolicyName,
-		Path:          path,
-		Decision:      DefaultDecision,
-		InstanceLabel: DefaultInstanceLabel,
+		Name:     DefaultPolicyName,
+		Path:     path,
+		Decision: DefaultDecision,
 	}
 }
 
@@ -61,12 +59,11 @@ func Decision(authorize bool) *authz.Decision {
 
 func Request(o ...Override) *authz.IsRequest {
 	os := &Overrides{
-		idtype:        api.IdentityType_IDENTITY_TYPE_SUB,
-		id:            DefaultUsername,
-		policy:        DefaultPolicyName,
-		decisions:     []string{DefaultDecision},
-		resource:      &structpb.Struct{Fields: map[string]*structpb.Value{}},
-		instanceLabel: DefaultInstanceLabel,
+		idtype:    api.IdentityType_IDENTITY_TYPE_SUB,
+		id:        DefaultUsername,
+		policy:    DefaultPolicyName,
+		decisions: []string{DefaultDecision},
+		resource:  &structpb.Struct{Fields: map[string]*structpb.Value{}},
 	}
 
 	for _, ov := range o {
@@ -81,20 +78,19 @@ func Request(o ...Override) *authz.IsRequest {
 		},
 		PolicyInstance: &api.PolicyInstance{
 			Name:          os.policy,
-			InstanceLabel: os.instanceLabel,
+			InstanceLabel: os.policy,
 		},
 		ResourceContext: os.resource,
 	}
 }
 
 type Overrides struct {
-	idtype        api.IdentityType
-	id            string
-	policy        string
-	instanceLabel string
-	path          string
-	decisions     []string
-	resource      *structpb.Struct
+	idtype    api.IdentityType
+	id        string
+	policy    string
+	path      string
+	decisions []string
+	resource  *structpb.Struct
 }
 
 type Override func(*Overrides)
@@ -114,12 +110,6 @@ func Identity(id string) Override {
 func PolicyName(name string) Override {
 	return func(o *Overrides) {
 		o.policy = name
-	}
-}
-
-func PolicyInstanceLabel(label string) Override {
-	return func(o *Overrides) {
-		o.instanceLabel = label
 	}
 }
 

@@ -1,18 +1,18 @@
-package httpz
+package ginz
 
 import (
-	"net/http"
 	"strings"
 
 	"github.com/aserto-dev/go-aserto/middleware"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
+	"github.com/gin-gonic/gin"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
 // IdentityMapper is the type of callback functions that can inspect incoming HTTP requests
 // and set the caller's identity.
-type IdentityMapper func(*http.Request, middleware.Identity)
+type IdentityMapper func(*gin.Context, middleware.Identity)
 
 // IdentityBuilder is used to configure what information about caller identity is sent in authorization calls.
 type IdentityBuilder struct {
@@ -74,9 +74,9 @@ func (b *IdentityBuilder) ID(identity string) *IdentityBuilder {
 // Headers are attempted in order. The first non-empty header is used.
 // If none of the specified headers have a value, the request is considered anonymous.
 func (b *IdentityBuilder) FromHeader(header ...string) *IdentityBuilder {
-	b.mapper = func(r *http.Request, identity middleware.Identity) {
+	b.mapper = func(c *gin.Context, identity middleware.Identity) {
 		for _, h := range header {
-			id := r.Header.Get(h)
+			id := c.GetHeader(h)
 			if id == "" {
 				continue
 			}
@@ -98,12 +98,12 @@ func (b *IdentityBuilder) FromHeader(header ...string) *IdentityBuilder {
 	return b
 }
 
-// FromContextValue extracts caller identity from a value in the incoming request context.
+// FromContextValue extracts caller identity from a value in the incoming Gin context.
 //
 // If the value is not present, not a string, or an empty string then the request is considered anonymous.
-func (b *IdentityBuilder) FromContextValue(key interface{}) *IdentityBuilder {
-	b.mapper = func(r *http.Request, identity middleware.Identity) {
-		identity.ID(internal.ValueOrEmpty(r.Context(), key))
+func (b *IdentityBuilder) FromContextValue(key string) *IdentityBuilder {
+	b.mapper = func(c *gin.Context, identity middleware.Identity) {
+		identity.ID(c.GetString(key))
 	}
 
 	return b
@@ -117,8 +117,8 @@ func (b *IdentityBuilder) FromContextValue(key interface{}) *IdentityBuilder {
 // For Example, if the hostname is "service.user.company.com" then both FromHostname(1) and
 // FromHostname(-3) return the value "user".
 func (b *IdentityBuilder) FromHostname(segment int) *IdentityBuilder {
-	b.mapper = func(r *http.Request, identity middleware.Identity) {
-		identity.ID(internal.HostnameSegment(r.URL, segment))
+	b.mapper = func(c *gin.Context, identity middleware.Identity) {
+		identity.ID(internal.HostnameSegment(c.Request.URL, segment))
 	}
 
 	return b
@@ -131,11 +131,11 @@ func (b *IdentityBuilder) Mapper(mapper IdentityMapper) *IdentityBuilder {
 }
 
 // Build constructs an IdentityContext that can be used in authorization requests.
-func (b *IdentityBuilder) Build(r *http.Request) *api.IdentityContext {
+func (b *IdentityBuilder) Build(c *gin.Context) *api.IdentityContext {
 	identity := internal.NewIdentity(b.identityType, b.defaultIdentity)
 
 	if b.mapper != nil {
-		b.mapper(r, identity)
+		b.mapper(c, identity)
 	}
 
 	return identity.Context()

@@ -22,7 +22,4 @@ type Policy struct {
 
 	// Root is an optional prefix shared by all policy modules being evaluated.
 	Root string
-
-	// Label name of the aserto policy's instance being queried for authorization.
-	InstanceLabel string
 }

@@ -26,13 +26,12 @@ func main() {
 	mw := ginz.New(
 		azClient.Authorizer,
 		&middleware.Policy{
-			Name:          "local",
-			Decision:      "allowed",
-			InstanceLabel: "label",
+			Name:     "local",
+			Decision: "allowed",
 		},
 	)
-	mw.Identity.Mapper(func(r *http.Request, identity middleware.Identity) {
-		if username, _, ok := r.BasicAuth(); ok {
+	mw.Identity.Mapper(func(c *gin.Context, identity middleware.Identity) {
+		if username, _, ok := c.Request.BasicAuth(); ok {
 			identity.Subject().ID(username)
 		}
 	})

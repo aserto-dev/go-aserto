@@ -1,4 +1,4 @@
-package gorillaz
+package ginz
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -14,7 +14,7 @@ import (
 type CheckOption func(*CheckOptions)
 
 // ObjectMapper takes an incoming request and returns the object type and id to check.
-type ObjectMapper func(r *http.Request) (objType string, id string)
+type ObjectMapper func(*gin.Context) (objType string, id string)
 
 // WithIdentityMapper takes an identity mapper function that is used to determine the subject id for the check call.
 func WithIdentityMapper(mapper IdentityMapper) CheckOption {
@@ -61,8 +61,8 @@ func WithObjectIDMapper(mapper StringMapper) CheckOption {
 // WithObjectIDFromVar takes the name of a variable in the request path that is used as the object id to check.
 func WithObjectIDFromVar(name string) CheckOption {
 	return func(o *CheckOptions) {
-		o.obj.idMapper = func(r *http.Request) string {
-			return mux.Vars(r)[name]
+		o.obj.idMapper = func(g *gin.Context) string {
+			return g.Param(name)
 		}
 	}
 }
@@ -103,24 +103,24 @@ type CheckOptions struct {
 	}
 }
 
-func (o *CheckOptions) object(r *http.Request) (string, string) {
+func (o *CheckOptions) object(g *gin.Context) (string, string) {
 	objType := o.obj.objType
 	objID := o.obj.id
 
 	switch {
 	case o.obj.mapper != nil:
-		objType, objID = o.obj.mapper(r)
+		objType, objID = o.obj.mapper(g)
 	case o.obj.idMapper != nil:
-		objID = o.obj.idMapper(r)
+		objID = o.obj.idMapper(g)
 	}
 
 	return objType, objID
 }
 
-func (o *CheckOptions) relation(r *http.Request) string {
+func (o *CheckOptions) relation(g *gin.Context) string {
 	relation := o.rel.name
 	if o.rel.mapper != nil {
-		relation = o.rel.mapper(r)
+		relation = o.rel.mapper(g)
 	}
 
 	return relation
@@ -149,38 +149,31 @@ func newCheck(mw *Middleware, options ...CheckOption) *Check {
 }
 
 // Handler returns a middleware handler that checks incoming requests.
-func (c *Check) Handler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		policyContext := c.policyContext(r)
-		identityContext := c.identityContext(r)
-		resourceContext, err := c.resourceContext(r)
+func (c *Check) Handler(g *gin.Context) {
+	policyContext := c.policyContext(g)
+	identityContext := c.identityContext(g)
 
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
+	resourceContext, err := c.resourceContext(g)
+	if err != nil {
+		_ = g.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
 
-		allowed, err := c.mw.is(r.Context(), identityContext, policyContext, resourceContext)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+	allowed, err := c.mw.is(g.Request.Context(), identityContext, policyContext, resourceContext)
+	if err != nil {
+		_ = g.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
 
-		if !allowed {
-			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-			return
-		}
+	if !allowed {
+		g.AbortWithStatus(http.StatusForbidden)
+		return
+	}
 
-		next.ServeHTTP(w, r)
-	})
+	g.Next()
 }
 
-// HandlerFunc returns a middleware handler that wraps the given http.HandlerFunc and checks incoming requests.
-func (c *Check) HandlerFunc(next http.HandlerFunc) http.HandlerFunc {
-	return c.Handler(next).ServeHTTP
-}
-
-func (c *Check) policyContext(r *http.Request) *api.PolicyContext {
+func (c *Check) policyContext(g *gin.Context) *api.PolicyContext {
 	policyContext := c.mw.policyContext()
 	policyContext.Path = ""
 
@@ -190,7 +183,7 @@ func (c *Check) policyContext(r *http.Request) *api.PolicyContext {
 
 	policyMapper := c.opts.policy.mapper
 	if policyMapper != nil {
-		policyContext.Path = policyMapper(r)
+		policyContext.Path = policyMapper(g)
 	}
 
 	if policyContext.Path == "" {
@@ -205,21 +198,21 @@ func (c *Check) policyContext(r *http.Request) *api.PolicyContext {
 	return policyContext
 }
 
-func (c *Check) identityContext(r *http.Request) *api.IdentityContext {
-	idc := c.mw.Identity.Build(r)
+func (c *Check) identityContext(g *gin.Context) *api.IdentityContext {
+	idc := c.mw.Identity.Build(g)
 
 	if c.opts.subj.mapper != nil {
 		identity := internal.NewIdentity(idc.Type, idc.Identity)
-		c.opts.subj.mapper(r, identity)
+		c.opts.subj.mapper(g, identity)
 		idc = identity.Context()
 	}
 
 	return idc
 }
 
-func (c *Check) resourceContext(r *http.Request) (*structpb.Struct, error) {
-	relation := c.opts.relation(r)
-	objType, objID := c.opts.object(r)
+func (c *Check) resourceContext(g *gin.Context) (*structpb.Struct, error) {
+	relation := c.opts.relation(g)
+	objType, objID := c.opts.object(g)
 	subjType := c.opts.subjectType()
 
 	return structpb.NewStruct(map[string]interface{}{

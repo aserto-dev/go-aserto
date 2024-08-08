@@ -1,4 +1,4 @@
-package httpz
+package gorillaz
 
 import (
 	"net/http"

@@ -1,4 +1,4 @@
-package gorillaz
+package httpz
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
-	"github.com/gorilla/mux"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -55,15 +54,6 @@ func WithObjectID(id string) CheckOption {
 func WithObjectIDMapper(mapper StringMapper) CheckOption {
 	return func(o *CheckOptions) {
 		o.obj.idMapper = mapper
-	}
-}
-
-// WithObjectIDFromVar takes the name of a variable in the request path that is used as the object id to check.
-func WithObjectIDFromVar(name string) CheckOption {
-	return func(o *CheckOptions) {
-		o.obj.idMapper = func(r *http.Request) string {
-			return mux.Vars(r)[name]
-		}
 	}
 }
 

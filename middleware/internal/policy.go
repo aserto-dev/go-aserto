@@ -15,6 +15,6 @@ func DefaultPolicyContext(policy *middleware.Policy) *api.PolicyContext {
 func DefaultPolicyInstance(policy *middleware.Policy) *api.PolicyInstance {
 	return &api.PolicyInstance{
 		Name:          policy.Name,
-		InstanceLabel: policy.InstanceLabel,
+		InstanceLabel: policy.Name,
 	}
 }
