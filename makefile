@@ -36,11 +36,11 @@ build:
 
 lint:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/golangci-lint run --config ${PWD}/.golangci.yaml
+	@go work edit -json | jq -r '.Use[].DiskPath'  | xargs -I{} ${EXT_BIN_DIR}/golangci-lint run {}/... -c .golangci.yaml   
 
 test:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/gotestsum --format short-verbose -- -count=1 -v ${PWD}/... -coverprofile=cover.out -coverpkg=./... ${PWD}/...
+	@go work edit -json | jq -r '.Use[].DiskPath'  | xargs -I{} ${EXT_BIN_DIR}/gotestsum --format short-verbose -- -count=1 -v {}/...
 
 .PHONY: vault-login
 vault-login:
