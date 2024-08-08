@@ -7,7 +7,7 @@ import (
 
 	"github.com/aserto-dev/go-aserto"
 	"github.com/aserto-dev/go-aserto/az"
-	mw "github.com/aserto-dev/go-aserto/middleware/httpz"
+	"github.com/aserto-dev/go-aserto/middleware/httpz"
 )
 
 func Hello(w http.ResponseWriter, _ *http.Request) {
@@ -28,9 +28,9 @@ func Example() {
 	defer azClient.Close()
 
 	// Create HTTP middleware.
-	middleware := mw.New(
+	middleware := httpz.New(
 		azClient.Authorizer,
-		&mw.Policy{
+		&httpz.Policy{
 			Name:          "<Aserto policy Name>",
 			Decision:      "<authorization decision (e.g. 'allowed')",
 			InstanceLabel: "<Aserto  policy instance label>",

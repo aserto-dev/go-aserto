@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	httpmw "github.com/aserto-dev/go-aserto/middleware/httpz"
+	"github.com/aserto-dev/go-aserto/middleware/httpz"
 	"github.com/aserto-dev/go-aserto/middleware/internal/test"
 	assert "github.com/stretchr/testify/require"
 )
@@ -13,13 +13,13 @@ import (
 type TestCase struct {
 	*test.Case
 	expectedStatusCode int
-	middleware         *httpmw.Middleware
+	middleware         *httpz.Middleware
 }
 
 type testOptions struct {
 	test.Options
 	expectedStatusCode int
-	callback           func(*httpmw.Middleware)
+	callback           func(*httpz.Middleware)
 }
 
 func (opts *testOptions) HasStatusCode() bool {
@@ -39,7 +39,7 @@ func NewTest(t *testing.T, name string, options *testOptions) *TestCase {
 
 	base := test.NewTest(t, name, &options.Options)
 
-	mw := httpmw.New(base.Client, test.Policy(""))
+	mw := httpz.New(base.Client, test.Policy(""))
 
 	if options.callback == nil {
 		mw.Identity.Subject().ID(test.DefaultUsername)
@@ -74,7 +74,7 @@ func TestAuthorizer(t *testing.T) {
 				Options: test.Options{
 					PolicyPath: test.OverridePolicyPath,
 				},
-				callback: func(mw *httpmw.Middleware) {
+				callback: func(mw *httpz.Middleware) {
 					mw.WithPolicyPathMapper(
 						func(r *http.Request) string {
 							return test.OverridePolicyPath
