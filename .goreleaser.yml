@@ -1,0 +1,99 @@
+project_name: go-aserto
+
+env:
+  # https://goreleaser.com/customization/env/
+  - ORG=aserto-dev
+  - REPO=go-aserto
+  - DESCRIPTION="Aserto Go SDK"
+  - LICENSE=MIT
+
+before:
+  # https://goreleaser.com/customization/hooks/
+  hooks:
+
+builds:
+  # https://goreleaser.com/customization/build/
+  - id: gin_example
+    main: ./examples/middleware/http/gin/main.go
+    binary: gin_example
+    tags: []
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s
+      - -w
+      - -X github.com/{{ .Env.ORG }}/{{ .Env.REPO }}/pkg/version.ver={{.Version}}
+      - -X github.com/{{ .Env.ORG }}/{{ .Env.REPO }}/pkg/version.commit={{.ShortCommit}}
+      - -X github.com/{{ .Env.ORG }}/{{ .Env.REPO }}/pkg/version.date={{.Date}}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+  - id: gorilla_example
+    main: ./examples/middleware/http/gorilla/main.go
+    binary: gorilla_example
+    tags: []
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s
+      - -w
+      - -X github.com/{{ .Env.ORG }}/{{ .Env.REPO }}/pkg/version.ver={{.Version}}
+      - -X github.com/{{ .Env.ORG }}/{{ .Env.REPO }}/pkg/version.commit={{.ShortCommit}}
+      - -X github.com/{{ .Env.ORG }}/{{ .Env.REPO }}/pkg/version.date={{.Date}}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  # https://goreleaser.com/customization/archive/
+  - format: zip
+    builds:
+    - gin_example
+    - gorilla_example
+    files:
+      - LICENSE
+      - README.md
+    name_template: >-
+      {{ .ProjectName }}_{{ .Os }}_{{- if eq .Arch "amd64" }}x86_64{{- else }}{{ .Arch }}{{ end }}
+
+checksum:
+  # https://goreleaser.com/customization/checksum/
+  name_template: "checksums.txt"
+
+source:
+  # https://goreleaser.com/customization/source/
+  enabled: false
+
+changelog:
+  # https://goreleaser.com/customization/changelog/
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  # https://goreleaser.com/customization/release/
+  github:
+    owner: "{{ .Env.ORG }}"
+    name: "{{ .Env.REPO }}"
+
+  draft: false
+  prerelease: "false"
+  name_template: "{{.ProjectName}} {{.Tag}}"

@@ -1,32 +1,30 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/aserto-dev/go-aserto/authorizer/grpc"
-	"github.com/aserto-dev/go-aserto/client"
+	"github.com/aserto-dev/go-aserto"
+	"github.com/aserto-dev/go-aserto/az"
 	"github.com/aserto-dev/go-aserto/middleware"
-	"github.com/aserto-dev/go-aserto/middleware/http/ginz"
+	"github.com/aserto-dev/go-aserto/middleware/ginz"
 	"github.com/gin-gonic/gin"
 )
 
 const port = 8080
 
 func main() {
-	ctx := context.Background()
-	authClient, err := grpc.New(
-		ctx,
-		client.WithAddr("localhost:8282"),
+	azClient, err := az.New(
+		aserto.WithAddr("localhost:8282"),
 	)
 	if err != nil {
 		log.Fatalln("Failed to create authorizer client:", err)
 	}
+	defer azClient.Close()
 
 	mw := ginz.New(
-		authClient,
+		azClient.Authorizer,
 		&middleware.Policy{
 			Name:          "local",
 			Decision:      "allowed",

@@ -18,37 +18,27 @@ go get -u github.com/aserto-dev/go-aserto
 
 ## Authorizer
 
-The [Authorizer](https://docs.aserto.com/docs/overview/authorizer) service is is an [open source authorization engine](https://www.topaz.sh)
+The [Authorizer](https://www.topaz.sh/docs/authorizer-guide/overview) service is is an [open source authorization engine](https://www.topaz.sh)
 which uses the [Open Policy Agent](https://www.openpolicyagent.org) (OPA) to make decisions by computing authorization
 policies.
-
-
-### AuthorizerClient
 
 The `AuthorizerClient` interface, defined in
 [`github.com/aserto-dev/go-authorizer/aserto/authorizer/v2`](https://github.com/aserto-dev/go-authorizer/blob/main/aserto/authorizer/v2/authorizer_grpc.pb.go#L34),
 describes the operations exposed by the Aserto authorizer service.
 
-Two implementation of `AuthorizerClient` are available:
 
-1. `authorizer/grpc` provides a client that communicates with the authorizer using gRPC.
+### Client
 
-2. `authorizer/http` provides a client that communicates with the authorizer over its REST HTTP endpoints.
-
-
-Create a new client using `New()` in either package.
-
-The snippet below creates an authorizer client that talks to Aserto's hosted authorizer over gRPC:
+The snippet below creates an authorizer client that connects to a topaz instance running locally:
 
 ```go
 import (
-	"github.com/aserto-dev/go-aserto/client"
-	"github.com/aserto-dev/go-aserto/authorizer/grpc"
+	"github.com/aserto-dev/go-aserto"
+	"github.com/aserto-dev/go-aserto/az"
 )
 ...
-authorizer, err := grpc.New(
-	ctx,
-	client.WithAPIKeyAuth("<API Key>"),
+azClient, err := az.New(
+	aserto.WithAddr("localhost:8282"),
 )
 ```
 
@@ -69,33 +59,21 @@ The options below can be specified to override default behaviors:
 **`WithCACertPath()`** - adds the specified PEM certificate file to the connection's list of trusted root CAs.
 
 
-#### Connection Timeout
-
-
-Connection timeout can be set on the specified context using context.WithTimeout. If no timeout is set on the
-context, the default connection timeout is 5 seconds. For example, to increase the timeout to 10 seconds:
-
-```go
-ctx := context.Background()
-
-authorizer, err := grpc.New(
-	context.WithTimeout(ctx, time.Duration(10) * time.Second),
-	aserto.WithAPIKeyAuth("<API Key>"),
-)
-```
-
-
 ### Making Authorization Calls
 
 Use the client's `Is()` method to request authorization decisions from the Aserto authorizer service.
 
 ```go
 import (
-	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
+	"context"
+	...
+	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 )
 
-resp, err := authorizer.Is(c.Context, &authz.IsRequest{
+ctx := context.Background()
+
+resp, err := azClient.Authorizer.Is(ctx, &authorizer.IsRequest{
 	PolicyContext: &api.PolicyContext{
 		Path:      		"peoplefinder.GET.users.__id",
 		Decisions: 		"allowed",
@@ -107,7 +85,7 @@ resp, err := authorizer.Is(c.Context, &authz.IsRequest{
 })
 ```
 
-## Directory
+## Directory Service
 
 The [Directory](https://docs.aserto.com/docs/overview/directory) stores information required to make authorization
 decisions.
@@ -128,14 +106,13 @@ To create a directory client:
 ```go
 
 import (
-	"context"
-	"github.com/aserto-dev/go-aserto/client"
-	"github.com/aserto-dev/go-aserto/client/directory/v3"
+	"github.com/aserto-dev/go-aserto"
+	"github.com/aserto-dev/go-aserto/ds/v3"
 )
 
 ...
 
-dir, err := directory.New(context.Background(), client.WithAPIKeyAuth('<api key>'))
+dsClient, err := ds.New(aserto.WithAPIKeyAuth('<api key>'))
 ```
 
 [Connection options](#connection-options) are the same as those for the authorizer client.
@@ -174,13 +151,13 @@ type Config struct {
 The embedded `*client.Config` acts as a fallback. If no configuration is provided for a specific service, the fallback
 configuration is used. If no fallback is provided, the client for that service is nil.
 
-To create a directory client from configuration, call `Connect(context.Context)` on the config struct:
+To create a directory client from configuration, call `Connect()` on the config struct:
 
 ```go
 import (
 	"context"
 
-	"github.com/aserto-dev/go-aserto/client/directory/v3"
+	"github.com/aserto-dev/go-aserto/ds/v3"
 	"github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 )
@@ -188,14 +165,14 @@ import (
 ...
 
 // Use the same address for all services.
-cfg := &directory.Config{Address: "localhost:9292"}
+cfg := &ds.Config{Address: "localhost:9292"}
 
-dir, err := cfg.Connect(context.Background())
+dsClient, err := cfg.Connect()
 if err != nil {
 	panic(err)
 }
 
-resp, err := dir.Reader.GetObjects(&reader.GetObjectsRequest{})
+resp, err := dsClient.Reader.GetObjects(context.Background(), &reader.GetObjectsRequest{})
 ```
 
 **Examples**
@@ -235,16 +212,19 @@ Only a reader and writer are configured. `Client.Importer` and `Client.Exporter`
 
 ## Middleware
 
-Two middleware implementations are available in subpackages:
+To easily integrate Aserto authorization into your own services middleware implementations for common
+frameworks are available as submodules of `go-aserto/middleware`.
 
-* `middleware/grpc` provides middleware for gRPC servers.
-* `middleware/http` provides middleware for HTTP REST servers.
+* `middleware/grpcz` provides middleware for gRPC servers.
+* `middleware/gorillaz` provides middleware for HTTP servers using [gorilla/mux](https://github.com/gorilla/mux)
+   or the standard `net/http` package.
+* `middleware/ginz` provides middleware for HTTP servers using the [Gin](https://gin-gonic.com) web framework.
 
 When authorization middleware is configured and attached to a server, it examines incoming requests, extracts
-authorization parameters like the caller's identity, calls the Aserto authorizers, and rejects messages if their
+authorization parameters such as the caller's identity, calls the Aserto authorizers, and rejects requests if their
 access is denied.
 
-Both gRPC and HTTP middleware are created from an `AuthorizerClient` and a `Policy` with parameters that can be shared
+All middleware are created from an `AuthorizerClient` and a `Policy` with parameters that can be shared
 by all authorization calls.
 
 ```go
@@ -253,7 +233,7 @@ type Policy struct {
 	// Name is the Name of the aserto policy being queried for authorization.
 	Name string
 
-	// Path is the package name of the rego policy to evaluate.
+	// Path is the name of the policy package to evaluate.
 	// If left empty, a policy mapper must be attached to the middleware to provide
 	// the policy path from incoming messages.
 	Path string
@@ -268,7 +248,7 @@ type Policy struct {
 
 The value of several authorization parameters often depends on the content of incoming requests. Those are:
 
-* Identity - the identity (subject or JWT) of the caller.
+* Identity - the identity (subject name or JWT) of the caller.
 * Policy Path - the name of the authorization policy package to evaluate. A default value can be set in `Policy.Path`
   when creating the middleware, but the path is often dependent on the details of the request being authorized.
 * Resource Context - Additional data sent to the authorizer as JSON.
@@ -295,13 +275,13 @@ middleware.Identity.FromContext("user")
 middleware.Manual().ID("object_id")
 ```
 
-In addition, it is possible to provide custom logic to specify the callers identity. For example, in HTTP middleware:
+In addition, it is possible to provide custom logic to specify the caller's identity. For example, in HTTP middleware:
 
 ```go
 middleware.Identity.Mapper(func(r *http.Request, identity middleware.Identity) {
 	username := getUserFromRequest(r) // custom logic to get user identity
 
-	identity.Subject().ID(username) // set it on the middleware
+	identity.Subject().ID(username) // set the caller's identity for the request
 })
 ```
 
@@ -332,27 +312,32 @@ By default, middleware do not include a resource in authorization calls.
 To add resource data, use `Middleware.WithResourceMapper()` to attach custom logic. For example, in HTTP middleware:
 
 ```go
-middleware.WithResourceMapper(func(r *http.Request) *structpb.Struct {
-	return structFromBody(r.Body) // custom logic
+middleware.WithResourceMapper(func(r *http.Request, resource map[string]interface{}) {
+	accountID := getAccountID(r)         // custom logic to retrieve a value from the request
+
+	resource["account_id"] = accountID   // add the value as a field to the resource context
 })
 ```
+
+`Middleware.WithResourceMapper()` can be called multiple times to add more than one mapper. Each mapper can add
+or remove fields from the resoruce context. Mappers are called in the order in which they are added.
 
 In addition to these, each middleware has built-in mappers that can handle common use-cases.
 
 ### gRPC Middleware
 
-The gRPC middleware is available in the sub-package `middleware/grpc`.
+The gRPC middleware is available in the sub-package `middleware/grpcz`.
 It implements unary and stream gRPC server interceptors in its `.Unary()` and `.Stream()` methods.
 
 ```go
 import (
 	"github.com/aserto-dev/go-aserto/middleware"
-	grpcmw "github.com/aserto-dev/go-aserto/middleware/grpc"
+	"github.com/aserto-dev/go-aserto/middleware/grpcz"
 	"google.golang.org/grpc"
 )
 ...
-middleware, err := grpcmw.New(
-	client,
+middleware, err := grpcz.New(
+	azClient,
 	middleware.Policy{
 		Decision: 	   "allowed",
 	},
@@ -366,23 +351,11 @@ server := grpc.NewServer(
 
 #### Mappers
 
-gRPC mappers take as their input the incoming request's context and the message.
-
-```go
-type (
-	// StringMapper functions are used to extract string values like identity and policy-path from incoming messages.
-	StringMapper func(context.Context, interface{}) string
-
-	// ResourceMapper functions are used to extract structured data from incoming message.
-	ResourceMapper func(context.Context, interface{}, map[string]interface{})
-)
-```
-
 In addition to the general `WithIdentityMapper`, `WithPolicyPathMapper`, and `WithResourceMapper`, the gRPC middleware
 provides methods to help construct resource contexts from incoming messages.
 
 **`WithResourceFromFields(fields ...string)`** selects a specified set of fields from the incoming message to be
-included in the authorization resource.
+included in the resource context.
 
 **WithResourceFromMessageByPath(fieldsByPath map[string][]string, defaults ...string)** is similar to
 `WithResourceFromFields` but can select different sets  of fields depending on which service method is called.
@@ -401,12 +374,10 @@ The default behavior of the gRPC middleware is:
 
 ### HTTP Middleware
 
-The HTTP middleware are available under the sub-package `middleware/http`.
+Two flavors of HTTP middleware are available:
 
-Two flavors are implemented:
-
-* Standard `net/http` middleware with support for [gorilla/mux](https://pkg.go.dev/github.com/gorilla/mux) is implemented in `middleware/http/std`.
-* [Gin](https://github.com/gin-gonic/gin) middleware is implemented in `middleware/http/gin`.
+* `middleware/gorillaz`: Standard `net/http` middleware with support for [gorilla/mux](https://pkg.go.dev/github.com/gorilla/mux).
+* `middleware/ginz`: Middleware for the [Gin](https://github.com/gin-gonic/gin) web framework.
 
 Both are constructed and configured in a similar way. They differ in the signature of their `Handler()`
 function, which is used to attach them to HTTP routes, and in the signatures of their mapper functions.
@@ -416,11 +387,11 @@ function, which is used to attach them to HTTP routes, and in the signatures of 
 ```go
 import (
 	"github.com/aserto-dev/go-aserto/middleware"
-	"github.com/aserto-dev/go-aserto/middleware/http/std"
+	"github.com/aserto-dev/go-aserto/middleware/gorillaz"
 )
 ...
-mw := std.New(
-	client,
+mw := gorillaz.New(
+	azClient,
 	middleware.Policy{
 		Decision:	   "allowed",
 	},
@@ -430,36 +401,22 @@ mw := std.New(
 Adding the created authorization middleware to a basic `net/http` server may look something like this:
 
 ```go
-http.Handle("/foo", mw.Handler(fooHandler))
+http.Handle("/users", mw.Handler(usersHandler))
 ```
 
-The popular [`gorilla/mux`](https://github.com/gorilla/mux) package provides a powerful and flexible HTTP router.
+The popular [`gorilla/mux`](https://github.com/gorilla/mux) package provides a powerful and flexible HTTP router
+with support for URL path paremeters.
 Attaching the standard authorization middleware to a `gorilla/mux` server is as simple as:
 
 ```go
 router := mux.NewRouter()
 router.Use(mw.Handler)
 
-router.HandleFunc("/foo", fooHandler).Methods("GET")
+router.HandleFunc("/users/{id}", userHandler).Methods("GET")
 ```
 
 
 #### Mappers
-
-HTTP mappers take the incoming `http.Request` as their sole parameter.
-
-```go
-type (
-	StringMapper func(*http.Request) string
-	StructMapper func(*http.Request) *structpb.Struct
-)
-```
-
-In addition to the general `WithIdentityMapper`, `WithPolicyMapper`, and `WithResourceMapper`, the HTTP middleware
-provides `WithIdentityFromHeader()` to extract identity information from HTTP headers, and `WithNoResourceContext()` to
-omit a resource context from authorization calls.
-
-#### Default Mappers
 
 The default behavior of the HTTP middleware is:
 
@@ -476,17 +433,7 @@ The default behavior of the HTTP middleware is:
 
 #### Gin Middleware
 
-The gin middleware looks and behaves just like the net/http middleware with the following differences:
-
-* Its Handler function is a `gin.HandlerFunc` which can be used with
-[`IRoutes.Use(...HandlerFunc)`](https://pkg.go.dev/github.com/gin-gonic/gin#IRoutes).
-* Its mappers take `*gin.Context` instead of `*http.Request`:
-  ```go
-	type (
-		StringMapper func(*gin.Context) string
-		StructMapper func(*gin.Context) *structpb.Struct
-	)
-  ```
+The gin middleware looks and behaves just like the net/http middleware but uses `gin.Context` instead of `http.Request`.
 
 ### Check Middleware (ReBAC)
 
@@ -551,24 +498,3 @@ takes an `http.Request` and returns a `(objectType string, objectID string)` pai
 **`WithPolicyPath(string)`** sets the name of the policy module to evaluate in check calls. It defaults to `check`.
 If the `Policy` object used to construct the middleware contains the `Root` field, the root is used as a prefix.
 For example, if the root is set to `"myPolicy"`, the `Check` call looks for a policy module named `myPolicy.check`.
-
-
-## Other Aserto Services
-
-In addition to the authorizer service, go-aserto provides gRPC clients for Aserto's administrative services,
-allowing users to programmatically manage their aserto account.
-
-`client/authorizer` defines a client for services run at the edge and used to serve authorization requests.
-
-
-An API client is created using `New()` with the same connection options as the authorizer client.
-
-### Edge Client
-
-```go
-// Client provides access to Aserto edge services.
-type Client struct {
-	// Authorizer provides methods for performing authorization requests.
-	Authorizer authorizer.AuthorizerClient
-}
-```
