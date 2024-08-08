@@ -26,9 +26,8 @@ func main() {
 	mw := ginz.New(
 		azClient.Authorizer,
 		&middleware.Policy{
-			Name:          "local",
-			Decision:      "allowed",
-			InstanceLabel: "label",
+			Name:     "local",
+			Decision: "allowed",
 		},
 	)
 	mw.Identity.Mapper(func(c *gin.Context, identity middleware.Identity) {

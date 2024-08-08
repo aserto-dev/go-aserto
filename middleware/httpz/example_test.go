@@ -31,9 +31,8 @@ func Example() {
 	middleware := httpz.New(
 		azClient.Authorizer,
 		&httpz.Policy{
-			Name:          "<Aserto policy Name>",
-			Decision:      "<authorization decision (e.g. 'allowed')",
-			InstanceLabel: "<Aserto  policy instance label>",
+			Name:     "<Aserto policy Name>",
+			Decision: "<authorization decision (e.g. 'allowed')",
 		},
 	)
 
