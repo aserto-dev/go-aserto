@@ -31,8 +31,8 @@ func main() {
 			InstanceLabel: "label",
 		},
 	)
-	mw.Identity.Mapper(func(r *http.Request, identity middleware.Identity) {
-		if username, _, ok := r.BasicAuth(); ok {
+	mw.Identity.Mapper(func(c *gin.Context, identity middleware.Identity) {
+		if username, _, ok := c.Request.BasicAuth(); ok {
 			identity.Subject().ID(username)
 		}
 	})

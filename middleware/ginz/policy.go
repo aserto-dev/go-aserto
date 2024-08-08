@@ -7,7 +7,6 @@ import (
 
 	cerr "github.com/aserto-dev/errors"
 	"github.com/aserto-dev/go-aserto/middleware"
-	httpmw "github.com/aserto-dev/go-aserto/middleware/httpz"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
@@ -37,7 +36,7 @@ The values for these parameters can be set globally or extracted dynamically fro
 */
 type Middleware struct {
 	// Identity determines the caller identity used in authorization calls.
-	Identity *httpmw.IdentityBuilder
+	Identity *IdentityBuilder
 
 	client          AuthorizerClient
 	policy          *Policy
@@ -68,7 +67,7 @@ func New(client AuthorizerClient, policy *Policy) *Middleware {
 
 	return &Middleware{
 		client:          client,
-		Identity:        (&httpmw.IdentityBuilder{}).FromHeader("Authorization"),
+		Identity:        (&IdentityBuilder{}).FromHeader("Authorization"),
 		policy:          policy,
 		resourceMappers: []ResourceMapper{defaultResourceMapper},
 		policyMapper:    policyMapper,
@@ -76,48 +75,50 @@ func New(client AuthorizerClient, policy *Policy) *Middleware {
 }
 
 // Handler is the middleware implementation. It is how an Authorizer is wired to a Gin router.
-func (m *Middleware) Handler(g *gin.Context) {
+func (m *Middleware) Handler(c *gin.Context) {
 	policyContext := m.policyContext()
 
 	if m.policyMapper != nil {
-		policyContext.Path = m.policyMapper(g)
+		policyContext.Path = m.policyMapper(c)
 	}
 
-	resource, err := m.resourceContext(g)
+	resource, err := m.resourceContext(c)
 	if err != nil {
-		_ = g.AbortWithError(http.StatusInternalServerError, err)
+		_ = c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	allowed, err := m.is(g.Request.Context(), m.Identity.Build(g.Request), policyContext, resource)
+	allowed, err := m.is(c.Request.Context(), m.Identity.Build(c), policyContext, resource)
 	if err != nil {
-		_ = g.AbortWithError(http.StatusInternalServerError, err)
+		_ = c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	if !allowed {
-		g.AbortWithStatus(http.StatusForbidden)
+		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 
-	g.Next()
+	c.Next()
 }
 
-// Check returns a new Check middleware object that can be used to make ReBAC authorization decisions for individual
+// Check returns a new middleware handler that can be used to make ReBAC authorization decisions for individual
 // routes.
-// A check call returns true if a given relation exists between an object and a subject.
-func (m *Middleware) Check(options ...CheckOption) *Check {
-	return newCheck(m, options...)
+// The check handler authorizers requests if the caller has a given relation to or permission on a specified object.
+func (m *Middleware) Check(options ...CheckOption) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		newCheck(m, options...).Handler(c)
+	}
 }
 
 func (m *Middleware) policyContext() *api.PolicyContext {
 	return internal.DefaultPolicyContext(m.policy)
 }
 
-func (m *Middleware) resourceContext(g *gin.Context) (*structpb.Struct, error) {
+func (m *Middleware) resourceContext(c *gin.Context) (*structpb.Struct, error) {
 	res := map[string]interface{}{}
 	for _, mapper := range m.resourceMappers {
-		mapper(g, res)
+		mapper(c, res)
 	}
 
 	return structpb.NewStruct(res)
@@ -198,19 +199,19 @@ func (m *Middleware) WithResourceMapper(mapper ResourceMapper) *Middleware {
 	return m
 }
 
-func defaultResourceMapper(g *gin.Context, resource map[string]interface{}) {
-	for _, param := range g.Params {
+func defaultResourceMapper(c *gin.Context, resource map[string]interface{}) {
+	for _, param := range c.Params {
 		resource[param.Key] = param.Value
 	}
 }
 
 func urlPolicyPathMapper(prefix string) StringMapper {
-	return func(g *gin.Context) string {
-		policyPath := []string{g.Request.Method}
+	return func(c *gin.Context) string {
+		policyPath := []string{c.Request.Method}
 
-		segments := getPathSegments(g)
+		segments := getPathSegments(c)
 
-		if len(g.Params) > 0 {
+		if len(c.Params) > 0 {
 			for i, segment := range segments {
 				if strings.HasPrefix(segment, ":") {
 					segments[i] = "__" + segment[1:]
@@ -228,10 +229,10 @@ func urlPolicyPathMapper(prefix string) StringMapper {
 	}
 }
 
-func getPathSegments(g *gin.Context) []string {
-	path := g.Request.URL.Path
-	if len(g.Params) > 0 {
-		path = g.FullPath()
+func getPathSegments(c *gin.Context) []string {
+	path := c.Request.URL.Path
+	if len(c.Params) > 0 {
+		path = c.FullPath()
 	}
 
 	return strings.Split(strings.Trim(path, "/"), "/")
