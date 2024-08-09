@@ -1,7 +1,7 @@
 github.com/aserto-dev/errors v0.0.10 h1:tNf2imOyQJfBfYw1dkbsQfS58FKnql2W4XInGqCqhPk=
 github.com/aserto-dev/errors v0.0.10/go.mod h1:9g5ofm7u5rl9LKPh7WQvZZZ22tEYOiDmW+bwFQwIshA=
-github.com/aserto-dev/go-authorizer v0.20.8 h1:/Nk7G+LnyUwIFiEwZO62sQ9cqBFyPiO/vzoN5G8c860=
-github.com/aserto-dev/go-authorizer v0.20.8/go.mod h1:lncQZDlVYhXMsVBYnPvrFhGjtuvmNBJfUkIamy1dtrM=
+github.com/aserto-dev/go-authorizer v0.20.10 h1:H3IrMG7iti9bF0yWsiIQB7ApC9AaS6Zn7HIcLZlp4Jw=
+github.com/aserto-dev/go-authorizer v0.20.10/go.mod h1:lncQZDlVYhXMsVBYnPvrFhGjtuvmNBJfUkIamy1dtrM=
 github.com/aserto-dev/header v0.0.7 h1:hlo5/zYsBOsxzPxtve7LRbXyBbQmKSPAyOfmPhGgirM=
 github.com/aserto-dev/header v0.0.7/go.mod h1:wDF2S9k2q3lbilNb9q20vPpX8uvlSLYGa4F7p9GtGy4=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=

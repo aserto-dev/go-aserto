@@ -3,7 +3,7 @@ module github.com/aserto-dev/go-aserto
 go 1.21
 
 require (
-	github.com/aserto-dev/go-authorizer v0.20.8
+	github.com/aserto-dev/go-authorizer v0.20.10
 	github.com/aserto-dev/go-directory v0.31.9
 	github.com/aserto-dev/header v0.0.7
 	github.com/hashicorp/go-multierror v1.1.1

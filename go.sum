@@ -1,7 +1,7 @@
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240717164558-a6c49f84cc0f.2 h1:SZRVx928rbYZ6hEKUIN+vtGDkl7uotABRWGY4OAg5gM=
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240717164558-a6c49f84cc0f.2/go.mod h1:ylS4c28ACSI59oJrOdW4pHS4n0Hw4TgSPHn8rpHl4Yw=
-github.com/aserto-dev/go-authorizer v0.20.8 h1:/Nk7G+LnyUwIFiEwZO62sQ9cqBFyPiO/vzoN5G8c860=
-github.com/aserto-dev/go-authorizer v0.20.8/go.mod h1:lncQZDlVYhXMsVBYnPvrFhGjtuvmNBJfUkIamy1dtrM=
+github.com/aserto-dev/go-authorizer v0.20.10 h1:H3IrMG7iti9bF0yWsiIQB7ApC9AaS6Zn7HIcLZlp4Jw=
+github.com/aserto-dev/go-authorizer v0.20.10/go.mod h1:lncQZDlVYhXMsVBYnPvrFhGjtuvmNBJfUkIamy1dtrM=
 github.com/aserto-dev/go-directory v0.31.9 h1:XyZ9Ug9j0uGE+pDEka4DjuXv1eJEAnWCOlZHvt5kzx8=
 github.com/aserto-dev/go-directory v0.31.9/go.mod h1:T125gQBcPXrLUh7bMPFHzsXRHUnZb++DzhPk8o8tc4k=
 github.com/aserto-dev/header v0.0.7 h1:hlo5/zYsBOsxzPxtve7LRbXyBbQmKSPAyOfmPhGgirM=
