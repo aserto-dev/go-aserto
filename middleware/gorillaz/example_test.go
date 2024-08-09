@@ -29,7 +29,7 @@ func Example() {
 
 	// Create HTTP middleware.
 	middleware := mw.New(
-		azClient.Authorizer,
+		azClient,
 		&mw.Policy{
 			Name:     "<Aserto policy Name>",
 			Decision: "<authorization decision (e.g. 'allowed')",

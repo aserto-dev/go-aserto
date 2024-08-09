@@ -73,7 +73,7 @@ import (
 
 ctx := context.Background()
 
-resp, err := azClient.Authorizer.Is(ctx, &authorizer.IsRequest{
+resp, err := azClient.Is(ctx, &authorizer.IsRequest{
 	PolicyContext: &api.PolicyContext{
 		Path:      		"peoplefinder.GET.users.__id",
 		Decisions: 		"allowed",

@@ -25,7 +25,7 @@ func main() {
 	defer azClient.Close()
 
 	mw := gorillaz.New(
-		azClient.Authorizer,
+		azClient,
 		&middleware.Policy{
 			Name:     "local",
 			Decision: "allowed",

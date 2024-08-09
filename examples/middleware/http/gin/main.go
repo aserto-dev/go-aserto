@@ -24,7 +24,7 @@ func main() {
 	defer azClient.Close()
 
 	mw := ginz.New(
-		azClient.Authorizer,
+		azClient,
 		&middleware.Policy{
 			Name:     "local",
 			Decision: "allowed",
