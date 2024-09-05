@@ -48,7 +48,8 @@ type Middleware struct {
 	policy          *Policy
 	policyMapper    StringMapper
 	resourceMappers []ResourceMapper
-	ignoredMethods  []string
+	ignoredPaths    internal.Lookup[string]
+	allowedMethods  internal.Lookup[string]
 }
 
 type (
@@ -77,12 +78,23 @@ func New(authzClient AuthorizerClient, policy *Policy) *Middleware {
 		policy:          policy,
 		policyMapper:    policyMapper,
 		resourceMappers: []ResourceMapper{},
-		ignoredMethods:  []string{},
 	}
 }
 
-func (m *Middleware) WithIgnoredMethods(methods []string) *Middleware {
-	m.ignoredMethods = methods
+// Deprecated: Use WithAllowedMethods instead.
+// WithIgnoredMethods takes as its input a list of policy paths in Rego dot notation
+// (e.g. "myservice.GET.user.__id") that are ignored by the middleware. Requests that
+// would normally evaluate one of these paths will be allowed to proceed without authorization.
+func (m *Middleware) WithIgnoredMethods(paths []string) *Middleware {
+	m.ignoredPaths = internal.NewLookup(paths...)
+	return m
+}
+
+// WithAllowedMethods takes a list of gRPC methods that are allowed to proceed without authorization.
+// Method paths are in the format "/package.Service/Method".
+// For example: "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo".
+func (m *Middleware) WithAllowedMethods(methods ...string) *Middleware {
+	m.allowedMethods = internal.NewLookup(methods...)
 	return m
 }
 
@@ -214,15 +226,17 @@ func (m *Middleware) Stream() grpc.StreamServerInterceptor {
 }
 
 func (m *Middleware) authorize(ctx context.Context, req interface{}) error {
+	if m.isAllowedMethod(ctx) {
+		return nil
+	}
+
 	policyContext := internal.DefaultPolicyContext(m.policy)
 	if m.policyMapper != nil {
 		policyContext.Path = m.policyMapper(ctx, req)
 	}
 
-	for _, path := range m.ignoredMethods {
-		if policyContext.Path == path {
-			return nil
-		}
+	if m.ignoredPaths.Contains(policyContext.Path) {
+		return nil
 	}
 
 	resource, err := m.resourceContext(ctx, req)
@@ -255,6 +269,11 @@ func (m *Middleware) authorize(ctx context.Context, req interface{}) error {
 	}
 
 	return nil
+}
+
+func (m *Middleware) isAllowedMethod(ctx context.Context) bool {
+	method, _ := grpc.Method(ctx)
+	return m.allowedMethods.Contains(method)
 }
 
 func (m *Middleware) resourceContext(ctx context.Context, req interface{}) (*structpb.Struct, error) {

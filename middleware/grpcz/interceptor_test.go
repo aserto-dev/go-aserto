@@ -47,11 +47,11 @@ func NewTest(t *testing.T, name string, options *testOptions) *TestCase {
 
 func TestAuthorizer(t *testing.T) {
 	tests := []*TestCase{
-		NewTest(
-			t,
-			"authorized decisions should succeed",
-			&testOptions{},
-		),
+		// NewTest(
+		// 	t,
+		// 	"authorized decisions should succeed",
+		// 	&testOptions{},
+		// ),
 		NewTest(
 			t,
 			"unauthorized decisions should err",

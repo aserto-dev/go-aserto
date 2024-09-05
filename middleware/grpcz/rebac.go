@@ -10,6 +10,7 @@ import (
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 	"github.com/aserto-dev/go-authorizer/pkg/aerr"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -22,7 +23,8 @@ type RebacMiddleware struct {
 	resourceMappers []ResourceMapper
 	subjType        string
 	objType         string
-	ignoredMethods  []string
+	ignoredPaths    internal.Lookup[string]
+	allowedMethods  internal.Lookup[string]
 }
 
 /*
@@ -65,8 +67,23 @@ func (c *RebacMiddleware) WithObjectType(value string) *RebacMiddleware {
 	return c
 }
 
+// Deprecated: Use WithAllowedMethods instead.
+// WithIgnoredMethods takes as its input a list of policy paths in Rego dot notation
+// (e.g. "myservice.GET.user.__id") that are ignored by the middleware. Requests that
+// would normally evaluate one of these paths will be allowed to proceed without authorization.
 func (c *RebacMiddleware) WithIgnoredMethods(methods []string) *RebacMiddleware {
-	c.ignoredMethods = methods
+	c.ignoredPaths = internal.NewLookup(
+		lo.Map(methods, func(m string, _ int) string { return strings.ToLower(m) })...,
+	)
+
+	return c
+}
+
+// WithAllowedMethods takes a list of gRPC methods that are allowed to proceed without authorization.
+// Method paths are in the format "/package.Service/Method".
+// For example: "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo".
+func (c *RebacMiddleware) WithAllowedMethods(methods ...string) *RebacMiddleware {
+	c.allowedMethods = internal.NewLookup(methods...)
 	return c
 }
 
@@ -77,11 +94,10 @@ func NewRebacMiddleware(authzClient AuthorizerClient, policy *Policy) *RebacMidd
 	}
 
 	return &RebacMiddleware{
-		Identity:       (&IdentityBuilder{}).Subject().FromMetadata("authorization"),
-		client:         authzClient,
-		policy:         policy,
-		policyMapper:   policyMapper,
-		ignoredMethods: []string{},
+		Identity:     (&IdentityBuilder{}).Subject().FromMetadata("authorization"),
+		client:       authzClient,
+		policy:       policy,
+		policyMapper: policyMapper,
 	}
 }
 
@@ -120,17 +136,19 @@ func (c *RebacMiddleware) Stream() grpc.StreamServerInterceptor {
 }
 
 func (c *RebacMiddleware) authorize(ctx context.Context, req interface{}) error {
-	policyContext := c.policyContext()
-	resource, err := c.resourceContext(ctx, req)
+	if c.isAllowedMethod(ctx) {
+		return nil
+	}
 
+	policyContext := c.policyContext()
+
+	resource, err := c.resourceContext(ctx, req)
 	if err != nil {
 		return errors.Wrap(err, "failed to apply resource mapper")
 	}
 
-	for _, path := range c.ignoredMethods {
-		if resource.AsMap()["relation"] == strings.ToLower(path) {
-			return nil
-		}
+	if c.ignoredPaths.Contains(permissionFromMethod(ctx)) {
+		return nil
 	}
 
 	resp, err := c.client.Is(
@@ -155,6 +173,11 @@ func (c *RebacMiddleware) authorize(ctx context.Context, req interface{}) error 
 	}
 
 	return nil
+}
+
+func (c *RebacMiddleware) isAllowedMethod(ctx context.Context) bool {
+	method, _ := grpc.Method(ctx)
+	return c.allowedMethods.Contains(method)
 }
 
 func (c *RebacMiddleware) policyContext() *api.PolicyContext {
@@ -188,15 +211,15 @@ func (c *RebacMiddleware) resourceContext(ctx context.Context, req interface{}) 
 	}
 
 	res["object_type"] = c.objectType()
-	res["relation"] = methodResource(ctx)
+	res["relation"] = permissionFromMethod(ctx)
 	res["subject_type"] = c.subjectType()
 
 	return structpb.NewStruct(res)
 }
 
-func methodResource(ctx context.Context) string {
+func permissionFromMethod(ctx context.Context) string {
 	method, _ := grpc.Method(ctx)
-	path := strings.ToLower(internal.ToPolicyPath(method))
+	path := strings.ToLower(internal.ToPolicyPath(method)[:64])
 
 	return path
 }

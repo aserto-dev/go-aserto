@@ -9,7 +9,6 @@ import (
 	ds3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/samber/lo"
 	"google.golang.org/grpc"
 )
 
@@ -166,19 +165,23 @@ func WithSubjectMapper(mapper ObjectMapper) CheckOption {
 }
 
 func WithMethodFilter(methods ...string) CheckOption {
+	lookup := internal.NewLookup(methods...)
+
 	return func(o *CheckOptions) {
 		o.filters = append(o.filters, func(ctx context.Context, _ any) bool {
 			method, _ := grpc.Method(ctx)
-			return lo.Contains(methods, method)
+			return lookup.Contains(method)
 		})
 	}
 }
 
 func WithContextValueFilter(ctxKey any, values ...string) CheckOption {
+	lookup := internal.NewLookup(values...)
+
 	return func(o *CheckOptions) {
 		o.filters = append(o.filters, func(ctx context.Context, _ any) bool {
 			value := internal.ValueOrEmpty(ctx, ctxKey)
-			return lo.Contains(values, value)
+			return lookup.Contains(value)
 		})
 	}
 }
@@ -294,5 +297,5 @@ func (c *CheckMiddleware) authorize(ctx context.Context, req interface{}) error 
 }
 
 func relationFromMethod(ctx context.Context, _ any) string {
-	return methodResource(ctx)
+	return permissionFromMethod(ctx)
 }
