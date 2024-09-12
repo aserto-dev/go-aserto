@@ -12,11 +12,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-const (
-	DefaultSubjType = "user"
-	DefaultObjType  = "tenant"
-)
-
 type ObjectMapper func(ctx context.Context, req any) (objType, id string)
 type Filter func(ctx context.Context, req any) bool
 
@@ -63,7 +58,12 @@ func (o *CheckOptions) object(ctx context.Context, req any) (string, string) {
 }
 
 func (o *CheckOptions) subject(ctx context.Context, req any) (string, string) {
-	return o.subj.resolve(ctx, req)
+	subjType, subjID := o.subj.resolve(ctx, req)
+	if subjType == "" {
+		subjType = internal.DefaultSubjType
+	}
+
+	return subjType, subjID
 }
 
 func (o *CheckOptions) relation(ctx context.Context, req any) string {

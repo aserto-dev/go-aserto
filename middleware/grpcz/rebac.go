@@ -235,13 +235,9 @@ func (c *RebacMiddleware) subjectType() string {
 		return c.subjType
 	}
 
-	return DefaultSubjType
+	return internal.DefaultSubjType
 }
 
 func (c *RebacMiddleware) objectType() string {
-	if c.objType != "" {
-		return c.objType
-	}
-
-	return DefaultObjType
+	return c.objType
 }
