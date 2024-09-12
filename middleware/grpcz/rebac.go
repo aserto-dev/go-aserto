@@ -15,6 +15,8 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+const MaxPermissionLen = 64
+
 type RebacMiddleware struct {
 	policy          *Policy
 	client          AuthorizerClient
@@ -219,7 +221,11 @@ func (c *RebacMiddleware) resourceContext(ctx context.Context, req interface{}) 
 
 func permissionFromMethod(ctx context.Context) string {
 	method, _ := grpc.Method(ctx)
-	path := strings.ToLower(internal.ToPolicyPath(method)[:64])
+
+	path := strings.ToLower(internal.ToPolicyPath(method))
+	if len(path) > MaxPermissionLen {
+		path = path[:MaxPermissionLen]
+	}
 
 	return path
 }
