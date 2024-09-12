@@ -121,7 +121,7 @@ func (o *CheckOptions) subjectType() string {
 		return o.subj.subjType
 	}
 
-	return "user"
+	return internal.DefaultSubjType
 }
 
 type Check struct {
