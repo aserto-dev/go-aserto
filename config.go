@@ -45,6 +45,10 @@ func (cfg *Config) ToConnectionOptions(dop DialOptionsProvider) ([]ConnectionOpt
 		options = append(options, WithTenantID(cfg.TenantID))
 	}
 
+	for key, value := range cfg.Headers {
+		options = append(options, WithHeader(key, value))
+	}
+
 	opts, err := dop(cfg)
 	if err != nil {
 		return nil, err

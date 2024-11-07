@@ -133,6 +133,17 @@ func WithDialOptions(opts ...grpc.DialOption) ConnectionOption {
 	}
 }
 
+// WithHeader adds an header to the client config instance.
+func WithHeader(key, value string) ConnectionOption {
+	return func(options *ConnectionOptions) error {
+		if options.Headers == nil {
+			options.Headers = map[string]string{}
+		}
+		options.Headers[key] = value
+		return nil
+	}
+}
+
 // ConnectionOptions holds settings used to establish a connection to the authorizer service.
 type ConnectionOptions struct {
 	// The server's host name and port separated by a colon ("hostname:port").
@@ -171,6 +182,9 @@ type ConnectionOptions struct {
 
 	// DialOptions passed to the grpc client.
 	DialOptions []grpc.DialOption
+
+	// Headers
+	Headers map[string]string
 }
 
 // ConnectionOption functions are used to configure ConnectionOptions instances.

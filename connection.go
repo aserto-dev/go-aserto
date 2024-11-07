@@ -177,3 +177,11 @@ func SetSessionContext(ctx context.Context, sessionID string) context.Context {
 
 	return metadata.AppendToOutgoingContext(ctx, string(header.HeaderAsertoSessionID), sessionID)
 }
+
+func SetAccountContext(ctx context.Context, accountID string) context.Context {
+	if strings.TrimSpace(accountID) == "" {
+		return ctx
+	}
+
+	return metadata.AppendToOutgoingContext(ctx, string(header.HeaderAsertoAccountID), accountID)
+}
