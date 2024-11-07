@@ -20,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -96,12 +97,18 @@ func newClient(
 	}
 
 	dialOptions := []grpc.DialOption{
-		grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)),
 		grpc.WithChainUnaryInterceptor(unary(tenantID, sessionID)),
 		grpc.WithChainStreamInterceptor(stream(tenantID, sessionID)),
 	}
+
 	if callerCreds != nil {
 		dialOptions = append(dialOptions, grpc.WithPerRPCCredentials(callerCreds))
+	}
+
+	if tlsConf == nil {
+		dialOptions = append(dialOptions, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	} else {
+		dialOptions = append(dialOptions, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)))
 	}
 
 	dialOptions = append(dialOptions, options...)
@@ -113,9 +120,14 @@ func newClient(
 }
 
 func newConnection(dialContext connectionFactory, options *ConnectionOptions) (*grpc.ClientConn, error) {
-	tlsConf, err := tlsconf.TLSConfig(options.Insecure, options.CACertPath)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to setup tls configuration")
+	var tlsConf *tls.Config
+
+	if !options.NoTLS {
+		if conf, err := tlsconf.TLSConfig(options.Insecure, options.CACertPath); err != nil {
+			return nil, errors.Wrap(err, "failed to setup tls configuration")
+		} else {
+			tlsConf = conf
+		}
 	}
 
 	dialOptions := []grpc.DialOption{

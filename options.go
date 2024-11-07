@@ -139,7 +139,16 @@ func WithHeader(key, value string) ConnectionOption {
 		if options.Headers == nil {
 			options.Headers = map[string]string{}
 		}
+
 		options.Headers[key] = value
+
+		return nil
+	}
+}
+
+func WithNoTLS(noTLS bool) ConnectionOption {
+	return func(options *ConnectionOptions) error {
+		options.NoTLS = noTLS
 		return nil
 	}
 }
@@ -173,6 +182,8 @@ type ConnectionOptions struct {
 
 	// If true, skip TLS certificate verification.
 	Insecure bool
+
+	NoTLS bool
 
 	// UnaryClientInterceptors passed to the grpc client.
 	UnaryClientInterceptors []grpc.UnaryClientInterceptor

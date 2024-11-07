@@ -2,6 +2,8 @@ package aserto
 
 import "github.com/pkg/errors"
 
+var ErrInvalidConfig = errors.New("invalid configuration")
+
 // gRPC Client Configuration.
 type Config struct {
 	Address          string            `json:"address"`
@@ -13,16 +15,22 @@ type Config struct {
 	CACertPath       string            `json:"ca_cert_path"`
 	TimeoutInSeconds int               `json:"timeout_in_seconds"`
 	Insecure         bool              `json:"insecure"`
+	NoTLS            bool              `json:"no_tls"`
 	Headers          map[string]string `json:"headers"`
 }
 
 func (cfg *Config) ToConnectionOptions(dop DialOptionsProvider) ([]ConnectionOption, error) {
-	options := []ConnectionOption{
-		WithInsecure(cfg.Insecure),
+	if cfg.APIKey != "" && cfg.Token != "" {
+		return nil, errors.Wrap(ErrInvalidConfig, "api_key and token are mutually exclusive")
 	}
 
-	if cfg.APIKey != "" && cfg.Token != "" {
-		return nil, errors.New("both api_key and token are set")
+	if cfg.Insecure && cfg.NoTLS {
+		return nil, errors.Wrap(ErrInvalidConfig, "insecure and no_tls are mutually exclusive")
+	}
+
+	options := []ConnectionOption{
+		WithInsecure(cfg.Insecure),
+		WithNoTLS(cfg.NoTLS),
 	}
 
 	if cfg.Token != "" {
