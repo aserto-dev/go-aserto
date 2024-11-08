@@ -40,7 +40,7 @@ func New(opts ...aserto.ConnectionOption) (*Client, error) {
 		return nil, err
 	}
 
-	if options.ServerAddress() == "" {
+	if options.Address == "" {
 		options.Address = hosted.HostedDirectoryHostname + hosted.HostedDirectoryGRPCPort
 	}
 

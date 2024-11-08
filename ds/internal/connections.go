@@ -31,9 +31,7 @@ func (cb *Connections) Get(cfg *aserto.Config) (*grpc.ClientConn, error) {
 
 	conn := cb.conns[hash]
 	if conn == nil {
-		dop := aserto.NewDialOptionsProvider()
-
-		opts, err := cfg.ToConnectionOptions(dop)
+		opts, err := cfg.ToConnectionOptions()
 		if err != nil {
 			return nil, err
 		}

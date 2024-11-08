@@ -1,31 +1,80 @@
 package aserto
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+)
 
 var ErrInvalidConfig = errors.New("invalid configuration")
 
 // gRPC Client Configuration.
 type Config struct {
-	Address          string            `json:"address"`
-	Token            string            `json:"token"`
-	TenantID         string            `json:"tenant_id"`
-	APIKey           string            `json:"api_key"`
-	ClientCertPath   string            `json:"client_cert_path"`
-	ClientKeyPath    string            `json:"client_key_path"`
-	CACertPath       string            `json:"ca_cert_path"`
-	TimeoutInSeconds int               `json:"timeout_in_seconds"`
-	Insecure         bool              `json:"insecure"`
-	NoTLS            bool              `json:"no_tls"`
-	Headers          map[string]string `json:"headers"`
+	// Address of the service to connect to.
+	//
+	// Address is typically in the form "hostname:port" but may also be a
+	// a Unix socket or DNS URI.
+	// See https://github.com/grpc/grpc/blob/master/doc/naming.md#name-syntax for more details.
+	Address string `json:"address"`
+
+	// A JWT to be used for authentication with the service.
+	//
+	// Token and APIKey are mutually exclusive.
+	Token string `json:"token"`
+
+	// An API key to be used for authentication with the service.
+	APIKey string `json:"api_key"`
+
+	// An Aserto tenant ID.
+	TenantID string `json:"tenant_id"`
+
+	// An aserto account ID.
+	AccountID string `json:"account_id"`
+
+	// In mTLS connections, ClientCertPath is the path of the client's
+	// certificate file.
+	ClientCertPath string `json:"client_cert_path"`
+
+	// In mTLS connections, ClientKeyPath is the path of the client's
+	// private key file.
+	ClientKeyPath string `json:"client_key_path"`
+
+	// In TLS connections, CACertPath is the path of a CA certificate to
+	// validate the server's certificate against.
+	CACertPath string `json:"ca_cert_path"`
+
+	// In TLS connections, skip verification of the server certificate.
+	Insecure bool `json:"insecure"`
+
+	// Disable TLS and use a plaintext connection.
+	NoTLS bool `json:"no_tls"`
+
+	// Additional headers to include in requests to the service.
+	Headers map[string]string `json:"headers"`
 }
 
-func (cfg *Config) ToConnectionOptions(dop DialOptionsProvider) ([]ConnectionOption, error) {
+// Connects to the service specified in Config, possibly with additional
+// connection options.
+func (cfg *Config) Connect(opts ...ConnectionOption) (*grpc.ClientConn, error) {
+	connOpts := &ConnectionOptions{Config: *cfg}
+	if err := connOpts.Apply(opts...); err != nil {
+		return nil, err
+	}
+
+	return Connect(connOpts)
+}
+
+// Converts the Config into a ConnectionOption slice that can be passed to NewConnection().
+func (cfg *Config) ToConnectionOptions() ([]ConnectionOption, error) {
 	if cfg.APIKey != "" && cfg.Token != "" {
 		return nil, errors.Wrap(ErrInvalidConfig, "api_key and token are mutually exclusive")
 	}
 
 	if cfg.Insecure && cfg.NoTLS {
 		return nil, errors.Wrap(ErrInvalidConfig, "insecure and no_tls are mutually exclusive")
+	}
+
+	if !cfg.NoTLS && ((cfg.ClientCertPath == "") != (cfg.ClientKeyPath == "")) {
+		return nil, errors.Wrap(ErrInvalidConfig, "client_cert_path and client_key_path must be specified together")
 	}
 
 	options := []ConnectionOption{
@@ -53,16 +102,13 @@ func (cfg *Config) ToConnectionOptions(dop DialOptionsProvider) ([]ConnectionOpt
 		options = append(options, WithTenantID(cfg.TenantID))
 	}
 
+	if cfg.ClientCertPath != "" {
+		options = append(options, WithClientCert(cfg.ClientCertPath, cfg.ClientKeyPath))
+	}
+
 	for key, value := range cfg.Headers {
 		options = append(options, WithHeader(key, value))
 	}
-
-	opts, err := dop(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	options = append(options, WithDialOptions(opts...))
 
 	return options, nil
 }
