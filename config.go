@@ -113,6 +113,10 @@ func (cfg *Config) validate() error {
 		return errors.Wrap(ErrInvalidConfig, "insecure and no_tls are mutually exclusive")
 	}
 
+	if cfg.NoTLS && (cfg.ClientCertPath != "" || cfg.ClientKeyPath != "") {
+		return errors.Wrap(ErrInvalidConfig, "mtls (client_cert_path and client_cert_key) and no_tls are mutually exclusive")
+	}
+
 	if !cfg.NoTLS && ((cfg.ClientCertPath == "") != (cfg.ClientKeyPath == "")) {
 		return errors.Wrap(ErrInvalidConfig, "client_cert_path and client_key_path must be specified together")
 	}
