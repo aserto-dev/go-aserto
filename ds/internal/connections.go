@@ -20,10 +20,6 @@ func NewConnections() *Connections {
 }
 
 func (cb *Connections) Get(cfg *aserto.Config) (*grpc.ClientConn, error) {
-	if cfg == nil {
-		return nil, nil
-	}
-
 	hash, err := hs.Hash(cfg, hs.FormatV2, nil)
 	if err != nil {
 		return nil, err

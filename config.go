@@ -11,8 +11,7 @@ var ErrInvalidConfig = errors.New("invalid configuration")
 type Config struct {
 	// Address of the service to connect to.
 	//
-	// Address is typically in the form "hostname:port" but may also be a
-	// a Unix socket or DNS URI.
+	// Address is typically in the form "hostname:port" but may also be a Unix socket or DNS URI.
 	// See https://github.com/grpc/grpc/blob/master/doc/naming.md#name-syntax for more details.
 	Address string `json:"address"`
 
@@ -27,7 +26,7 @@ type Config struct {
 	// An Aserto tenant ID.
 	TenantID string `json:"tenant_id"`
 
-	// An aserto account ID.
+	// An Aserto account ID.
 	AccountID string `json:"account_id"`
 
 	// In mTLS connections, ClientCertPath is the path of the client's
@@ -65,16 +64,8 @@ func (cfg *Config) Connect(opts ...ConnectionOption) (*grpc.ClientConn, error) {
 
 // Converts the Config into a ConnectionOption slice that can be passed to NewConnection().
 func (cfg *Config) ToConnectionOptions() ([]ConnectionOption, error) {
-	if cfg.APIKey != "" && cfg.Token != "" {
-		return nil, errors.Wrap(ErrInvalidConfig, "api_key and token are mutually exclusive")
-	}
-
-	if cfg.Insecure && cfg.NoTLS {
-		return nil, errors.Wrap(ErrInvalidConfig, "insecure and no_tls are mutually exclusive")
-	}
-
-	if !cfg.NoTLS && ((cfg.ClientCertPath == "") != (cfg.ClientKeyPath == "")) {
-		return nil, errors.Wrap(ErrInvalidConfig, "client_cert_path and client_key_path must be specified together")
+	if err := cfg.validate(); err != nil {
+		return nil, err
 	}
 
 	options := []ConnectionOption{
@@ -111,4 +102,20 @@ func (cfg *Config) ToConnectionOptions() ([]ConnectionOption, error) {
 	}
 
 	return options, nil
+}
+
+func (cfg *Config) validate() error {
+	if cfg.APIKey != "" && cfg.Token != "" {
+		return errors.Wrap(ErrInvalidConfig, "api_key and token are mutually exclusive")
+	}
+
+	if cfg.Insecure && cfg.NoTLS {
+		return errors.Wrap(ErrInvalidConfig, "insecure and no_tls are mutually exclusive")
+	}
+
+	if !cfg.NoTLS && ((cfg.ClientCertPath == "") != (cfg.ClientKeyPath == "")) {
+		return errors.Wrap(ErrInvalidConfig, "client_cert_path and client_key_path must be specified together")
+	}
+
+	return nil
 }

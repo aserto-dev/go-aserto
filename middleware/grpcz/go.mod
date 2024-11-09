@@ -1,6 +1,8 @@
 module github.com/aserto-dev/go-aserto/middleware/grpcz
 
-go 1.21
+go 1.22
+
+toolchain go1.23.2
 
 replace github.com/aserto-dev/go-aserto => ../../
 

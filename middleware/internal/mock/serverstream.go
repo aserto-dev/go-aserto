@@ -11,7 +11,6 @@ var errNotImplemented = errors.New("not implemented")
 
 // Mock grpc.ServerStream.
 type ServerStream struct {
-	Ctx context.Context
 }
 
 func (s *ServerStream) SetHeader(metadata.MD) error {
@@ -26,7 +25,7 @@ func (s *ServerStream) SetTrailer(metadata.MD) {
 }
 
 func (s *ServerStream) Context() context.Context {
-	return s.Ctx
+	return context.TODO()
 }
 
 func (s *ServerStream) SendMsg(_ interface{}) error {

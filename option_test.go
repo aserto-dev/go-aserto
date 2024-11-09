@@ -104,10 +104,15 @@ func TestWithTenantID(t *testing.T) {
 	assert.Equal("<tenantid>", options.TenantID)
 }
 
+const (
+	caPath   = "/path/to/ca.crt"
+	certPath = "/path/to/cert.crt"
+	keyPath  = "/path/to/cert.key"
+)
+
 func TestWithCACertPath(t *testing.T) {
 	assert := assrt.New(t)
 
-	caPath := "/path/to/ca.crt"
 	options, err := aserto.NewConnectionOptions(aserto.WithCACertPath(caPath))
 	assert.NoError(err)
 
@@ -117,7 +122,6 @@ func TestWithCACertPath(t *testing.T) {
 func TestWithClientCert(t *testing.T) {
 	assert := assrt.New(t)
 
-	certPath, keyPath := "/path/to/cert.crt", "/path/to/cert.key"
 	options, err := aserto.NewConnectionOptions(aserto.WithClientCert(certPath, keyPath))
 	assert.NoError(err)
 
@@ -170,5 +174,4 @@ func TestWithAccountID(t *testing.T) {
 	options, err := aserto.NewConnectionOptions(aserto.WithAccountID("accountID"))
 	assert.NoError(err)
 	assert.Equal("accountID", options.AccountID)
-
 }

@@ -113,7 +113,7 @@ func runUnary(mw *grpcmw.Middleware) error {
 		nil,
 		&grpc.UnaryServerInfo{},
 		func(_ context.Context, _ interface{}) (interface{}, error) {
-			return nil, nil
+			return nil, nil //nolint: nilnil
 		},
 	)
 
@@ -123,7 +123,7 @@ func runUnary(mw *grpcmw.Middleware) error {
 func runStream(mw *grpcmw.Middleware) error {
 	return mw.Stream()(
 		nil,
-		&mock.ServerStream{Ctx: context.Background()},
+		&mock.ServerStream{},
 		&grpc.StreamServerInfo{},
 		func(_ interface{}, _ grpc.ServerStream) error {
 			return nil

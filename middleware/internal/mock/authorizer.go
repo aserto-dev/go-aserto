@@ -33,7 +33,7 @@ func (c *Authorizer) DecisionTree(
 	_ *authz.DecisionTreeRequest,
 	_ ...grpc.CallOption,
 ) (*authz.DecisionTreeResponse, error) {
-	return nil, nil
+	return &authz.DecisionTreeResponse{}, nil
 }
 
 func (c *Authorizer) Is(
@@ -54,7 +54,7 @@ func (c *Authorizer) Query(
 	_ *authz.QueryRequest,
 	_ ...grpc.CallOption,
 ) (*authz.QueryResponse, error) {
-	return nil, nil
+	return &authz.QueryResponse{}, nil
 }
 
 func (c *Authorizer) Compile(
@@ -62,7 +62,7 @@ func (c *Authorizer) Compile(
 	_ *authz.CompileRequest,
 	_ ...grpc.CallOption,
 ) (*authz.CompileResponse, error) {
-	return nil, nil
+	return &authz.CompileResponse{}, nil
 }
 
 func (c *Authorizer) GetPolicy(
@@ -70,7 +70,7 @@ func (c *Authorizer) GetPolicy(
 	_ *authz.GetPolicyRequest,
 	_ ...grpc.CallOption,
 ) (*authz.GetPolicyResponse, error) {
-	return nil, nil
+	return &authz.GetPolicyResponse{}, nil
 }
 
 func (c *Authorizer) ListPolicies(
@@ -78,7 +78,7 @@ func (c *Authorizer) ListPolicies(
 	_ *authz.ListPoliciesRequest,
 	_ ...grpc.CallOption,
 ) (*authz.ListPoliciesResponse, error) {
-	return nil, nil
+	return &authz.ListPoliciesResponse{}, nil
 }
 
 func (c *Authorizer) Info(
@@ -86,5 +86,5 @@ func (c *Authorizer) Info(
 	_ *authz.InfoRequest,
 	_ ...grpc.CallOption,
 ) (*authz.InfoResponse, error) {
-	return nil, nil
+	return &authz.InfoResponse{}, nil
 }

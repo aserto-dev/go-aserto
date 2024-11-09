@@ -1,6 +1,8 @@
 module github.com/aserto-dev/go-aserto/middleware/ginz
 
-go 1.21
+go 1.22
+
+toolchain go1.23.2
 
 replace github.com/aserto-dev/go-aserto => ../../
 
@@ -41,6 +43,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/samber/lo v1.46.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
