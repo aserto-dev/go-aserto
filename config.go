@@ -49,11 +49,23 @@ type Config struct {
 
 	// Additional headers to include in requests to the service.
 	Headers map[string]string `json:"headers"`
+
+	// Deprecated: no longer used. Timeouts are controlled on a per-call basis
+	// by the provided context.
+	TimeoutInSeconds int `json:"timeout_in_seconds"`
 }
 
 // Connects to the service specified in Config, possibly with additional
 // connection options.
 func (cfg *Config) Connect(opts ...ConnectionOption) (*grpc.ClientConn, error) {
+	if cfg.APIKey != "" {
+		opts = append(opts, WithAPIKeyAuth(cfg.APIKey))
+	}
+
+	if cfg.Token != "" {
+		opts = append(opts, WithTokenAuth(cfg.Token))
+	}
+
 	connOpts := &ConnectionOptions{Config: *cfg}
 	if err := connOpts.Apply(opts...); err != nil {
 		return nil, err
