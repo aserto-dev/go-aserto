@@ -1,3 +1,5 @@
+---
+version: 2
 project_name: go-aserto
 
 env:
@@ -64,8 +66,8 @@ archives:
   # https://goreleaser.com/customization/archive/
   - format: zip
     builds:
-    - gin_example
-    - gorilla_example
+      - gin_example
+      - gorilla_example
     files:
       - LICENSE
       - README.md

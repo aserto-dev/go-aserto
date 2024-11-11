@@ -319,11 +319,15 @@ func messageResourceMapper(fieldsByPath map[string][]string, defaults ...string)
 func reqMessageResourceMapper() ResourceMapper {
 	return func(ctx context.Context, req interface{}, res map[string]interface{}) {
 		if req != nil {
-			protoReq := req.(protoreflect.ProtoMessage)
+			protoReq, ok := req.(protoreflect.ProtoMessage)
+			if !ok {
+				return
+			}
+
 			message := protoReq.ProtoReflect()
 			fields := message.Descriptor().Fields()
 
-			for idx := 0; idx < fields.Len(); idx++ {
+			for idx := range fields.Len() {
 				field := fields.Get(idx)
 				value := protoReq.ProtoReflect().Get(field).String()
 

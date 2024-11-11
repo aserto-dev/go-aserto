@@ -1,167 +1,26 @@
 package aserto
 
 import (
-	"net/url"
-	"strings"
+	"context"
+	"crypto/tls"
 
-	"github.com/aserto-dev/go-aserto/internal/client"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
+
+	"github.com/aserto-dev/go-aserto/internal/tlsconf"
 )
-
-var ErrInvalidOptions = errors.New("invalid connection options")
-
-// WithInsecure disables TLS verification.
-func WithInsecure(insecure bool) ConnectionOption {
-	return func(options *ConnectionOptions) error {
-		options.Insecure = insecure
-
-		return nil
-	}
-}
-
-// WithAddr overrides the default authorizer server address.
-//
-// Note: WithAddr and WithURL are mutually exclusive.
-func WithAddr(addr string) ConnectionOption {
-	return func(options *ConnectionOptions) error {
-		if options.URL != nil {
-			return errors.Wrap(ErrInvalidOptions, "address and url are mutually exclusive")
-		}
-
-		options.Address = addr
-
-		return nil
-	}
-}
-
-// WithURL overrides the default authorizer server URL.
-// Unlike WithAddr, WithURL lets gRPC users to connect to communicate with a locally running authorizer
-// over Unix sockets. See https://github.com/grpc/grpc/blob/master/doc/naming.md#grpc-name-resolution for
-// more details about gRPC name resolution.
-//
-// Note: WithURL and WithAddr are mutually exclusive.
-func WithURL(svcURL *url.URL) ConnectionOption {
-	return func(options *ConnectionOptions) error {
-		if options.Address != "" {
-			return errors.Wrap(ErrInvalidOptions, "url and address are mutually exclusive")
-		}
-
-		options.URL = svcURL
-
-		return nil
-	}
-}
-
-// WithCACertPath treats the specified certificate file as a trusted root CA.
-//
-// Include it when calling an authorizer service that uses a self-issued SSL certificate.
-func WithCACertPath(path string) ConnectionOption {
-	return func(options *ConnectionOptions) error {
-		options.CACertPath = path
-
-		return nil
-	}
-}
-
-// WithTokenAuth uses an OAuth2.0 token to authenticate with the authorizer service.
-func WithTokenAuth(token string) ConnectionOption {
-	return func(options *ConnectionOptions) error {
-		if options.Creds != nil {
-			return errors.Wrap(ErrInvalidOptions, "only one set of credentials allowed")
-		}
-
-		options.Creds = client.NewTokenAuth(token)
-
-		return nil
-	}
-}
-
-// WithAPIKeyAuth uses an Aserto API key to authenticate with the authorizer service.
-func WithAPIKeyAuth(key string) ConnectionOption {
-	return func(options *ConnectionOptions) error {
-		if options.Creds != nil {
-			return errors.Wrap(ErrInvalidOptions, "only one set of credentials allowed")
-		}
-
-		options.Creds = client.NewAPIKeyAuth(key)
-
-		return nil
-	}
-}
-
-// WithTenantID sets the Aserto tenant ID.
-func WithTenantID(tenantID string) ConnectionOption {
-	return func(options *ConnectionOptions) error {
-		options.TenantID = tenantID
-
-		return nil
-	}
-}
-
-// WithSessionID sets the Aserto session ID.
-func WithSessionID(sessionID string) ConnectionOption {
-	return func(options *ConnectionOptions) error {
-		options.SessionID = sessionID
-
-		return nil
-	}
-}
-
-// WithChainUnaryInterceptor adds a unary interceptor to grpc dial options.
-func WithChainUnaryInterceptor(mw ...grpc.UnaryClientInterceptor) ConnectionOption {
-	return func(options *ConnectionOptions) error {
-		options.UnaryClientInterceptors = append(options.UnaryClientInterceptors, mw...)
-		return nil
-	}
-}
-
-// WithChainStreamInterceptor adds a stream interceptor to grpc dial options.
-func WithChainStreamInterceptor(mw ...grpc.StreamClientInterceptor) ConnectionOption {
-	return func(options *ConnectionOptions) error {
-		options.StreamClientInterceptors = append(options.StreamClientInterceptors, mw...)
-		return nil
-	}
-}
-
-// WithDialOptions add custom dial options to the grpc connection.
-func WithDialOptions(opts ...grpc.DialOption) ConnectionOption {
-	return func(options *ConnectionOptions) error {
-		options.DialOptions = append(options.DialOptions, opts...)
-		return nil
-	}
-}
 
 // ConnectionOptions holds settings used to establish a connection to the authorizer service.
 type ConnectionOptions struct {
-	// The server's host name and port separated by a colon ("hostname:port").
-	//
-	// Note: Address and URL are mutually exclusive. Only one of them may be set.
-	Address string
-
-	// URL is the service URL.
-	//
-	// Unlike ConnectionOptions.Address, URL gives gRPC clients the ability to use Unix sockets in addition
-	// to DNS names (see https://github.com/grpc/grpc/blob/master/doc/naming.md#name-syntax)
-	//
-	// Note: Address and URL are mutually exclusive. Only one of them may be set.
-	URL *url.URL
-
-	// Path to a CA certificate file to treat as a root CA for TLS verification.
-	CACertPath string
-
-	// The tenant ID of your aserto account.
-	TenantID string
-
-	// Session ID.
-	SessionID string
+	Config
 
 	// Credentials used to authenticate with the authorizer service. Either API Key or OAuth Token.
 	Creds credentials.PerRPCCredentials
-
-	// If true, skip TLS certificate verification.
-	Insecure bool
 
 	// UnaryClientInterceptors passed to the grpc client.
 	UnaryClientInterceptors []grpc.UnaryClientInterceptor
@@ -173,47 +32,133 @@ type ConnectionOptions struct {
 	DialOptions []grpc.DialOption
 }
 
-// ConnectionOption functions are used to configure ConnectionOptions instances.
-type ConnectionOption func(*ConnectionOptions) error
-
-// ConnectionOptionErrors is an error that can encapsulate one or more underlying ErrInvalidOptions errors.
-type ConnectionOptionErrors []error
-
-func (errs ConnectionOptionErrors) Error() string {
-	msgs := []string{}
-	for _, err := range errs {
-		msgs = append(msgs, err.Error())
-	}
-
-	return strings.Join(msgs, ",")
-}
-
 // NewConnectionOptions creates a ConnectionOptions object from a collection of ConnectionOption functions.
 func NewConnectionOptions(opts ...ConnectionOption) (*ConnectionOptions, error) {
-	options := &ConnectionOptions{
-		UnaryClientInterceptors:  []grpc.UnaryClientInterceptor{},
-		StreamClientInterceptors: []grpc.StreamClientInterceptor{},
-	}
-
-	errs := ConnectionOptionErrors{}
-
-	for _, opt := range opts {
-		if err := opt(options); err != nil {
-			errs = append(errs, err)
-		}
-	}
-
-	if len(errs) != 0 {
-		return nil, errs
+	options := &ConnectionOptions{}
+	if err := options.Apply(opts...); err != nil {
+		return nil, err
 	}
 
 	return options, nil
 }
 
-func (o *ConnectionOptions) ServerAddress() string {
-	if o.URL != nil {
-		return o.URL.String()
+// Apply additional options.
+func (o *ConnectionOptions) Apply(opts ...ConnectionOption) error {
+	var errs error
+
+	for _, opt := range opts {
+		if err := opt(o); err != nil {
+			errs = multierror.Append(errs, err)
+		}
 	}
 
-	return o.Address
+	return errs
+}
+
+func (o *ConnectionOptions) ToDialOptions() ([]grpc.DialOption, error) {
+	transportCreds, err := o.transportCredentials()
+	if err != nil {
+		return nil, err
+	}
+
+	opts := []grpc.DialOption{
+		transportCreds,
+		grpc.WithChainStreamInterceptor(o.StreamClientInterceptors...),
+		grpc.WithChainUnaryInterceptor(o.UnaryClientInterceptors...),
+	}
+
+	opts = append(opts, o.DialOptions...)
+
+	if o.Creds != nil {
+		opts = append(opts, grpc.WithPerRPCCredentials(o.Creds))
+	}
+
+	if o.TenantID != "" {
+		opts = append(opts, contextWrapperInterceptor(o.tenantContext)...)
+	}
+
+	if o.AccountID != "" {
+		opts = append(opts, contextWrapperInterceptor(o.accountContext)...)
+	}
+
+	if len(o.Headers) > 0 {
+		opts = append(opts, o.outgoingHeaders()...)
+	}
+
+	return opts, nil
+}
+
+func (o *ConnectionOptions) transportCredentials() (grpc.DialOption, error) {
+	if o.NoTLS {
+		return grpc.WithTransportCredentials(insecure.NewCredentials()), nil
+	}
+
+	conf, err := tlsconf.TLSConfig(o.Insecure, o.CACertPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to setup tls configuration")
+	}
+
+	if o.ClientCertPath != "" {
+		clientCert, err := tls.LoadX509KeyPair(o.ClientCertPath, o.ClientKeyPath)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to load client TLS certs")
+		}
+
+		conf.Certificates = []tls.Certificate{clientCert}
+	}
+
+	return grpc.WithTransportCredentials(credentials.NewTLS(conf)), nil
+}
+
+func (o *ConnectionOptions) tenantContext(ctx context.Context) context.Context {
+	return SetTenantContext(ctx, o.TenantID)
+}
+
+func (o *ConnectionOptions) accountContext(ctx context.Context) context.Context {
+	return SetAccountContext(ctx, o.AccountID)
+}
+
+func (o *ConnectionOptions) outgoingHeaders() []grpc.DialOption {
+	pairs := lo.Reduce(
+		lo.Entries(o.Headers),
+		func(acc []string, entry lo.Entry[string, string], _ int) []string {
+			return append(acc, entry.Key, entry.Value)
+		},
+		nil,
+	)
+
+	appendOutgoing := func(ctx context.Context) context.Context {
+		return metadata.AppendToOutgoingContext(ctx, pairs...)
+	}
+
+	return contextWrapperInterceptor(appendOutgoing)
+}
+
+func contextWrapperInterceptor(wrap func(ctx context.Context) context.Context) []grpc.DialOption {
+	unary := func(
+		ctx context.Context,
+		method string,
+		req, reply interface{},
+		cc *grpc.ClientConn,
+		invoker grpc.UnaryInvoker,
+		opts ...grpc.CallOption,
+	) error {
+		return invoker(wrap(ctx), method, req, reply, cc, opts...)
+	}
+
+	stream := func(
+		ctx context.Context,
+		desc *grpc.StreamDesc,
+		cc *grpc.ClientConn,
+		method string,
+		streamer grpc.Streamer,
+		opts ...grpc.CallOption,
+	) (grpc.ClientStream, error) {
+		return streamer(wrap(ctx), desc, cc, method, opts...)
+	}
+
+	return []grpc.DialOption{
+		grpc.WithChainUnaryInterceptor(unary),
+		grpc.WithChainStreamInterceptor(stream),
+	}
 }

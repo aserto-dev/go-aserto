@@ -1,6 +1,8 @@
 module gorilla_example
 
-go 1.22.4
+go 1.22
+
+toolchain go1.23.2
 
 replace github.com/aserto-dev/go-aserto => ../../../..
 

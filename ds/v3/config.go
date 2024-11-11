@@ -116,7 +116,7 @@ func getConnection(
 		return conns.Get(fallback)
 	}
 
-	return nil, nil
+	return nil, nil //nolint: nilnil
 }
 
 func newClient[T any](conn *grpc.ClientConn, factory func(conn grpc.ClientConnInterface) T) T {

@@ -1,4 +1,4 @@
-package ds // nolint:testpackage
+package ds //nolint:testpackage
 
 import (
 	"encoding/json"
@@ -68,7 +68,7 @@ func TestUnmarshalConfig(t *testing.T) {
 }
 
 func TestConnect(t *testing.T) {
-	t.Run("base only", func(t *testing.T) { // nolint:dupl
+	t.Run("base only", func(t *testing.T) { //nolint:dupl
 		assert := asserts.New(t)
 
 		conns, counter := mockConns()
@@ -107,7 +107,7 @@ func TestConnect(t *testing.T) {
 		assert.Equal(2, counter.Count)
 	})
 
-	t.Run("no base", func(t *testing.T) { // nolint:dupl
+	t.Run("no base", func(t *testing.T) { //nolint:dupl
 		assert := asserts.New(t)
 
 		conns, counter := mockConns()

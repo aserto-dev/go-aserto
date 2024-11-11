@@ -18,8 +18,8 @@ EXT_TMP_DIR        := ${EXT_DIR}/tmp
 
 SVU_VER 	         := 1.12.0
 GOTESTSUM_VER      := 1.11.0
-GOLANGCI-LINT_VER  := 1.56.2
-GORELEASER_VER     := 1.24.0
+GOLANGCI-LINT_VER  := 1.61.0
+GORELEASER_VER     := 2.3.2
 
 RELEASE_TAG        := $$(svu)
 
