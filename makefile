@@ -34,6 +34,11 @@ build:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
 	@${EXT_BIN_DIR}/goreleaser build --clean --snapshot --single-target
 
+PHONY: go-mod-tidy
+go-mod-tidy:
+	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
+	@go work edit -json | jq -r '.Use[].DiskPath' | xargs -I{} bash -c 'cd {} && echo "${PWD}/go.mod" && go mod tidy -v && cd -'
+
 lint:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
 	@go work edit -json | jq -r '.Use[].DiskPath'  | xargs -I{} ${EXT_BIN_DIR}/golangci-lint run {}/... -c .golangci.yaml
