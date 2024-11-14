@@ -2,7 +2,6 @@ package aserto
 
 import (
 	"context"
-	"crypto/tls"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -11,8 +10,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-
-	"github.com/aserto-dev/go-aserto/internal/tlsconf"
 )
 
 // ConnectionOptions holds settings used to establish a connection to the authorizer service.
@@ -56,6 +53,10 @@ func (o *ConnectionOptions) Apply(opts ...ConnectionOption) error {
 }
 
 func (o *ConnectionOptions) ToDialOptions() ([]grpc.DialOption, error) {
+	if o.Insecure && o.NoTLS {
+		return nil, errors.Wrap(ErrInvalidOptions, "insecure and no_tls options are mutually exclusive")
+	}
+
 	transportCreds, err := o.transportCredentials()
 	if err != nil {
 		return nil, err
@@ -93,21 +94,18 @@ func (o *ConnectionOptions) transportCredentials() (grpc.DialOption, error) {
 		return grpc.WithTransportCredentials(insecure.NewCredentials()), nil
 	}
 
-	conf, err := tlsconf.TLSConfig(o.Insecure, o.CACertPath)
+	cfg := &TLSConfig{
+		Cert: o.ClientCertPath,
+		Key:  o.ClientKeyPath,
+		CA:   o.CACertPath,
+	}
+
+	creds, err := cfg.ClientCredentials(o.Insecure)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to setup tls configuration")
+		return nil, errors.Wrap(err, "failed to create transport credentials")
 	}
 
-	if o.ClientCertPath != "" {
-		clientCert, err := tls.LoadX509KeyPair(o.ClientCertPath, o.ClientKeyPath)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to load client TLS certs")
-		}
-
-		conf.Certificates = []tls.Certificate{clientCert}
-	}
-
-	return grpc.WithTransportCredentials(credentials.NewTLS(conf)), nil
+	return grpc.WithTransportCredentials(creds), nil
 }
 
 func (o *ConnectionOptions) tenantContext(ctx context.Context) context.Context {
