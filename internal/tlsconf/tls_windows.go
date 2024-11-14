@@ -1,37 +1,15 @@
 package tlsconf
 
 import (
-	"crypto/tls"
 	"crypto/x509"
-	"os"
-
-	"github.com/pkg/errors"
 )
 
-func TLSConfig(insecure bool, caCertPath string) (*tls.Config, error) {
-	var tlsConf tls.Config
+func CertPool(caCertPath string) (*x509.CertPool, error) {
+	var certPool *x509.CertPool
 
-	if insecure {
-		tlsConf.InsecureSkipVerify = true //nolint: gosec
-		return &tlsConf, nil
+	if caCertPath == "" {
+		return certPool, nil
 	}
 
-	if caCertPath != "" {
-		certPool := x509.NewCertPool()
-		caCertBytes, err := os.ReadFile(caCertPath)
-
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to read ca cert [%s]", caCertPath)
-		}
-
-		if !certPool.AppendCertsFromPEM(caCertBytes) {
-			return nil, errors.Wrapf(err, "failed to append client ca cert [%s]", caCertPath)
-		}
-
-		tlsConf.RootCAs = certPool
-	}
-
-	tlsConf.MinVersion = tls.VersionTLS12
-
-	return &tlsConf, nil
+	return x509.NewCertPool(), nil
 }
