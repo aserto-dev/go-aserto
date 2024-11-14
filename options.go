@@ -8,6 +8,7 @@ import (
 	"github.com/samber/lo"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -52,6 +53,10 @@ func (o *ConnectionOptions) Apply(opts ...ConnectionOption) error {
 }
 
 func (o *ConnectionOptions) ToDialOptions() ([]grpc.DialOption, error) {
+	if o.Insecure && o.NoTLS {
+		return nil, errors.Wrap(ErrInvalidOptions, "insecure and no_tls options are mutually exclusive")
+	}
+
 	transportCreds, err := o.transportCredentials()
 	if err != nil {
 		return nil, err
@@ -85,13 +90,17 @@ func (o *ConnectionOptions) ToDialOptions() ([]grpc.DialOption, error) {
 }
 
 func (o *ConnectionOptions) transportCredentials() (grpc.DialOption, error) {
+	if o.NoTLS {
+		return grpc.WithTransportCredentials(insecure.NewCredentials()), nil
+	}
+
 	cfg := &TLSConfig{
 		Cert: o.ClientCertPath,
 		Key:  o.ClientKeyPath,
 		CA:   o.CACertPath,
 	}
 
-	creds, err := cfg.ClientCredentials(NoTLSVerify(o.Insecure))
+	creds, err := cfg.ClientCredentials(o.Insecure)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create transport credentials")
 	}

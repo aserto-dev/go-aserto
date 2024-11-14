@@ -23,6 +23,15 @@ func WithInsecure(insecure bool) ConnectionOption {
 	}
 }
 
+// WithNoTLS disables transport security. The connection is established in plaintext.
+func WithNoTLS(noTLS bool) ConnectionOption {
+	return func(options *ConnectionOptions) error {
+		options.NoTLS = noTLS
+
+		return nil
+	}
+}
+
 // WithAddr overrides the default authorizer server address.
 //
 // Note: WithAddr and WithURL are mutually exclusive.
@@ -157,14 +166,6 @@ func WithHeader(key, value string) ConnectionOption {
 
 		options.Headers[key] = value
 
-		return nil
-	}
-}
-
-// WithNoTLS disables transport security. The connection is established in plaintext.
-func WithNoTLS(noTLS bool) ConnectionOption {
-	return func(options *ConnectionOptions) error {
-		options.NoTLS = noTLS
 		return nil
 	}
 }
