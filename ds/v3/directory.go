@@ -59,6 +59,18 @@ func New(opts ...aserto.ConnectionOption) (*Client, error) {
 	}, nil
 }
 
+// New returns a new Directory using an existing connection.
+func FromConnection(conn *grpc.ClientConn) (*Client, error) {
+	return &Client{
+		Reader:   drs.NewReaderClient(conn),
+		Writer:   dws.NewWriterClient(conn),
+		Importer: dis.NewImporterClient(conn),
+		Exporter: des.NewExporterClient(conn),
+		Model:    dms.NewModelClient(conn),
+		conns:    []*grpc.ClientConn{conn},
+	}, nil
+}
+
 // Close closes the underlying connections.
 func (c *Client) Close() error {
 	var errs error
