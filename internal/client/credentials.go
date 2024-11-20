@@ -32,7 +32,7 @@ func (t TokenAuth) GetRequestMetadata(_ context.Context, _ ...string) (map[strin
 }
 
 func (TokenAuth) RequireTransportSecurity() bool {
-	return true
+	return false
 }
 
 // APIKeyAuth API key based authentication.
@@ -55,5 +55,5 @@ func (k *APIKeyAuth) GetRequestMetadata(_ context.Context, _ ...string) (map[str
 }
 
 func (k *APIKeyAuth) RequireTransportSecurity() bool {
-	return true
+	return false
 }
