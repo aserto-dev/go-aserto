@@ -133,6 +133,14 @@ func WithAccountID(accountID string) ConnectionOption {
 	}
 }
 
+// WithNoProxy returns a ConnectionOption that bypasses any configured HTTP proxy.
+func WithNoProxy(noProxy bool) ConnectionOption {
+	return func(options *ConnectionOptions) error {
+		options.NoProxy = noProxy
+		return nil
+	}
+}
+
 // WithChainUnaryInterceptor adds a unary interceptor to grpc dial options.
 func WithChainUnaryInterceptor(mw ...grpc.UnaryClientInterceptor) ConnectionOption {
 	return func(options *ConnectionOptions) error {

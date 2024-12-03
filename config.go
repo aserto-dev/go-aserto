@@ -47,6 +47,9 @@ type Config struct {
 	// Disable TLS and use a plaintext connection.
 	NoTLS bool `json:"no_tls"`
 
+	// NoProxy bypasses any configured HTTP proxy.
+	NoProxy bool `json:"no_proxy"`
+
 	// Additional headers to include in requests to the service.
 	Headers map[string]string `json:"headers"`
 

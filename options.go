@@ -82,6 +82,10 @@ func (o *ConnectionOptions) ToDialOptions() ([]grpc.DialOption, error) {
 		opts = append(opts, contextWrapperInterceptor(o.accountContext)...)
 	}
 
+	if o.NoProxy {
+		opts = append(opts, grpc.WithNoProxy())
+	}
+
 	if len(o.Headers) > 0 {
 		opts = append(opts, o.outgoingHeaders()...)
 	}
