@@ -28,6 +28,14 @@ func New(opts ...aserto.ConnectionOption) (*Client, error) {
 	}, err
 }
 
+// FromConnection returns a new Client using an existing connection.
+func FromConnection(conn *grpc.ClientConn) *Client {
+	return &Client{
+		AuthorizerClient: authz.NewAuthorizerClient(conn),
+		conn:             conn,
+	}
+}
+
 // Close closes the underlying connection.
 func (c *Client) Close() error {
 	return c.conn.Close()

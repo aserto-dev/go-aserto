@@ -33,7 +33,7 @@ type Client struct {
 	conns []*grpc.ClientConn
 }
 
-// New returns a new Directory with the specified options.
+// New returns a new Client with the specified options.
 func New(opts ...aserto.ConnectionOption) (*Client, error) {
 	options, err := aserto.NewConnectionOptions(opts...)
 	if err != nil {
@@ -59,8 +59,8 @@ func New(opts ...aserto.ConnectionOption) (*Client, error) {
 	}, nil
 }
 
-// New returns a new Directory using an existing connection.
-func FromConnection(conn *grpc.ClientConn) (*Client, error) {
+// FromConnection returns a new Client using an existing connection.
+func FromConnection(conn *grpc.ClientConn) *Client {
 	return &Client{
 		Reader:   drs.NewReaderClient(conn),
 		Writer:   dws.NewWriterClient(conn),
@@ -68,7 +68,7 @@ func FromConnection(conn *grpc.ClientConn) (*Client, error) {
 		Exporter: des.NewExporterClient(conn),
 		Model:    dms.NewModelClient(conn),
 		conns:    []*grpc.ClientConn{conn},
-	}, nil
+	}
 }
 
 // Close closes the underlying connections.
