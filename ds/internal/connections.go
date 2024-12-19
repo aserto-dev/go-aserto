@@ -1,38 +1,41 @@
 package internal
 
 import (
+	"encoding/json"
+	"hash/maphash"
+
 	"github.com/aserto-dev/go-aserto"
-	hs "github.com/mitchellh/hashstructure/v2"
 	"github.com/samber/lo"
 	"google.golang.org/grpc"
 )
 
 type Connections struct {
 	conns   map[uint64]*grpc.ClientConn
-	Connect func(...aserto.ConnectionOption) (*grpc.ClientConn, error)
+	seed    maphash.Seed
+	Connect func(*aserto.Config) (*grpc.ClientConn, error)
 }
 
 func NewConnections() *Connections {
 	return &Connections{
-		conns:   make(map[uint64]*grpc.ClientConn),
-		Connect: aserto.NewConnection,
+		conns: make(map[uint64]*grpc.ClientConn),
+		seed:  maphash.MakeSeed(),
+		Connect: func(cfg *aserto.Config) (*grpc.ClientConn, error) {
+			return cfg.Connect()
+		},
 	}
 }
 
 func (cb *Connections) Get(cfg *aserto.Config) (*grpc.ClientConn, error) {
-	hash, err := hs.Hash(cfg, hs.FormatV2, nil)
+	bin, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
 	}
 
+	hash := maphash.Bytes(cb.seed, bin)
+
 	conn := cb.conns[hash]
 	if conn == nil {
-		opts, err := cfg.ToConnectionOptions()
-		if err != nil {
-			return nil, err
-		}
-
-		conn, err = cb.Connect(opts...)
+		conn, err = cb.Connect(cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -52,7 +55,7 @@ type ConnectCounter struct {
 	Count int
 }
 
-func (cc *ConnectCounter) Connect(...aserto.ConnectionOption) (*grpc.ClientConn, error) {
+func (cc *ConnectCounter) Connect(*aserto.Config) (*grpc.ClientConn, error) {
 	cc.Count++
 	return &grpc.ClientConn{}, nil
 }
