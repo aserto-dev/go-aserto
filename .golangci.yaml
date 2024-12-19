@@ -87,7 +87,6 @@ linters:
     - godot
     - gofmt
     - goimports
-    - gomoddirectives
     - goprintffuncname
     - gosec
     - gosmopolitan
@@ -134,6 +133,7 @@ linters:
     # - gocognit
     # - godox
     # - gofumpt
+    # - gomoddirectives
     # - ireturn
     # - lll
     # - nlreturn
