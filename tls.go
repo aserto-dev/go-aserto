@@ -96,6 +96,10 @@ func (c *TLSConfig) ServerCredentials() (credentials.TransportCredentials, error
 
 // ClientCredentials returns transport credentials for a GRPC client.
 func (c *TLSConfig) ClientCredentials(skipVerify bool) (credentials.TransportCredentials, error) {
+	if !c.HasCert() {
+		return insecure.NewCredentials(), nil
+	}
+
 	tlsConfig, err := c.ClientConfig(skipVerify)
 	if err != nil {
 		return nil, err
