@@ -16,12 +16,12 @@ EXT_DIR            := ./.ext
 EXT_BIN_DIR        := ${EXT_DIR}/bin
 EXT_TMP_DIR        := ${EXT_DIR}/tmp
 
-SVU_VER 	         := 1.12.0
+SVU_VER 	         := 3.1.0
 GOTESTSUM_VER      := 1.11.0
-GOLANGCI-LINT_VER  := 1.61.0
+GOLANGCI-LINT_VER  := 1.64.5
 GORELEASER_VER     := 2.3.2
 
-RELEASE_TAG        := $$(svu)
+RELEASE_TAG        := $$(svu current)
 
 .DEFAULT_GOAL      := build
 
@@ -37,7 +37,7 @@ build:
 PHONY: go-mod-tidy
 go-mod-tidy:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@go work edit -json | jq -r '.Use[].DiskPath' | xargs -I{} bash -c 'cd {} && echo "${PWD}/go.mod" && go mod tidy -v && cd -'
+	@go work edit -json | jq -r '.Use[].DiskPath' | xargs -I{} bash -c 'cd {} && go mod tidy -v && cd -'
 
 lint:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
@@ -57,7 +57,6 @@ info:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
 	@echo "GOOS:        ${GOOS}"
 	@echo "GOARCH:      ${GOARCH}"
-	@echo "BIN_DIR:     ${BIN_DIR}"
 	@echo "EXT_DIR:     ${EXT_DIR}"
 	@echo "EXT_BIN_DIR: ${EXT_BIN_DIR}"
 	@echo "EXT_TMP_DIR: ${EXT_TMP_DIR}"
@@ -72,13 +71,13 @@ install-svu: install-svu-${GOOS}
 .PHONY: install-svu-darwin
 install-svu-darwin: ${EXT_TMP_DIR} ${EXT_BIN_DIR}
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@gh release download --repo https://github.com/caarlos0/svu --pattern "svu_*_darwin_all.tar.gz" --output "${EXT_TMP_DIR}/svu.tar.gz" --clobber
+	@gh release download v${SVU_VER} --repo https://github.com/caarlos0/svu --pattern "*darwin_all.tar.gz" --output "${EXT_TMP_DIR}/svu.tar.gz" --clobber
 	@tar -xvf ${EXT_TMP_DIR}/svu.tar.gz --directory ${EXT_BIN_DIR} svu &> /dev/null
 
 .PHONY: install-svu-linux
 install-svu-linux: ${EXT_TMP_DIR} ${EXT_BIN_DIR}
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@gh release download --repo https://github.com/caarlos0/svu --pattern "svu_*_linux_${GOARCH}.tar.gz" --output "${EXT_TMP_DIR}/svu.tar.gz" --clobber
+	@gh release download v${SVU_VER} --repo https://github.com/caarlos0/svu --pattern "*linux_${GOARCH}.tar.gz" --output "${EXT_TMP_DIR}/svu.tar.gz" --clobber
 	@tar -xvf ${EXT_TMP_DIR}/svu.tar.gz --directory ${EXT_BIN_DIR} svu &> /dev/null
 
 .PHONY: install-gotestsum
