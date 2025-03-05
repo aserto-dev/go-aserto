@@ -41,6 +41,8 @@ go-mod-tidy:
 
 lint:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
+	@${EXT_BIN_DIR}/golangci-lint config path
+	@${EXT_BIN_DIR}/golangci-lint config verify
 	@go work edit -json | jq -r '.Use[].DiskPath'  | xargs -I{} ${EXT_BIN_DIR}/golangci-lint run {}/... -c .golangci.yaml
 
 test:

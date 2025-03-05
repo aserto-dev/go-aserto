@@ -33,7 +33,6 @@ linters-settings:
       - condition
       - return
   govet:
-    shadow: true
     settings:
       printf:
         funcs:
