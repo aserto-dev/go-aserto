@@ -9,6 +9,7 @@ package grpcz
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	cerr "github.com/aserto-dev/errors"
 	"github.com/aserto-dev/go-aserto/middleware"
@@ -308,10 +309,14 @@ func messageResourceMapper(fieldsByPath map[string][]string, defaults ...string)
 		}
 
 		if len(fields) > 0 && req != nil {
-			resource, _ := pbutil.Select(req.(protoreflect.ProtoMessage), fields...)
-			for k, v := range resource.AsMap() {
-				res[k] = v
+			msg, ok := req.(protoreflect.ProtoMessage)
+			if !ok {
+				panic("not a proto message")
 			}
+
+			resource, _ := pbutil.Select(msg, fields...)
+
+			maps.Copy(res, resource.AsMap())
 		}
 	}
 }
