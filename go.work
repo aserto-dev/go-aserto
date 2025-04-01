@@ -8,4 +8,5 @@ use (
 	./middleware/gorillaz
 	./middleware/grpcz
 	./middleware/httpz
+	./middleware/humaz
 )
