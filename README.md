@@ -219,6 +219,7 @@ frameworks are available as submodules of `go-aserto/middleware`.
 * `middleware/gorillaz` provides middleware for HTTP servers using [gorilla/mux](https://github.com/gorilla/mux).
 * `middleware/ginz` provides middleware for HTTP servers using the [Gin web framework](https://gin-gonic.com).
 * `middleware/grpcz` provides middleware for gRPC servers.
+* `middleware/humaz` provides middleware for HTTP servers using the [Huma REST API framework](https://huma.rocks/).
 
 When authorization middleware is configured and attached to a server, it examines incoming requests, extracts
 authorization parameters such as the caller's identity, calls the Aserto authorizers, and rejects requests if their
@@ -329,6 +330,7 @@ Two flavors of HTTP middleware are available:
 * `middleware/httpz`: Middleware for HTTP servers using the standard [net/http](https://pkg.go.dev/net/http) package.
 * `middleware/gorillaz`: Middleware with support for [gorilla/mux](https://pkg.go.dev/github.com/gorilla/mux).
 * `middleware/ginz`: Middleware for the [Gin](https://github.com/gin-gonic/gin) web framework.
+* `middleware/humaz`: Middleware for the the [Huma REST API framework](https://huma.rocks/).
 
 Both are constructed and configured in a similar way. They differ in the signature of their `Handler()`
 function, which is used to attach them to HTTP routes, and in the signatures of their mapper functions.
@@ -409,6 +411,10 @@ The default behavior of the gorilla/mux middleware is:
 #### Gin Middleware
 
 The gin middleware looks and behaves just like the net/http middleware but uses `gin.Context` instead of `http.Request`.
+
+#### Huma Middleware
+
+The huma middleware looks and behaves just like the net/http middleware but uses `huma.Context` instead of `http.Request`.
 
 
 ### Relation-Based Access Control (ReBAC)
