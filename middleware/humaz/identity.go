@@ -103,7 +103,6 @@ func (b *IdentityBuilder) FromHeader(header ...string) *IdentityBuilder {
 // If the value is not present, not a string, or an empty string then the request is considered anonymous.
 func (b *IdentityBuilder) FromContextValue(key string) *IdentityBuilder {
 	b.mapper = func(ctx huma.Context, identity middleware.Identity) {
-		// uData := tokenintrospection.GetUserFromContext(c.Context())
 		b.ID(internal.ValueOrEmpty(ctx.Context(), key))
 	}
 	return b

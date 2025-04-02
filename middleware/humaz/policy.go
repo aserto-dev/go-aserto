@@ -119,7 +119,7 @@ func (m *Middleware) policyContext() *api.PolicyContext {
 }
 
 func (m *Middleware) resourceContext(ctx huma.Context) (*structpb.Struct, error) {
-	res := map[string]interface{}{}
+	res := map[string]any{}
 	for _, mapper := range m.resourceMappers {
 		mapper(ctx, res)
 	}

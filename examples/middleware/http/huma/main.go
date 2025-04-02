@@ -16,7 +16,7 @@ import (
 
 const port = 8080
 const contextKey = "subject"
-const subjectValue = "200b5979-a7c1-4059-86d0-8c39f6fe88b4"
+const subjectValue = "CiRmZDE2MTRkMy1jMzlhLTQ3ODEtYjdiZC04Yjk2ZjVhNTEwMGQSBWxvY2Fs"
 
 func AuthNMiddleware(ctx huma.Context, next func(huma.Context)) {
 	ctx = huma.WithValue(ctx, contextKey, subjectValue)
