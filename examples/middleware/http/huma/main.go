@@ -15,9 +15,12 @@ import (
 )
 
 const port = 8080
+const contextKey = "subject"
+const subjectValue = "200b5979-a7c1-4059-86d0-8c39f6fe88b4"
 
-type SuccessResponse struct {
-	Message string `json:"message"`
+func AuthNMiddleware(ctx huma.Context, next func(huma.Context)) {
+	ctx = huma.WithValue(ctx, contextKey, subjectValue)
+	next(ctx)
 }
 
 func main() {
@@ -39,14 +42,37 @@ func main() {
 		},
 	)
 
-	mw.Identity.FromContextValue("subject")
+	mw.Identity.FromContextValue(contextKey)
 	mw.Identity.Manual()
 
 	// Set up Gin router
 	router := gin.Default()
 
 	// Initialize Huma API with Gin adapter
-	_ = humagin.New(router, huma.DefaultConfig("Aserto Example", "1.0.0"))
+	api := humagin.New(router, huma.DefaultConfig("Aserto Example", "1.0.0"))
+	api.UseMiddleware(AuthNMiddleware, mw.Handler)
+
+	huma.Register(api, huma.Operation{
+		OperationID: "getAsset",
+		Method:      "GET",
+		Path:        "/api/{asset}",
+		Summary:     "Get an asset",
+		// Middlewares: huma.Middlewares{mw.Handler},
+	}, handler)
+
+	huma.Register(api, huma.Operation{
+		OperationID: "createAsset",
+		Method:      "POST",
+		Path:        "/api/{asset}",
+		Summary:     "Create an asset",
+	}, handler)
+
+	huma.Register(api, huma.Operation{
+		OperationID: "deleteAsset",
+		Method:      "DELETE",
+		Path:        "/api/{asset}",
+		Summary:     "Delete an asset",
+	}, handler)
 
 	// Start the server
 	fmt.Printf("Server running on port %d\n", port)
@@ -55,30 +81,15 @@ func main() {
 	}
 }
 
-func handler(ctx context.Context) (*SuccessResponse, error) {
-	return &SuccessResponse{Message: "Permission granted"}, nil
+// Input struct for the handler
+type AssetRequest struct {
+	Asset string `path:"asset"`
 }
 
-// Define API endpoints
-// func init() {
-// 	huma.Register(handler, huma.Operation{
-// 		OperationID: "getAsset",
-// 		Method:      "GET",
-// 		Path:        "/api/{asset}",
-// 		Summary:     "Get an asset",
-// 	})
+type SuccessResponse struct {
+	Message string `json:"message"`
+}
 
-// 	huma.Register(handler, huma.Operation{
-// 		OperationID: "createAsset",
-// 		Method:      "POST",
-// 		Path:        "/api/{asset}",
-// 		Summary:     "Create an asset",
-// 	})
-
-// 	huma.Register(handler, huma.Operation{
-// 		OperationID: "deleteAsset",
-// 		Method:      "DELETE",
-// 		Path:        "/api/{asset}",
-// 		Summary:     "Delete an asset",
-// 	})
-// }
+func handler(ctx context.Context, input *AssetRequest) (*SuccessResponse, error) {
+	return &SuccessResponse{Message: "Permission granted"}, nil
+}
