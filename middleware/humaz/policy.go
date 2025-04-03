@@ -84,7 +84,6 @@ func (m *Middleware) Handler(c huma.Context, next func(huma.Context)) {
 	resource, err := m.resourceContext(c)
 	if err != nil {
 		c.SetStatus(http.StatusInternalServerError)
-
 		return
 	}
 
