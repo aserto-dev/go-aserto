@@ -2,8 +2,6 @@ module github.com/aserto-dev/go-aserto
 
 go 1.23.0
 
-toolchain go1.23.7
-
 require (
 	github.com/aserto-dev/go-authorizer v0.20.13
 	github.com/aserto-dev/go-directory v0.33.7

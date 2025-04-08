@@ -14,9 +14,7 @@ import (
 	dws "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 )
 
-var (
-	ErrInvalidConfig = errors.New("invalid config")
-)
+var ErrInvalidConfig = errors.New("invalid config")
 
 // Config provides configuration for connecting to the Aserto Directory service.
 type Config struct {

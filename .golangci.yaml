@@ -1,150 +1,55 @@
 ---
-# golangci.com configuration
-# https://github.com/golangci/golangci/wiki/Configuration
+# Configuration
+# https://golangci-lint.run/usage/configuration/
 
-linters-settings:
-  funlen:
-    lines: 100
-    statements: 80
-  goconst:
-    min-len: 2
-    min-occurrences: 2
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
-    disabled-checks:
-      - dupImport  #  https://github.com/go-critic/go-critic/issues/845
-      - ifElseChain
-      - octalLiteral
-      - whyNoLint
-      - wrapperFunc
-  gocyclo:
-    min-complexity: 18
-  goimports:
-    local-prefixes: github.com/golangci/golangci-lint
-  mnd:
-    checks:
-      - argument
-      - case
-      - condition
-      - return
-  govet:
-    settings:
-      printf:
-        funcs:
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
-  lll:
-    line-length: 140
-  misspell:
-    locale: US
-  nolintlint:
-    allow-unused: false  # report any unused nolint directives
-    require-explanation: false  # don't require an explanation for nolint directives
-    require-specific: false  # don't require nolint directives to be specific about which linter is being skipped
+version: "2"
 
 linters:
-  # please, do not use `enable-all`: it's deprecated and will be removed soon.
-  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
-  disable-all: false
+  # https://golangci-lint.run/usage/configuration/#linters-configuration
+  default: all
+
+  # explicitly disabled linters
+  disable:
+    - depguard
+    - exhaustruct
+    - gochecknoglobals  # no configuration options
+    - nlreturn  # redundant with wsl
+    - paralleltest
+    - revive
+    - thelper
+    - varnamelen
+    - wrapcheck
+
+  settings:
+    cyclop:
+      max-complexity: 12
+
+    funlen:
+      lines: 80
+      statements: 60
+      ignore-comments: true
+
+    ireturn:
+      allow:
+        - error
+        - generic
+        - context.Context
+        - credentials.TransportCredentials
+        - grpc.ClientConnInterface
+        - grpc.DialOption
+        - middleware.Identity
+
+    lll:
+      line-length: 150
+
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+          yaml: snake
+
+formatters:
   enable:
-    - asasalint
-    - asciicheck
-    - bidichk
-    - bodyclose
-    - canonicalheader
-    - containedctx
-    - contextcheck
-    - copyloopvar
-    - cyclop
-    - decorder
-    - dogsled
-    - dupword
-    - durationcheck
-    - err113
-    - errchkjson
-    - errname
-    - errorlint
-    - exhaustive
-    - fatcontext
-    - forcetypeassert
-    - funlen
-    - gocheckcompilerdirectives
-    - gochecknoinits
-    - gochecknoglobals
-    - gochecknoinits
-    - gocognit
-    - goconst
-    - gocritic
-    - gocyclo
-    - godot
     - gofmt
+    - gofumpt
     - goimports
-    - goprintffuncname
-    - gosec
-    - gosmopolitan
-    - grouper
-    - importas
-    - inamedparam
-    - interfacebloat
-    - intrange
-    - lll
-    - makezero
-    - mirror
-    - misspell
-    - mnd
-    - musttag
-    - nakedret
-    - nestif
-    - nilerr
-    - nilnil
-    - noctx
-    - nolintlint
-    - nonamedreturns
-    - perfsprint
-    - prealloc
-    - predeclared
-    - reassign
-    - rowserrcheck
-    - stylecheck
-    - testpackage
-    - unconvert
-    - unparam
-    - usestdlibvars
-    - wastedassign
-    - whitespace
-    - wsl
-    - zerologlint
-
-    # don't enable:
-    # - depguard
-    # - dupl
-    # - exhaustruct
-    # - gci
-    # - ginkgolinter
-    # - gochecknoglobals
-    # - gocognit
-    # - godox
-    # - gofumpt
-    # - gomoddirectives
-    # - ireturn
-    # - lll
-    # - nlreturn
-    # - nolintlint # conflict with 1.19 gofmt changes
-    # - protogetter
-    # - prealloc
-    # - revive
-    # - wsl
-    # - wrapcheck
-
-issues:
-  exclude-rules:
-    - text: "unnamedResult:"
-      linters:
-        - gocritic

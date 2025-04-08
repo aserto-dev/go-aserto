@@ -10,8 +10,7 @@ import (
 var errNotImplemented = errors.New("not implemented")
 
 // Mock grpc.ServerStream.
-type ServerStream struct {
-}
+type ServerStream struct{}
 
 func (s *ServerStream) SetHeader(metadata.MD) error {
 	return errNotImplemented

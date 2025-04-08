@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	asserts "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/aserto-dev/go-aserto"
 	"github.com/aserto-dev/go-aserto/ds/internal"
@@ -18,7 +18,7 @@ const (
 
 func TestUnmarshalConfig(t *testing.T) {
 	t.Run("base only", func(t *testing.T) {
-		assert := asserts.New(t)
+		assert := require.New(t)
 
 		cfg := Config{}
 		if err := json.Unmarshal([]byte(base), &cfg); err != nil {
@@ -33,7 +33,7 @@ func TestUnmarshalConfig(t *testing.T) {
 	})
 
 	t.Run("no base", func(t *testing.T) {
-		assert := asserts.New(t)
+		assert := require.New(t)
 
 		var cfg Config
 		if err := json.Unmarshal([]byte(noBase), &cfg); err != nil {
@@ -50,7 +50,7 @@ func TestUnmarshalConfig(t *testing.T) {
 	})
 
 	t.Run("overrides", func(t *testing.T) {
-		assert := asserts.New(t)
+		assert := require.New(t)
 
 		var cfg Config
 		if err := json.Unmarshal([]byte(overrides), &cfg); err != nil {
@@ -68,8 +68,8 @@ func TestUnmarshalConfig(t *testing.T) {
 }
 
 func TestConnect(t *testing.T) {
-	t.Run("base only", func(t *testing.T) { //nolint:dupl
-		assert := asserts.New(t)
+	t.Run("base only", func(t *testing.T) {
+		assert := require.New(t)
 
 		conns, counter := mockConns()
 
@@ -88,7 +88,7 @@ func TestConnect(t *testing.T) {
 	})
 
 	t.Run("base with overrides", func(t *testing.T) {
-		assert := asserts.New(t)
+		assert := require.New(t)
 
 		conns, counter := mockConns()
 
@@ -107,8 +107,8 @@ func TestConnect(t *testing.T) {
 		assert.Equal(2, counter.Count)
 	})
 
-	t.Run("no base", func(t *testing.T) { //nolint:dupl
-		assert := asserts.New(t)
+	t.Run("no base", func(t *testing.T) {
+		assert := require.New(t)
 
 		conns, counter := mockConns()
 

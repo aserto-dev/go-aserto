@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/aserto-dev/go-aserto/middleware/internal"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type TestCase struct {
@@ -32,9 +32,9 @@ func TestHostnameSegment(t *testing.T) {
 func hostnameSegmentTest(test TestCase) func(*testing.T) {
 	return func(t *testing.T) {
 		u, err := url.Parse(test.hostname)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		actual := internal.HostnameSegment(u, test.level)
-		assert.Equal(t, test.expected, actual)
+		require.Equal(t, test.expected, actual)
 	}
 }

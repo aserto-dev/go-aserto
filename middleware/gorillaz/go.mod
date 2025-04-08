@@ -2,8 +2,6 @@ module github.com/aserto-dev/go-aserto/middleware/gorillaz
 
 go 1.23.0
 
-toolchain go1.23.7
-
 replace github.com/aserto-dev/go-aserto => ../../
 
 require (
