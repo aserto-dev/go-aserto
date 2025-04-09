@@ -34,6 +34,34 @@ jobs:
           version: ${{ env.GO_LANGCI_LINT_VERSION }}
           args: --timeout=2m
       -
+        name: Lint ginz
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: ${{ env.GO_LANGCI_LINT_VERSION }}
+          args: --timeout=2m
+          working-directory: middleware/ginz
+      -
+        name: Lint gorillaz
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: ${{ env.GO_LANGCI_LINT_VERSION }}
+          args: --timeout=2m
+          working-directory: middleware/gorillaz
+      -
+        name: Lint grpcz
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: ${{ env.GO_LANGCI_LINT_VERSION }}
+          args: --timeout=2m
+          working-directory: middleware/grpcz
+      -
+        name: Lint httpz
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: ${{ env.GO_LANGCI_LINT_VERSION }}
+          args: --timeout=2m
+          working-directory: middleware/httpz
+      -
         name: Test Setup
         uses: gertd/action-gotestsum@v3.0.0
         with:
