@@ -12,8 +12,10 @@ import (
 	"google.golang.org/grpc"
 )
 
-type ObjectMapper func(ctx context.Context, req any) (objType, id string)
-type Filter func(ctx context.Context, req any) bool
+type (
+	ObjectMapper func(ctx context.Context, req any) (objType, id string)
+	Filter       func(ctx context.Context, req any) bool
+)
 
 type CheckClient interface {
 	Check(ctx context.Context, in *ds3.CheckRequest, opts ...grpc.CallOption) (*ds3.CheckResponse, error)
@@ -217,10 +219,10 @@ func NewCheckMiddleware(client CheckClient, options ...CheckOption) *CheckMiddle
 func (c *CheckMiddleware) Unary() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
-		req interface{},
+		req any,
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
-	) (interface{}, error) {
+	) (any, error) {
 		if err := c.authorize(ctx, req); err != nil {
 			return nil, err
 		}
@@ -232,7 +234,7 @@ func (c *CheckMiddleware) Unary() grpc.UnaryServerInterceptor {
 // Stream returns a grpc.StreamServerInterceptor that authorizes incoming messages.
 func (c *CheckMiddleware) Stream() grpc.StreamServerInterceptor {
 	return func(
-		srv interface{},
+		srv any,
 		stream grpc.ServerStream,
 		info *grpc.StreamServerInfo,
 		handler grpc.StreamHandler,
@@ -247,7 +249,7 @@ func (c *CheckMiddleware) Stream() grpc.StreamServerInterceptor {
 	}
 }
 
-func (c *CheckMiddleware) authorize(ctx context.Context, req interface{}) error {
+func (c *CheckMiddleware) authorize(ctx context.Context, req any) error {
 	for _, filter := range c.opts.filters {
 		if filter(ctx, req) {
 			return nil
@@ -289,7 +291,7 @@ func (c *CheckMiddleware) authorize(ctx context.Context, req interface{}) error 
 		return cerr.WrapContext(err, ctx, "check call failed")
 	}
 
-	if !allowed.Check {
+	if !allowed.GetCheck() {
 		return cerr.WithContext(aerr.ErrAuthorizationFailed, ctx)
 	}
 

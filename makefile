@@ -10,7 +10,7 @@ GOOS               := $(shell go env GOOS)
 GOARCH             := $(shell go env GOARCH)
 DOCKER_BUILDKIT    := 1
 
-EXT_DIR            := ./.ext
+EXT_DIR            := ${PWD}/.ext
 EXT_BIN_DIR        := ${EXT_DIR}/bin
 EXT_TMP_DIR        := ${EXT_DIR}/tmp
 

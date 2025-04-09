@@ -25,7 +25,8 @@ func Example() {
 	if err != nil {
 		log.Fatal("Failed to create authorizer client:", err)
 	}
-	defer azClient.Close()
+
+	defer func() { _ = azClient.Close() }()
 
 	// Create HTTP middleware.
 	middleware := httpz.New(

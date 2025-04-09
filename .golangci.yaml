@@ -18,6 +18,7 @@ linters:
     - revive
     - thelper
     - varnamelen
+    - testableexamples
     - wrapcheck
 
   settings:
@@ -29,12 +30,16 @@ linters:
       statements: 60
       ignore-comments: true
 
+    gomoddirectives:
+      replace-local: true
+
     ireturn:
       allow:
         - error
         - generic
         - context.Context
         - credentials.TransportCredentials
+        - http.Handler
         - grpc.ClientConnInterface
         - grpc.DialOption
         - middleware.Identity

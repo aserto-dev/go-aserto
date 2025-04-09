@@ -27,10 +27,10 @@ func (s *ServerStream) Context() context.Context {
 	return context.TODO()
 }
 
-func (s *ServerStream) SendMsg(_ interface{}) error {
+func (s *ServerStream) SendMsg(_ any) error {
 	return errNotImplemented
 }
 
-func (s *ServerStream) RecvMsg(_ interface{}) error {
+func (s *ServerStream) RecvMsg(_ any) error {
 	return errNotImplemented
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/aserto-dev/go-aserto/middleware/grpcz/internal/pbutil"
 	authz "github.com/aserto-dev/go-authorizer/aserto/authorizer/v2"
@@ -38,15 +39,15 @@ func TestFieldMaskIsValid(t *testing.T) {
 		"policy_instance.instance_label",
 	)
 
-	assert.NoError(t, err, "failed to create field mask")
+	require.NoError(t, err, "failed to create field mask")
 	assert.True(t, mask.IsValid(msg), "invalid mask")
 
 	mask.Normalize()
 
-	testCase := func(paths []string, expected map[string]interface{}) func(t *testing.T) {
+	testCase := func(paths []string, expected map[string]any) func(t *testing.T) {
 		return func(t *testing.T) {
 			selection, err := pbutil.Select(msg, paths...)
-			assert.NoError(t, err, "select failed on policy_context.path")
+			require.NoError(t, err, "select failed on policy_context.path")
 
 			actual := selection.AsMap()
 
@@ -56,27 +57,27 @@ func TestFieldMaskIsValid(t *testing.T) {
 
 	t.Run("single value", testCase(
 		[]string{"policy_context.path"},
-		map[string]interface{}{
-			"policy_context": map[string]interface{}{
+		map[string]any{
+			"policy_context": map[string]any{
 				"path": "policy.path",
 			},
 		},
 	))
 	t.Run("multiple values", testCase(
 		[]string{"policy_context.path", "identity_context.identity"},
-		map[string]interface{}{
-			"policy_context": map[string]interface{}{
+		map[string]any{
+			"policy_context": map[string]any{
 				"path": "policy.path",
 			},
-			"identity_context": map[string]interface{}{
+			"identity_context": map[string]any{
 				"identity": "username",
 			},
 		},
 	))
 	t.Run("struct value", testCase(
 		[]string{"policy_context"},
-		map[string]interface{}{
-			"policy_context": map[string]interface{}{
+		map[string]any{
+			"policy_context": map[string]any{
 				"path": "policy.path",
 			},
 		},
