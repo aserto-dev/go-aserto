@@ -40,7 +40,7 @@ Example:
 In each incoming request, the middleware reads the value of the "account_id" key from the request context and
 adds its value to the "account" field in the authorization resource context.
 */
-func (c *RebacMiddleware) WithResourceFromContextValue(ctxKey interface{}, field string) *RebacMiddleware {
+func (c *RebacMiddleware) WithResourceFromContextValue(ctxKey any, field string) *RebacMiddleware {
 	c.resourceMappers = append(c.resourceMappers, contextValueResourceMapper(ctxKey, field))
 	return c
 }
@@ -107,10 +107,10 @@ func NewRebacMiddleware(authzClient AuthorizerClient, policy *Policy) *RebacMidd
 func (c *RebacMiddleware) Unary() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
-		req interface{},
+		req any,
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
-	) (interface{}, error) {
+	) (any, error) {
 		if err := c.authorize(ctx, req); err != nil {
 			return nil, err
 		}
@@ -122,7 +122,7 @@ func (c *RebacMiddleware) Unary() grpc.UnaryServerInterceptor {
 // Stream returns a grpc.StreamServerInterceptor that authorizes incoming messages.
 func (c *RebacMiddleware) Stream() grpc.StreamServerInterceptor {
 	return func(
-		srv interface{},
+		srv any,
 		stream grpc.ServerStream,
 		info *grpc.StreamServerInfo,
 		handler grpc.StreamHandler,
@@ -137,7 +137,7 @@ func (c *RebacMiddleware) Stream() grpc.StreamServerInterceptor {
 	}
 }
 
-func (c *RebacMiddleware) authorize(ctx context.Context, req interface{}) error {
+func (c *RebacMiddleware) authorize(ctx context.Context, req any) error {
 	if c.isAllowedMethod(ctx) {
 		return nil
 	}
@@ -166,11 +166,11 @@ func (c *RebacMiddleware) authorize(ctx context.Context, req interface{}) error 
 		return errors.Wrap(err, "authorization call failed")
 	}
 
-	if len(resp.Decisions) == 0 {
+	if len(resp.GetDecisions()) == 0 {
 		return aerr.ErrInvalidDecision
 	}
 
-	if !resp.Decisions[0].Is {
+	if !resp.GetDecisions()[0].GetIs() {
 		return aerr.ErrAuthorizationFailed
 	}
 
@@ -190,7 +190,7 @@ func (c *RebacMiddleware) policyContext() *api.PolicyContext {
 		policyContext.Path = c.policy.Path
 	}
 
-	if policyContext.Path == "" {
+	if policyContext.GetPath() == "" {
 		path := "check"
 		if c.policy.Root != "" {
 			path = fmt.Sprintf("%s.%s", c.policy.Root, path)
@@ -202,12 +202,12 @@ func (c *RebacMiddleware) policyContext() *api.PolicyContext {
 	return policyContext
 }
 
-func (c *RebacMiddleware) identityContext(ctx context.Context, req interface{}) *api.IdentityContext {
+func (c *RebacMiddleware) identityContext(ctx context.Context, req any) *api.IdentityContext {
 	return c.Identity.build(ctx, req)
 }
 
-func (c *RebacMiddleware) resourceContext(ctx context.Context, req interface{}) (*structpb.Struct, error) {
-	res := map[string]interface{}{}
+func (c *RebacMiddleware) resourceContext(ctx context.Context, req any) (*structpb.Struct, error) {
+	res := map[string]any{}
 	for _, mapper := range c.resourceMappers {
 		mapper(ctx, req, res)
 	}

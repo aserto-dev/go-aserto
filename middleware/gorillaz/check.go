@@ -153,8 +153,8 @@ func (c *Check) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		policyContext := c.policyContext(r)
 		identityContext := c.identityContext(r)
-		resourceContext, err := c.resourceContext(r)
 
+		resourceContext, err := c.resourceContext(r)
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
@@ -193,7 +193,7 @@ func (c *Check) policyContext(r *http.Request) *api.PolicyContext {
 		policyContext.Path = policyMapper(r)
 	}
 
-	if policyContext.Path == "" {
+	if policyContext.GetPath() == "" {
 		path := "check"
 		if c.mw.policy.Root != "" {
 			path = fmt.Sprintf("%s.%s", c.mw.policy.Root, path)
@@ -209,7 +209,7 @@ func (c *Check) identityContext(r *http.Request) *api.IdentityContext {
 	idc := c.mw.Identity.Build(r)
 
 	if c.opts.subj.mapper != nil {
-		identity := internal.NewIdentity(idc.Type, idc.Identity)
+		identity := internal.NewIdentity(idc.GetType(), idc.GetIdentity())
 		c.opts.subj.mapper(r, identity)
 		idc = identity.Context()
 	}
@@ -222,7 +222,7 @@ func (c *Check) resourceContext(r *http.Request) (*structpb.Struct, error) {
 	objType, objID := c.opts.object(r)
 	subjType := c.opts.subjectType()
 
-	return structpb.NewStruct(map[string]interface{}{
+	return structpb.NewStruct(map[string]any{
 		"relation":     relation,
 		"object_type":  objType,
 		"object_id":    objID,

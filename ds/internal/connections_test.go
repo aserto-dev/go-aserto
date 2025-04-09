@@ -3,7 +3,7 @@ package internal_test
 import (
 	"testing"
 
-	asserts "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/aserto-dev/go-aserto"
 	"github.com/aserto-dev/go-aserto/ds/internal"
@@ -17,7 +17,7 @@ func TestConnections(t *testing.T) {
 	cfg := &aserto.Config{Address: "localhost:8282"}
 
 	t.Run("new connection", func(t *testing.T) {
-		assert := asserts.New(t)
+		assert := require.New(t)
 
 		conn, err := conns.Get(cfg)
 		assert.NoError(err)
@@ -26,7 +26,7 @@ func TestConnections(t *testing.T) {
 	})
 
 	t.Run("cached connection", func(t *testing.T) {
-		assert := asserts.New(t)
+		assert := require.New(t)
 		conn, err := conns.Get(cfg)
 		assert.NoError(err)
 		assert.NotNil(conn)
@@ -34,7 +34,7 @@ func TestConnections(t *testing.T) {
 	})
 
 	t.Run("second connection", func(t *testing.T) {
-		assert := asserts.New(t)
+		assert := require.New(t)
 		cfg := &aserto.Config{Address: "localhost:8282", TenantID: "foobar"}
 
 		conn, err := conns.Get(cfg)

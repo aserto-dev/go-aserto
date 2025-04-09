@@ -51,7 +51,7 @@ type (
 
 	// ResourceMapper functions are used to extract structured data from incoming requests.
 	// The optional resource mapper is a ResourceMapper.
-	ResourceMapper func(*gin.Context, map[string]interface{})
+	ResourceMapper func(*gin.Context, map[string]any)
 )
 
 // New creates middleware for the specified policy.
@@ -116,7 +116,7 @@ func (m *Middleware) policyContext() *api.PolicyContext {
 }
 
 func (m *Middleware) resourceContext(c *gin.Context) (*structpb.Struct, error) {
-	res := map[string]interface{}{}
+	res := map[string]any{}
 	for _, mapper := range m.resourceMappers {
 		mapper(c, res)
 	}
@@ -146,15 +146,15 @@ func (m *Middleware) is(
 	switch {
 	case err != nil:
 		return false, cerr.WithContext(err, ctx)
-	case len(resp.Decisions) != 1:
+	case len(resp.GetDecisions()) != 1:
 		return false, cerr.WithContext(aerr.ErrInvalidDecision, ctx)
 	}
 
-	if !resp.Decisions[0].Is {
+	if !resp.GetDecisions()[0].GetIs() {
 		logger.Info().Msg("authorization failed")
 	}
 
-	return resp.Decisions[0].Is, nil
+	return resp.GetDecisions()[0].GetIs(), nil
 }
 
 // WithPolicyFromURL instructs the middleware to construct the policy path from the path segment
@@ -199,7 +199,7 @@ func (m *Middleware) WithResourceMapper(mapper ResourceMapper) *Middleware {
 	return m
 }
 
-func defaultResourceMapper(c *gin.Context, resource map[string]interface{}) {
+func defaultResourceMapper(c *gin.Context, resource map[string]any) {
 	for _, param := range c.Params {
 		resource[param.Key] = param.Value
 	}

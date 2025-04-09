@@ -87,7 +87,7 @@ func TestAuthorizer(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(
-			test.Case.Name,
+			test.Name,
 			testCase(test),
 		)
 	}
@@ -107,7 +107,8 @@ func testCase(testCase *TestCase) func(*testing.T) {
 		handler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+
+		t.Cleanup(func() { _ = resp.Body.Close() })
 
 		assert.Equal(t, testCase.expectedStatusCode, resp.StatusCode)
 	}

@@ -26,7 +26,7 @@ func (id *Identity) JWT() middleware.Identity {
 }
 
 func (id *Identity) IsJWT() bool {
-	return id.context.Type == api.IdentityType_IDENTITY_TYPE_JWT
+	return id.context.GetType() == api.IdentityType_IDENTITY_TYPE_JWT
 }
 
 func (id *Identity) Subject() middleware.Identity {
@@ -35,7 +35,7 @@ func (id *Identity) Subject() middleware.Identity {
 }
 
 func (id *Identity) IsSubject() bool {
-	return id.context.Type == api.IdentityType_IDENTITY_TYPE_SUB
+	return id.context.GetType() == api.IdentityType_IDENTITY_TYPE_SUB
 }
 
 func (id *Identity) Manual() middleware.Identity {
@@ -44,7 +44,7 @@ func (id *Identity) Manual() middleware.Identity {
 }
 
 func (id *Identity) IsManual() bool {
-	return id.context.Type == api.IdentityType_IDENTITY_TYPE_MANUAL
+	return id.context.GetType() == api.IdentityType_IDENTITY_TYPE_MANUAL
 }
 
 func (id *Identity) None() middleware.Identity {
@@ -61,7 +61,7 @@ func (id *Identity) ID(identity string) middleware.Identity {
 }
 
 func (id *Identity) Context() *api.IdentityContext {
-	if id.context.Identity == "" {
+	if id.context.GetIdentity() == "" {
 		id.None()
 	}
 

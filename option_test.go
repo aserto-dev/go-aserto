@@ -6,11 +6,11 @@ import (
 	"testing"
 
 	"github.com/aserto-dev/go-aserto"
-	assrt "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWithAddr(t *testing.T) {
-	assert := assrt.New(t)
+	assert := require.New(t)
 
 	options, err := aserto.NewConnectionOptions(aserto.WithAddr("address"))
 	assert.NoError(err)
@@ -19,7 +19,7 @@ func TestWithAddr(t *testing.T) {
 }
 
 func TestWithURL(t *testing.T) {
-	assert := assrt.New(t)
+	assert := require.New(t)
 
 	const URL = "https://server.com:123"
 	svcURL, err := url.Parse(URL)
@@ -32,7 +32,7 @@ func TestWithURL(t *testing.T) {
 }
 
 func TestAddrAndURL(t *testing.T) {
-	assert := assrt.New(t)
+	assert := require.New(t)
 	svcURL, err := url.Parse("https://server.com:123")
 	assert.NoError(err)
 
@@ -41,7 +41,7 @@ func TestAddrAndURL(t *testing.T) {
 }
 
 func TestWithInsecure(t *testing.T) {
-	assert := assrt.New(t)
+	assert := require.New(t)
 
 	options, err := aserto.NewConnectionOptions(aserto.WithInsecure(true))
 	assert.NoError(err)
@@ -50,7 +50,7 @@ func TestWithInsecure(t *testing.T) {
 }
 
 func TestWithTokenAuth(t *testing.T) {
-	assert := assrt.New(t)
+	assert := require.New(t)
 
 	options, err := aserto.NewConnectionOptions(aserto.WithTokenAuth("<token>"))
 	assert.NoError(err)
@@ -64,7 +64,7 @@ func TestWithTokenAuth(t *testing.T) {
 }
 
 func TestWithBearerTokenAuth(t *testing.T) {
-	assert := assrt.New(t)
+	assert := require.New(t)
 
 	options, err := aserto.NewConnectionOptions(aserto.WithTokenAuth("bearer <token>"))
 	assert.NoError(err)
@@ -78,7 +78,7 @@ func TestWithBearerTokenAuth(t *testing.T) {
 }
 
 func TestWithAPIKey(t *testing.T) {
-	assert := assrt.New(t)
+	assert := require.New(t)
 
 	options, err := aserto.NewConnectionOptions(aserto.WithAPIKeyAuth("<apikey>"))
 	assert.NoError(err)
@@ -93,11 +93,11 @@ func TestWithAPIKey(t *testing.T) {
 
 func TestTokenAndAPIKey(t *testing.T) {
 	_, err := aserto.NewConnectionOptions(aserto.WithAPIKeyAuth("<apikey>"), aserto.WithTokenAuth("<token>"))
-	assrt.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestWithTenantID(t *testing.T) {
-	assert := assrt.New(t)
+	assert := require.New(t)
 	options, err := aserto.NewConnectionOptions(aserto.WithTenantID("<tenantid>"))
 	assert.NoError(err)
 
@@ -111,7 +111,7 @@ const (
 )
 
 func TestWithCACertPath(t *testing.T) {
-	assert := assrt.New(t)
+	assert := require.New(t)
 
 	options, err := aserto.NewConnectionOptions(aserto.WithCACertPath(caPath))
 	assert.NoError(err)
@@ -120,7 +120,7 @@ func TestWithCACertPath(t *testing.T) {
 }
 
 func TestWithClientCert(t *testing.T) {
-	assert := assrt.New(t)
+	assert := require.New(t)
 
 	options, err := aserto.NewConnectionOptions(aserto.WithClientCert(certPath, keyPath))
 	assert.NoError(err)
@@ -130,7 +130,7 @@ func TestWithClientCert(t *testing.T) {
 }
 
 func TestWithMissingClientCert(t *testing.T) {
-	assert := assrt.New(t)
+	assert := require.New(t)
 
 	certPath, keyPath := "", "/path/to/cert.key"
 	_, err := aserto.NewConnectionOptions(aserto.WithClientCert(certPath, keyPath))
@@ -138,7 +138,7 @@ func TestWithMissingClientCert(t *testing.T) {
 }
 
 func TestWithMissingClientKey(t *testing.T) {
-	assert := assrt.New(t)
+	assert := require.New(t)
 
 	certPath, keyPath := "/path/to/cert.crt", ""
 	_, err := aserto.NewConnectionOptions(aserto.WithClientCert(certPath, keyPath))
@@ -146,7 +146,7 @@ func TestWithMissingClientKey(t *testing.T) {
 }
 
 func TestWithHeader(t *testing.T) {
-	assert := assrt.New(t)
+	assert := require.New(t)
 	h1, v1 := "header1", "value1"
 	h2, v2 := "header2", "value2"
 
@@ -163,14 +163,14 @@ func TestWithHeader(t *testing.T) {
 }
 
 func TestWithNoTLS(t *testing.T) {
-	assert := assrt.New(t)
+	assert := require.New(t)
 	options, err := aserto.NewConnectionOptions(aserto.WithNoTLS(true))
 	assert.NoError(err)
 	assert.True(options.NoTLS)
 }
 
 func TestWithAccountID(t *testing.T) {
-	assert := assrt.New(t)
+	assert := require.New(t)
 	options, err := aserto.NewConnectionOptions(aserto.WithAccountID("accountID"))
 	assert.NoError(err)
 	assert.Equal("accountID", options.AccountID)

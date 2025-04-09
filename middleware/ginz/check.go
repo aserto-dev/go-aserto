@@ -186,7 +186,7 @@ func (c *Check) policyContext(g *gin.Context) *api.PolicyContext {
 		policyContext.Path = policyMapper(g)
 	}
 
-	if policyContext.Path == "" {
+	if policyContext.GetPath() == "" {
 		path := "check"
 		if c.mw.policy.Root != "" {
 			path = fmt.Sprintf("%s.%s", c.mw.policy.Root, path)
@@ -202,7 +202,7 @@ func (c *Check) identityContext(g *gin.Context) *api.IdentityContext {
 	idc := c.mw.Identity.Build(g)
 
 	if c.opts.subj.mapper != nil {
-		identity := internal.NewIdentity(idc.Type, idc.Identity)
+		identity := internal.NewIdentity(idc.GetType(), idc.GetIdentity())
 		c.opts.subj.mapper(g, identity)
 		idc = identity.Context()
 	}
@@ -215,7 +215,7 @@ func (c *Check) resourceContext(g *gin.Context) (*structpb.Struct, error) {
 	objType, objID := c.opts.object(g)
 	subjType := c.opts.subjectType()
 
-	return structpb.NewStruct(map[string]interface{}{
+	return structpb.NewStruct(map[string]any{
 		"relation":     relation,
 		"object_type":  objType,
 		"object_id":    objID,

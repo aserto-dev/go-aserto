@@ -12,7 +12,7 @@ import (
 )
 
 // IdentityMapper is the type of callback functions that can inspect incoming RPCs and set the caller's identity.
-type IdentityMapper func(context.Context, interface{}, middleware.Identity)
+type IdentityMapper func(context.Context, any, middleware.Identity)
 
 // IdentityBuilder is used to configure what information about caller identity is sent in authorization calls.
 type IdentityBuilder struct {
@@ -71,7 +71,7 @@ func (b *IdentityBuilder) ID(identity string) *IdentityBuilder {
 
 // FromMetadata extracts caller identity from a grpc/metadata field in the incoming message.
 func (b *IdentityBuilder) FromMetadata(field string) *IdentityBuilder {
-	b.mapper = func(ctx context.Context, _ interface{}, identity middleware.Identity) {
+	b.mapper = func(ctx context.Context, _ any, identity middleware.Identity) {
 		if md, ok := metadata.FromIncomingContext(ctx); ok {
 			id := md.Get(field)
 			if len(id) > 0 {
@@ -84,8 +84,8 @@ func (b *IdentityBuilder) FromMetadata(field string) *IdentityBuilder {
 }
 
 // WithIdentityFromContextValue extracts caller identity from a context value in the incoming message.
-func (b *IdentityBuilder) FromContextValue(key interface{}) *IdentityBuilder {
-	b.mapper = func(ctx context.Context, _ interface{}, identity middleware.Identity) {
+func (b *IdentityBuilder) FromContextValue(key any) *IdentityBuilder {
+	b.mapper = func(ctx context.Context, _ any, identity middleware.Identity) {
 		identity.ID(internal.ValueOrEmpty(ctx, key))
 	}
 
@@ -98,7 +98,7 @@ func (b *IdentityBuilder) Mapper(mapper IdentityMapper) *IdentityBuilder {
 	return b
 }
 
-func (b *IdentityBuilder) build(ctx context.Context, req interface{}) *api.IdentityContext {
+func (b *IdentityBuilder) build(ctx context.Context, req any) *api.IdentityContext {
 	identity := internal.NewIdentity(b.identityType, b.defaultIdentity)
 
 	if b.mapper != nil {

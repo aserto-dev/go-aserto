@@ -71,7 +71,7 @@ func TestAuthorizer(t *testing.T) {
 				},
 				callback: func(mw *grpcmw.Middleware) {
 					mw.WithPolicyPathMapper(
-						func(_ context.Context, _ interface{}) string {
+						func(_ context.Context, _ any) string {
 							return test.OverridePolicyPath
 						},
 					).Identity.Subject().ID(test.DefaultUsername)
@@ -83,7 +83,7 @@ func TestAuthorizer(t *testing.T) {
 	for _, test := range tests {
 		for runnerName, runner := range runners() {
 			t.Run(
-				fmt.Sprintf("%s: %s", test.Case.Name, runnerName),
+				fmt.Sprintf("%s: %s", test.Name, runnerName),
 				testCase(test, runner),
 			)
 		}
@@ -112,7 +112,7 @@ func runUnary(mw *grpcmw.Middleware) error {
 		context.Background(),
 		nil,
 		&grpc.UnaryServerInfo{},
-		func(_ context.Context, _ interface{}) (interface{}, error) {
+		func(_ context.Context, _ any) (any, error) {
 			return nil, nil //nolint: nilnil
 		},
 	)
@@ -125,7 +125,7 @@ func runStream(mw *grpcmw.Middleware) error {
 		nil,
 		&mock.ServerStream{},
 		&grpc.StreamServerInfo{},
-		func(_ interface{}, _ grpc.ServerStream) error {
+		func(_ any, _ grpc.ServerStream) error {
 			return nil
 		},
 	)

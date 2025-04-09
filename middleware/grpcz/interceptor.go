@@ -56,10 +56,10 @@ type Middleware struct {
 type (
 	// StringMapper functions are used to extract string values from incoming messages.
 	// They are used to define identity and policy mappers.
-	StringMapper func(context.Context, interface{}) string
+	StringMapper func(context.Context, any) string
 
 	// ResourceMapper functions are used to extract structured data from incoming message.
-	ResourceMapper func(context.Context, interface{}, map[string]interface{})
+	ResourceMapper func(context.Context, any, map[string]any)
 )
 
 // New creates middleware for the specified policy.
@@ -180,7 +180,7 @@ Example:
 In each incoming request, the middleware reads the value of the "account_id" key from the request context and
 adds its value to the "account" field in the authorization resource context.
 */
-func (m *Middleware) WithResourceFromContextValue(ctxKey interface{}, field string) *Middleware {
+func (m *Middleware) WithResourceFromContextValue(ctxKey any, field string) *Middleware {
 	m.resourceMappers = append(m.resourceMappers, contextValueResourceMapper(ctxKey, field))
 	return m
 }
@@ -196,10 +196,10 @@ func (m *Middleware) WithResourceMapper(mapper ResourceMapper) *Middleware {
 func (m *Middleware) Unary() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
-		req interface{},
+		req any,
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
-	) (interface{}, error) {
+	) (any, error) {
 		if err := m.authorize(ctx, req); err != nil {
 			return nil, err
 		}
@@ -211,7 +211,7 @@ func (m *Middleware) Unary() grpc.UnaryServerInterceptor {
 // Stream returns a grpc.StreamServerInterceptor that authorizes incoming messages.
 func (m *Middleware) Stream() grpc.StreamServerInterceptor {
 	return func(
-		srv interface{},
+		srv any,
 		stream grpc.ServerStream,
 		info *grpc.StreamServerInfo,
 		handler grpc.StreamHandler,
@@ -226,7 +226,7 @@ func (m *Middleware) Stream() grpc.StreamServerInterceptor {
 	}
 }
 
-func (m *Middleware) authorize(ctx context.Context, req interface{}) error {
+func (m *Middleware) authorize(ctx context.Context, req any) error {
 	if m.isAllowedMethod(ctx) {
 		return nil
 	}
@@ -236,7 +236,7 @@ func (m *Middleware) authorize(ctx context.Context, req interface{}) error {
 		policyContext.Path = m.policyMapper(ctx, req)
 	}
 
-	if m.ignoredPaths.Contains(policyContext.Path) {
+	if m.ignoredPaths.Contains(policyContext.GetPath()) {
 		return nil
 	}
 
@@ -261,11 +261,11 @@ func (m *Middleware) authorize(ctx context.Context, req interface{}) error {
 		return cerr.WrapContext(err, ctx, "authorization call failed")
 	}
 
-	if len(resp.Decisions) == 0 {
+	if len(resp.GetDecisions()) == 0 {
 		return cerr.WithContext(aerr.ErrInvalidDecision, ctx)
 	}
 
-	if !resp.Decisions[0].Is {
+	if !resp.GetDecisions()[0].GetIs() {
 		return cerr.WithContext(aerr.ErrAuthorizationFailed, ctx)
 	}
 
@@ -277,8 +277,8 @@ func (m *Middleware) isAllowedMethod(ctx context.Context) bool {
 	return m.allowedMethods.Contains(method)
 }
 
-func (m *Middleware) resourceContext(ctx context.Context, req interface{}) (*structpb.Struct, error) {
-	res := map[string]interface{}{}
+func (m *Middleware) resourceContext(ctx context.Context, req any) (*structpb.Struct, error) {
+	res := map[string]any{}
 	for _, mapper := range m.resourceMappers {
 		mapper(ctx, req, res)
 	}
@@ -287,7 +287,7 @@ func (m *Middleware) resourceContext(ctx context.Context, req interface{}) (*str
 }
 
 func methodPolicyMapper(policyRoot string) StringMapper {
-	return func(ctx context.Context, _ interface{}) string {
+	return func(ctx context.Context, _ any) string {
 		method, _ := grpc.Method(ctx)
 		path := internal.ToPolicyPath(method)
 
@@ -300,7 +300,7 @@ func methodPolicyMapper(policyRoot string) StringMapper {
 }
 
 func messageResourceMapper(fieldsByPath map[string][]string, defaults ...string) ResourceMapper {
-	return func(ctx context.Context, req interface{}, res map[string]interface{}) {
+	return func(ctx context.Context, req any, res map[string]any) {
 		method, _ := grpc.Method(ctx)
 
 		fields, ok := fieldsByPath[method]
@@ -322,7 +322,7 @@ func messageResourceMapper(fieldsByPath map[string][]string, defaults ...string)
 }
 
 func reqMessageResourceMapper() ResourceMapper {
-	return func(ctx context.Context, req interface{}, res map[string]interface{}) {
+	return func(ctx context.Context, req any, res map[string]any) {
 		if req != nil {
 			protoReq, ok := req.(protoreflect.ProtoMessage)
 			if !ok {
@@ -349,8 +349,8 @@ func reqMessageResourceMapper() ResourceMapper {
 	}
 }
 
-func contextValueResourceMapper(ctxKey interface{}, field string) ResourceMapper {
-	return func(ctx context.Context, _ interface{}, res map[string]interface{}) {
+func contextValueResourceMapper(ctxKey any, field string) ResourceMapper {
+	return func(ctx context.Context, _ any, res map[string]any) {
 		if v := ctx.Value(ctxKey); v != nil {
 			res[field] = v
 		}
