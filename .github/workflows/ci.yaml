@@ -1,3 +1,4 @@
+---
 name: ci
 
 on:
@@ -17,6 +18,31 @@ env:
   GO_TESTSUM_VERSION: 1.12.1
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module:
+          - .
+          - middleware/ginz
+          - middleware/gorillaz
+          - middleware/grpcz
+          - middleware/httpz
+    steps:
+      -
+        uses: actions/checkout@v4
+      -
+        name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      -
+        name: Lint ginz
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: ${{ env.GO_LANGCI_LINT_VERSION }}
+          args: --timeout=5m
+          working-directory: ${{ matrix.module }}
   test:
     runs-on: ubuntu-latest
     steps:
@@ -27,40 +53,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-      -
-        name: Lint
-        uses: golangci/golangci-lint-action@v7
-        with:
-          version: ${{ env.GO_LANGCI_LINT_VERSION }}
-          args: --timeout=2m
-      -
-        name: Lint ginz
-        uses: golangci/golangci-lint-action@v7
-        with:
-          version: ${{ env.GO_LANGCI_LINT_VERSION }}
-          args: --timeout=2m
-          working-directory: middleware/ginz
-      -
-        name: Lint gorillaz
-        uses: golangci/golangci-lint-action@v7
-        with:
-          version: ${{ env.GO_LANGCI_LINT_VERSION }}
-          args: --timeout=2m
-          working-directory: middleware/gorillaz
-      -
-        name: Lint grpcz
-        uses: golangci/golangci-lint-action@v7
-        with:
-          version: ${{ env.GO_LANGCI_LINT_VERSION }}
-          args: --timeout=2m
-          working-directory: middleware/grpcz
-      -
-        name: Lint httpz
-        uses: golangci/golangci-lint-action@v7
-        with:
-          version: ${{ env.GO_LANGCI_LINT_VERSION }}
-          args: --timeout=2m
-          working-directory: middleware/httpz
       -
         name: Test Setup
         uses: gertd/action-gotestsum@v3.0.0
