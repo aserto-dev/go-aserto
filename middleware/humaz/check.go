@@ -172,6 +172,24 @@ func (c *Check) Handler(ctx huma.Context, next func(huma.Context)) {
 	next(ctx)
 }
 
+// Allowed returns a boolean indicating whether the request is allowed or not.
+// It returns false if the request is not allowed or an error in the check happens.
+func (c *Check) Allowed(ctx huma.Context) (bool, error) {
+	policyContext := c.policyContext(ctx)
+	identityContext := c.identityContext(ctx)
+	resourceContext, err := c.resourceContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	allowed, err := c.mw.is(ctx.Context(), identityContext, policyContext, resourceContext)
+	if err != nil {
+		return false, err
+	}
+
+	return allowed, nil
+}
+
 func (c *Check) policyContext(ctx huma.Context) *api.PolicyContext {
 	policyContext := c.mw.policyContext()
 	policyContext.Path = ""

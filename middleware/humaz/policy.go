@@ -110,6 +110,15 @@ func (m *Middleware) Check(options ...CheckOption) func(c huma.Context, next fun
 	}
 }
 
+// Allowed returns a function that can be used to check if the request is allowed or not.
+// It returns false if the request is not allowed or an error in the check happens.
+// The function can be used in a route handler to check if the request is allowed.
+func (m *Middleware) Allowed(options ...CheckOption) func(c huma.Context) (bool, error) {
+	return func(c huma.Context) (bool, error) {
+		return newCheck(m, options...).Allowed(c)
+	}
+}
+
 func (m *Middleware) policyContext() *api.PolicyContext {
 	return &api.PolicyContext{
 		Path:      m.policy.Path,
