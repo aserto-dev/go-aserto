@@ -149,27 +149,16 @@ func newCheck(mw *Middleware, options ...CheckOption) *Check {
 
 // Handler returns a middleware handler that checks incoming requests.
 func (c *Check) Handler(ctx huma.Context, next func(huma.Context)) {
-	policyContext := c.policyContext(ctx)
-	identityContext := c.identityContext(ctx)
+	allowed, err := c.Allowed(ctx)
 
-	resourceContext, err := c.resourceContext(ctx)
-	if err != nil {
+	switch {
+	case err != nil:
 		ctx.SetStatus(http.StatusInternalServerError)
-		return
-	}
-
-	allowed, err := c.mw.is(ctx.Context(), identityContext, policyContext, resourceContext)
-	if err != nil {
-		ctx.SetStatus(http.StatusInternalServerError)
-		return
-	}
-
-	if !allowed {
+	case !allowed:
 		ctx.SetStatus(http.StatusForbidden)
-		return
+	default:
+		next(ctx)
 	}
-
-	next(ctx)
 }
 
 // Allowed returns a boolean indicating whether the request is allowed or not.

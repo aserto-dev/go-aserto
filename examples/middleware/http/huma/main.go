@@ -50,6 +50,7 @@ func main() {
 
 	// Initialize Huma API with Gin adapter
 	api := humagin.New(router, huma.DefaultConfig("Aserto Example", "1.0.0"))
+	// Configure authorization middlewares for all operations
 	api.UseMiddleware(AuthNMiddleware, mw.Handler)
 
 	huma.Register(api, huma.Operation{
@@ -57,6 +58,7 @@ func main() {
 		Method:      "GET",
 		Path:        "/api/{asset}",
 		Summary:     "Get an asset",
+		// Configure authorization only on per operation basis
 		// Middlewares: huma.Middlewares{mw.Handler},
 	}, handler)
 
