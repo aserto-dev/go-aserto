@@ -166,6 +166,7 @@ func (c *Check) Handler(ctx huma.Context, next func(huma.Context)) {
 func (c *Check) Allowed(ctx huma.Context) (bool, error) {
 	policyContext := c.policyContext(ctx)
 	identityContext := c.identityContext(ctx)
+
 	resourceContext, err := c.resourceContext(ctx)
 	if err != nil {
 		return false, err
@@ -192,7 +193,7 @@ func (c *Check) policyContext(ctx huma.Context) *api.PolicyContext {
 		policyContext.Path = policyMapper(ctx)
 	}
 
-	if policyContext.Path == "" {
+	if policyContext.GetPath() == "" {
 		path := "check"
 		if c.mw.policy.Root != "" {
 			path = fmt.Sprintf("%s.%s", c.mw.policy.Root, path)

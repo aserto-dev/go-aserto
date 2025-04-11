@@ -160,15 +160,15 @@ func (m *Middleware) is(
 	switch {
 	case err != nil:
 		return false, cerr.WithContext(err, ctx)
-	case len(resp.Decisions) != 1:
+	case len(resp.GetDecisions()) != 1:
 		return false, cerr.WithContext(aerr.ErrInvalidDecision, ctx)
 	}
 
-	if !resp.Decisions[0].Is {
+	if !resp.GetDecisions()[0].GetIs() {
 		logger.Info().Msg("authorization failed")
 	}
 
-	return resp.Decisions[0].Is, nil
+	return resp.GetDecisions()[0].GetIs(), nil
 }
 
 // WithPolicyFromURL instructs the middleware to construct the policy path from the path segment

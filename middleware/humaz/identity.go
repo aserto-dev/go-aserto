@@ -105,6 +105,7 @@ func (b *IdentityBuilder) FromContextValue(key string) *IdentityBuilder {
 	b.mapper = func(ctx huma.Context, identity middleware.Identity) {
 		b.ID(internal.ValueOrEmpty(ctx.Context(), key))
 	}
+
 	return b
 }
 
