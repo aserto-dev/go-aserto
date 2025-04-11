@@ -28,6 +28,7 @@ jobs:
           - middleware/gorillaz
           - middleware/grpcz
           - middleware/httpz
+          - middleware/humaz
     steps:
       -
         uses: actions/checkout@v4
