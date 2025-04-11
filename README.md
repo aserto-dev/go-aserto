@@ -296,7 +296,7 @@ By default, the policy path is derived from the URL path in HTTP middleware and 
 To provide custom logic, use `middleware.WithPolicyPathMapper()`. For example, in gRPC middleware:
 
 ```go
-middleware.WithPolicyPathMapper(func(ctx context.Context, req interface{}) string {
+middleware.WithPolicyPathMapper(func(ctx context.Context, req any) string {
 	path := getPolicyPath(ctx, req) // custom logic to retrieve a JWT token
 	return path
 })
@@ -310,7 +310,7 @@ By default, middleware do not include a resource in authorization calls.
 To add resource data, use `Middleware.WithResourceMapper()` to attach custom logic. For example, in HTTP middleware:
 
 ```go
-middleware.WithResourceMapper(func(r *http.Request, resource map[string]interface{}) {
+middleware.WithResourceMapper(func(r *http.Request, resource map[string]any) {
 	accountID := getAccountID(r)         // custom logic to retrieve a value from the request
 
 	resource["account_id"] = accountID   // add the value as a field to the resource context
@@ -522,7 +522,7 @@ included in the resource context.
 **WithResourceFromMessageByPath(fieldsByPath map[string][]string, defaults ...string)** is similar to
 `WithResourceFromFields` but can select different sets  of fields depending on which service method is called.
 
-**WithResourceFromContextValue(ctxKey interface{}, field string)** reads a value from the incoming request context
+**WithResourceFromContextValue(ctxKey any, field string)** reads a value from the incoming request context
 and adds it as a field to the resource context.
 
 #### Default Mappers

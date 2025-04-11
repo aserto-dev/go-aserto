@@ -40,9 +40,7 @@ func TestAssignmentOverride(t *testing.T) {
 	assert.Equal(
 		t,
 		Anon(),
-		(&grpcz.IdentityBuilder{}).JWT().None().InternalBuild(context.TODO(), nil),
-		identity.Type,
-		"Expected NONE identity to override JWT",
+		identity,
 	)
 }
 

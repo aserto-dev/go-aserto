@@ -31,7 +31,7 @@ func Select(msg proto.Message, paths ...string) (*structpb.Struct, error) {
 }
 
 func emptyStruct() *structpb.Struct {
-	s, _ := structpb.NewStruct(map[string]interface{}{})
+	s, _ := structpb.NewStruct(map[string]any{})
 	return s
 }
 
@@ -41,7 +41,7 @@ func messageStruct(msg proto.Message) (*structpb.Struct, error) {
 		return nil, err
 	}
 
-	var mapMsg map[string]interface{}
+	var mapMsg map[string]any
 	if err := json.Unmarshal(jsonMsg, &mapMsg); err != nil {
 		return nil, err
 	}
@@ -88,11 +88,11 @@ func addMessagePathToStruct(msg proto.Message, path string, strct *structpb.Stru
 	leafMessage := msg.ProtoReflect()
 
 	for _, part := range parts[:len(parts)-1] {
-		if _, ok := leafStruct.Fields[part]; !ok {
+		if _, ok := leafStruct.GetFields()[part]; !ok {
 			leafStruct.Fields[part] = structpb.NewStructValue(emptyStruct())
 		}
 
-		leafStruct = leafStruct.Fields[part].GetStructValue()
+		leafStruct = leafStruct.GetFields()[part].GetStructValue()
 		leafMessage = leafMessage.Get(leafMessage.Descriptor().Fields().ByTextName(part)).Message()
 	}
 

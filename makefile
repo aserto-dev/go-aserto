@@ -8,20 +8,18 @@ ATTN_COLOR         := \033[33;01m
 
 GOOS               := $(shell go env GOOS)
 GOARCH             := $(shell go env GOARCH)
-GOPRIVATE          := "github.com/aserto-dev"
 DOCKER_BUILDKIT    := 1
 
-BIN_DIR            := ./bin
-EXT_DIR            := ./.ext
+EXT_DIR            := ${PWD}/.ext
 EXT_BIN_DIR        := ${EXT_DIR}/bin
 EXT_TMP_DIR        := ${EXT_DIR}/tmp
 
-SVU_VER 	         := 3.1.0
-GOTESTSUM_VER      := 1.11.0
-GOLANGCI-LINT_VER  := 1.64.5
-GORELEASER_VER     := 2.3.2
+SVU_VER            := 3.2.3
+GOTESTSUM_VER      := 1.12.1
+GOLANGCI-LINT_VER  := 2.0.2
+GORELEASER_VER     := 2.8.2
 
-RELEASE_TAG        := $$(svu current)
+RELEASE_TAG		:= $$(${EXT_BIN_DIR}/svu current)
 
 .DEFAULT_GOAL      := build
 
@@ -65,22 +63,12 @@ info:
 	@echo "RELEASE_TAG: ${RELEASE_TAG}"
 
 .PHONY: install-svu
-install-svu: install-svu-${GOOS}
+install-svu: ${EXT_BIN_DIR} ${EXT_TMP_DIR}
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
+	@gh release download v${SVU_VER} --repo https://github.com/caarlos0/svu --pattern "*${GOOS}_all.tar.gz" --output "${EXT_TMP_DIR}/svu.tar.gz" --clobber
+	@tar -xvf ${EXT_TMP_DIR}/svu.tar.gz --directory ${EXT_BIN_DIR} svu &> /dev/null
 	@chmod +x ${EXT_BIN_DIR}/svu
 	@${EXT_BIN_DIR}/svu --version
-
-.PHONY: install-svu-darwin
-install-svu-darwin: ${EXT_TMP_DIR} ${EXT_BIN_DIR}
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@gh release download v${SVU_VER} --repo https://github.com/caarlos0/svu --pattern "*darwin_all.tar.gz" --output "${EXT_TMP_DIR}/svu.tar.gz" --clobber
-	@tar -xvf ${EXT_TMP_DIR}/svu.tar.gz --directory ${EXT_BIN_DIR} svu &> /dev/null
-
-.PHONY: install-svu-linux
-install-svu-linux: ${EXT_TMP_DIR} ${EXT_BIN_DIR}
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@gh release download v${SVU_VER} --repo https://github.com/caarlos0/svu --pattern "*linux_${GOARCH}.tar.gz" --output "${EXT_TMP_DIR}/svu.tar.gz" --clobber
-	@tar -xvf ${EXT_TMP_DIR}/svu.tar.gz --directory ${EXT_BIN_DIR} svu &> /dev/null
 
 .PHONY: install-gotestsum
 install-gotestsum: ${EXT_TMP_DIR} ${EXT_BIN_DIR}
@@ -116,12 +104,7 @@ clean-gen:
 clean:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
 	@rm -rf ${EXT_DIR}
-	@rm -rf ${BIN_DIR}
 	@rm -rf ./dist
-
-${BIN_DIR}:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@mkdir -p ${BIN_DIR}
 
 ${EXT_BIN_DIR}:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"

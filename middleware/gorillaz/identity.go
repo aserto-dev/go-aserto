@@ -101,7 +101,7 @@ func (b *IdentityBuilder) FromHeader(header ...string) *IdentityBuilder {
 // FromContextValue extracts caller identity from a value in the incoming request context.
 //
 // If the value is not present, not a string, or an empty string then the request is considered anonymous.
-func (b *IdentityBuilder) FromContextValue(key interface{}) *IdentityBuilder {
+func (b *IdentityBuilder) FromContextValue(key any) *IdentityBuilder {
 	b.mapper = func(r *http.Request, identity middleware.Identity) {
 		identity.ID(internal.ValueOrEmpty(r.Context(), key))
 	}
