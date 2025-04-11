@@ -4,7 +4,7 @@ import future.keywords.in
 
 default allowed = false
 
-allowed {
+allowed if {
     roles := {"viewer", "editor"}
 
     some x in roles
@@ -13,6 +13,6 @@ allowed {
     input.resource.asset != "secret"
 }
 
-allowed {
+allowed if {
     input.user.attributes.roles[_] == "admin"
 }
