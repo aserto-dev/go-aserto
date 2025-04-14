@@ -13,49 +13,49 @@ type Config struct {
 	//
 	// Address is typically in the form "hostname:port" but may also be a Unix socket or DNS URI.
 	// See https://github.com/grpc/grpc/blob/master/doc/naming.md#name-syntax for more details.
-	Address string `json:"address"`
+	Address string `json:"address" yaml:"address"`
 
 	// A JWT to be used for authentication with the service.
 	//
 	// Token and APIKey are mutually exclusive.
-	Token string `json:"token"`
+	Token string `json:"token" yaml:"token"`
 
 	// An API key to be used for authentication with the service.
-	APIKey string `json:"api_key"`
+	APIKey string `json:"api_key" yaml:"api_key"`
 
 	// An Aserto tenant ID.
-	TenantID string `json:"tenant_id"`
+	TenantID string `json:"tenant_id" yaml:"tenant_id"`
 
 	// An Aserto account ID.
-	AccountID string `json:"account_id"`
+	AccountID string `json:"account_id" yaml:"account_id"`
 
 	// In mTLS connections, ClientCertPath is the path of the client's
 	// certificate file.
-	ClientCertPath string `json:"client_cert_path"`
+	ClientCertPath string `json:"client_cert_path" yaml:"client_cert_path"`
 
 	// In mTLS connections, ClientKeyPath is the path of the client's
 	// private key file.
-	ClientKeyPath string `json:"client_key_path"`
+	ClientKeyPath string `json:"client_key_path" yaml:"client_key_path"`
 
 	// In TLS connections, CACertPath is the path of a CA certificate to
 	// validate the server's certificate against.
-	CACertPath string `json:"ca_cert_path"`
+	CACertPath string `json:"ca_cert_path" yaml:"ca_cert_path"`
 
 	// In TLS connections, skip verification of the server certificate.
-	Insecure bool `json:"insecure"`
+	Insecure bool `json:"insecure" yaml:"insecure"`
 
 	// Disable TLS and use a plaintext connection.
-	NoTLS bool `json:"no_tls"`
+	NoTLS bool `json:"no_tls" yaml:"no_tls"`
 
 	// NoProxy bypasses any configured HTTP proxy.
-	NoProxy bool `json:"no_proxy"`
+	NoProxy bool `json:"no_proxy" yaml:"no_proxy"`
 
 	// Additional headers to include in requests to the service.
-	Headers map[string]string `json:"headers"`
+	Headers map[string]string `json:"headers" yaml:"headers"`
 
 	// Deprecated: no longer used. Timeouts are controlled on a per-call basis
 	// by the provided context.
-	TimeoutInSeconds int `json:"timeout_in_seconds"`
+	TimeoutInSeconds int `json:"timeout_in_seconds" yaml:"timeout_in_seconds"`
 }
 
 // Connects to the service specified in Config, possibly with additional

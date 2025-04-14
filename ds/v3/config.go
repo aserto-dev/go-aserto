@@ -23,19 +23,19 @@ type Config struct {
 	*aserto.Config
 
 	// Reader configuration.
-	Reader *aserto.Config `json:"reader"`
+	Reader *aserto.Config `json:"reader" yaml:"reader"`
 
 	// Writer configuration.
-	Writer *aserto.Config `json:"writer"`
+	Writer *aserto.Config `json:"writer" yaml:"writer"`
 
 	// Importer configuration.
-	Importer *aserto.Config `json:"importer"`
+	Importer *aserto.Config `json:"importer" yaml:"importer"`
 
 	// Exporter configuration.
-	Exporter *aserto.Config `json:"exporter"`
+	Exporter *aserto.Config `json:"exporter" yaml:"exporter"`
 
 	// Model configuration.
-	Model *aserto.Config `json:"model"`
+	Model *aserto.Config `json:"model" yaml:"model"`
 }
 
 // Connect create a new directory client from the specified configuration.

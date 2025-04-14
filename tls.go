@@ -14,9 +14,9 @@ import (
 // TLSConfig contains paths to an X509 certificate's key-pair and CA files.
 // It can be used to create client or server tls.Config or grpc TransportCredentials.
 type TLSConfig struct {
-	Cert string `json:"tls_cert_path"`
-	Key  string `json:"tls_key_path"`
-	CA   string `json:"tls_ca_cert_path"`
+	Cert string `json:"tls_cert_path"    yaml:"tls_cert_path"`
+	Key  string `json:"tls_key_path"     yaml:"tls_key_path"`
+	CA   string `json:"tls_ca_cert_path" yaml:"tls_ca_cert_path"`
 }
 
 func (c *TLSConfig) HasCert() bool {
