@@ -39,7 +39,7 @@ func (c *TLSConfig) ServerConfig() (*tls.Config, error) {
 
 	certificate, err := tls.LoadX509KeyPair(c.Cert, c.Key)
 	if err != nil {
-		return cfg, errors.Wrapf(err, "failed to load gateway certs")
+		return cfg, errors.Wrapf(err, "failed to load server key-pair (%q, %q)", c.Cert, c.Key)
 	}
 
 	cfg.Certificates = []tls.Certificate{certificate}
@@ -61,17 +61,17 @@ func (c *TLSConfig) ClientConfig(skipVerify bool) (*tls.Config, error) {
 
 	certPool, err := tlsconf.CertPool(c.CA)
 	if err != nil {
-		return conf, errors.Wrap(err, "failed to create certificate pool")
+		return conf, errors.Wrapf(err, "failed to create certificate pool with ca %q", c.CA)
 	}
 
 	if c.HasCA() {
 		caCertBytes, err := os.ReadFile(c.CA)
 		if err != nil {
-			return conf, errors.Wrapf(err, "failed to read ca cert: %s", c.CA)
+			return conf, errors.Wrapf(err, "failed to read ca cert %q", c.CA)
 		}
 
 		if !certPool.AppendCertsFromPEM(caCertBytes) {
-			return conf, errors.Wrap(err, "failed to append client ca cert: %s")
+			return conf, errors.Errorf("failed to append client ca cert %q", c.CA)
 		}
 	}
 
