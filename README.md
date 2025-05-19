@@ -95,11 +95,8 @@ decisions.
 
 The directory client provides access to the directory services:
 
-1. Reader - provides functions to query the directory.
-2. Writer - provides functions to mutate or delete directory data.
-3. Exporter - provides bulk export of data from the directory.
-4. Importer - provides bulk import of data into the directory.
-
+1. Reader - provides functions to query and export the directory.
+2. Writer - provides functions to mutate, delete and import directory data.
 
 To create a directory client:
 
@@ -139,12 +136,6 @@ type Config struct {
 
 	// Writer configuration.
 	Writer *client.Config `json:"writer"`
-
-	// Importer configuration.
-	Importer *client.Config `json:"importer"`
-
-	// Exporter configuration.
-	Exporter *client.Config `json:"exporter"`
 }
 ```
 

@@ -6,7 +6,7 @@ import (
 	cerr "github.com/aserto-dev/errors"
 	"github.com/aserto-dev/go-aserto/middleware/internal"
 	"github.com/aserto-dev/go-authorizer/pkg/aerr"
-	ds3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
+	"github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
@@ -18,7 +18,7 @@ type (
 )
 
 type CheckClient interface {
-	Check(ctx context.Context, in *ds3.CheckRequest, opts ...grpc.CallOption) (*ds3.CheckResponse, error)
+	Check(ctx context.Context, in *reader.CheckRequest, opts ...grpc.CallOption) (*reader.CheckResponse, error)
 }
 
 type CheckOption func(*CheckOptions)
@@ -274,7 +274,7 @@ func (c *CheckMiddleware) authorize(ctx context.Context, req any) error {
 		return errors.New("subject type is empty")
 	}
 
-	check := &ds3.CheckRequest{
+	check := &reader.CheckRequest{
 		ObjectType:  objType,
 		ObjectId:    objID,
 		Relation:    c.opts.relation(ctx, req),

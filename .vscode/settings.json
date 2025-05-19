@@ -26,6 +26,7 @@
         "protojson",
         "rdns",
         "rego",
+        "samber",
         "sessionid",
         "strct",
         "stretchr",
@@ -38,6 +39,7 @@
         "tlsconf",
         "unexported",
         "userid",
-        "Wrapf"
+        "wrapf",
+        "zerolog"
     ]
 }

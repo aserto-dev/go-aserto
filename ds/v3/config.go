@@ -7,11 +7,8 @@ import (
 
 	"github.com/aserto-dev/go-aserto"
 	"github.com/aserto-dev/go-aserto/ds/internal"
-	des "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
-	dis "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
-	dms "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
-	drs "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
-	dws "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
+	"github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
+	"github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 )
 
 var ErrInvalidConfig = errors.New("invalid config")
@@ -27,15 +24,6 @@ type Config struct {
 
 	// Writer configuration.
 	Writer *aserto.Config `json:"writer"`
-
-	// Importer configuration.
-	Importer *aserto.Config `json:"importer"`
-
-	// Exporter configuration.
-	Exporter *aserto.Config `json:"exporter"`
-
-	// Model configuration.
-	Model *aserto.Config `json:"model"`
 }
 
 // Connect create a new directory client from the specified configuration.
@@ -50,7 +38,7 @@ func (c *Config) Validate() error {
 	}
 
 	// At least one client config must be non-nil.
-	if allNil([]*aserto.Config{c.Config, c.Reader, c.Writer, c.Importer, c.Exporter}) {
+	if allNil([]*aserto.Config{c.Config, c.Reader, c.Writer}) {
 		return ErrInvalidConfig
 	}
 
@@ -62,38 +50,20 @@ func connect(conns *internal.Connections, cfg *Config) (*Client, error) {
 		return nil, err
 	}
 
-	reader, err := getConnection(conns, cfg.Reader, cfg.Config)
+	r, err := getConnection(conns, cfg.Reader, cfg.Config)
 	if err != nil {
 		return nil, errors.Wrap(err, "reader connection failed")
 	}
 
-	writer, err := getConnection(conns, cfg.Writer, cfg.Config)
+	w, err := getConnection(conns, cfg.Writer, cfg.Config)
 	if err != nil {
 		return nil, errors.Wrap(err, "writer connection failed")
 	}
 
-	importer, err := getConnection(conns, cfg.Importer, cfg.Config)
-	if err != nil {
-		return nil, errors.Wrap(err, "importer connection failed")
-	}
-
-	exporter, err := getConnection(conns, cfg.Exporter, cfg.Config)
-	if err != nil {
-		return nil, errors.Wrap(err, "exporter connection failed")
-	}
-
-	model, err := getConnection(conns, cfg.Model, cfg.Config)
-	if err != nil {
-		return nil, errors.Wrap(err, "model connection failed")
-	}
-
 	return &Client{
-		Reader:   newClient(reader, drs.NewReaderClient),
-		Writer:   newClient(writer, dws.NewWriterClient),
-		Importer: newClient(importer, dis.NewImporterClient),
-		Exporter: newClient(exporter, des.NewExporterClient),
-		Model:    newClient(model, dms.NewModelClient),
-		conns:    conns.AsSlice(),
+		Reader: newClient(r, reader.NewReaderClient),
+		Writer: newClient(w, writer.NewWriterClient),
+		conns:  conns.AsSlice(),
 	}, nil
 }
 

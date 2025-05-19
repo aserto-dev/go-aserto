@@ -3,11 +3,9 @@ package ds
 import (
 	"github.com/aserto-dev/go-aserto"
 	"github.com/aserto-dev/go-aserto/internal/hosted"
-	des "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
-	dis "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
-	dms "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
-	drs "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
-	dws "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
+
+	"github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
+	"github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -16,19 +14,10 @@ import (
 // Client provides access to the Aserto Directory APIs.
 type Client struct {
 	// Client for the directory reader service.
-	Reader drs.ReaderClient
+	Reader reader.ReaderClient
 
 	// Client for the directory writer service.
-	Writer dws.WriterClient
-
-	// Client for the directory importer service.
-	Importer dis.ImporterClient
-
-	// Client for the directory exporter service.
-	Exporter des.ExporterClient
-
-	// Client for the directory model service.
-	Model dms.ModelClient
+	Writer writer.WriterClient
 
 	conns []*grpc.ClientConn
 }
@@ -50,24 +39,18 @@ func New(opts ...aserto.ConnectionOption) (*Client, error) {
 	}
 
 	return &Client{
-		Reader:   drs.NewReaderClient(conn),
-		Writer:   dws.NewWriterClient(conn),
-		Importer: dis.NewImporterClient(conn),
-		Exporter: des.NewExporterClient(conn),
-		Model:    dms.NewModelClient(conn),
-		conns:    []*grpc.ClientConn{conn},
+		Reader: reader.NewReaderClient(conn),
+		Writer: writer.NewWriterClient(conn),
+		conns:  []*grpc.ClientConn{conn},
 	}, nil
 }
 
 // FromConnection returns a new Client using an existing connection.
 func FromConnection(conn *grpc.ClientConn) *Client {
 	return &Client{
-		Reader:   drs.NewReaderClient(conn),
-		Writer:   dws.NewWriterClient(conn),
-		Importer: dis.NewImporterClient(conn),
-		Exporter: des.NewExporterClient(conn),
-		Model:    dms.NewModelClient(conn),
-		conns:    []*grpc.ClientConn{conn},
+		Reader: reader.NewReaderClient(conn),
+		Writer: writer.NewWriterClient(conn),
+		conns:  []*grpc.ClientConn{conn},
 	}
 }
 

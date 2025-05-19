@@ -41,8 +41,6 @@ func TestUnmarshalConfig(t *testing.T) {
 		}
 
 		assert.Nil(cfg.Config)
-		assert.Nil(cfg.Importer)
-		assert.Nil(cfg.Exporter)
 		assert.NotNil(cfg.Reader)
 		assert.NotNil(cfg.Writer)
 		assert.Equal("localhost:9292", cfg.Reader.Address)
@@ -60,8 +58,6 @@ func TestUnmarshalConfig(t *testing.T) {
 		assert.NotNil(cfg.Config)
 		assert.NotNil(cfg.Reader)
 		assert.Nil(cfg.Writer)
-		assert.Nil(cfg.Importer)
-		assert.Nil(cfg.Exporter)
 		assert.Equal("localhost:8282", cfg.Address)
 		assert.Equal("localhost:9292", cfg.Reader.Address)
 	})
@@ -82,8 +78,6 @@ func TestConnect(t *testing.T) {
 		assert.NotNil(dir)
 		assert.NotNil(dir.Reader)
 		assert.NotNil(dir.Writer)
-		assert.NotNil(dir.Importer)
-		assert.NotNil(dir.Exporter)
 		assert.Equal(1, counter.Count)
 	})
 
@@ -102,8 +96,6 @@ func TestConnect(t *testing.T) {
 		assert.NotNil(dir)
 		assert.NotNil(dir.Reader)
 		assert.NotNil(dir.Writer)
-		assert.NotNil(dir.Importer)
-		assert.NotNil(dir.Exporter)
 		assert.Equal(2, counter.Count)
 	})
 
@@ -121,8 +113,6 @@ func TestConnect(t *testing.T) {
 		assert.NotNil(dir)
 		assert.NotNil(dir.Reader)
 		assert.Nil(dir.Writer)
-		assert.Nil(dir.Importer)
-		assert.Nil(dir.Exporter)
 		assert.Equal(1, counter.Count)
 	})
 }
