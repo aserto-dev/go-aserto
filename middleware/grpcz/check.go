@@ -53,6 +53,7 @@ type CheckOptions struct {
 		mapper StringMapper
 	}
 	filters []Filter
+	trace   bool
 }
 
 func (o *CheckOptions) object(ctx context.Context, req any) (string, string) {
@@ -194,6 +195,13 @@ func WithFilter(filter Filter) CheckOption {
 	}
 }
 
+// WithTrace enables decision tracing.
+func WithTrace(trace bool) CheckOption {
+	return func(o *CheckOptions) {
+		o.trace = trace
+	}
+}
+
 type CheckMiddleware struct {
 	dsClient CheckClient
 	opts     *CheckOptions
@@ -280,6 +288,7 @@ func (c *CheckMiddleware) authorize(ctx context.Context, req any) error {
 		Relation:    c.opts.relation(ctx, req),
 		SubjectType: subjType,
 		SubjectId:   subjID,
+		Trace:       c.opts.trace,
 	}
 
 	logger := zerolog.Ctx(ctx).With().Interface("check_request", check).Logger()
@@ -291,8 +300,12 @@ func (c *CheckMiddleware) authorize(ctx context.Context, req any) error {
 		return cerr.WrapContext(err, ctx, "check call failed")
 	}
 
+	if c.opts.trace {
+		logger.Debug().Any("check_response", allowed).Msg("trace")
+	}
+
 	if !allowed.GetCheck() {
-		return cerr.WithContext(aerr.ErrAuthorizationFailed, ctx)
+		return cerr.WithContext(aerr.ErrAuthorizationFailed.Str("context", allowed.GetContext().String()), ctx)
 	}
 
 	return nil
