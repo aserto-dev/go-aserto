@@ -7,7 +7,7 @@ import (
 
 var ErrInvalidConfig = errors.New("invalid configuration")
 
-// gRPC Client Configuration.
+// Config contains the gRPC client configuration.
 type Config struct {
 	// Address of the service to connect to.
 	//
@@ -58,8 +58,8 @@ type Config struct {
 	TimeoutInSeconds int `json:"timeout_in_seconds"`
 }
 
-// Connects to the service specified in Config, possibly with additional
-// connection options.
+// Connect connects to the service specified in Config,
+// possibly with additional connection options.
 func (cfg *Config) Connect(opts ...ConnectionOption) (*grpc.ClientConn, error) {
 	if cfg.APIKey != "" {
 		opts = append(opts, WithAPIKeyAuth(cfg.APIKey))
@@ -77,7 +77,7 @@ func (cfg *Config) Connect(opts ...ConnectionOption) (*grpc.ClientConn, error) {
 	return Connect(connOpts)
 }
 
-// Converts the Config into a ConnectionOption slice that can be passed to NewConnection().
+// ToConnectionOptions converts the Config into a ConnectionOption slice that can be passed to NewConnection().
 func (cfg *Config) ToConnectionOptions() ([]ConnectionOption, error) {
 	if err := cfg.validate(); err != nil {
 		return nil, err

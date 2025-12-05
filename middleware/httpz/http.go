@@ -120,6 +120,47 @@ func (m *Middleware) Check(options ...CheckOption) *Check {
 	return newCheck(m, options...)
 }
 
+// WithPolicyFromURL instructs the middleware to construct the policy path from the path segment
+// of the incoming request's URL.
+//
+// Path separators ('/') are replaced with dots ('.').
+// An optional prefix can be specified to be included in all paths.
+//
+// # Example
+//
+// Using 'WithPolicyFromURL("myapp")', the route
+//
+//	POST /api/products/
+//
+// becomes the policy path
+//
+//	"myapp.POST.api.products"
+func (m *Middleware) WithPolicyFromURL(prefix string) *Middleware {
+	m.policyMapper = urlPolicyPathMapper(prefix)
+	return m
+}
+
+// WithPolicyPathMapper sets a custom policy mapper, a function that takes an incoming request
+// and returns the path within the policy of the package to query.
+func (m *Middleware) WithPolicyPathMapper(mapper StringMapper) *Middleware {
+	m.policyMapper = mapper
+	return m
+}
+
+// WithNoResourceContext causes the middleware to include no resource context in authorization request instead
+// of the default behavior that sends all URL path parameters.
+func (m *Middleware) WithNoResourceContext() *Middleware {
+	m.resourceMappers = []ResourceMapper{func(*http.Request, map[string]any) {}}
+	return m
+}
+
+// WithResourceMapper sets a custom resource mapper, a function that takes an incoming request
+// and returns the resource object to include with the authorization request as a `structpb.Struct`.
+func (m *Middleware) WithResourceMapper(mapper ResourceMapper) *Middleware {
+	m.resourceMappers = append(m.resourceMappers, mapper)
+	return m
+}
+
 func (m *Middleware) policyContext() *api.PolicyContext {
 	return internal.DefaultPolicyContext(m.policy)
 }
@@ -164,47 +205,6 @@ func (m *Middleware) is(
 	}
 
 	return resp.GetDecisions()[0].GetIs(), nil
-}
-
-// WithPolicyFromURL instructs the middleware to construct the policy path from the path segment
-// of the incoming request's URL.
-//
-// Path separators ('/') are replaced with dots ('.').
-// An optional prefix can be specified to be included in all paths.
-//
-// # Example
-//
-// Using 'WithPolicyFromURL("myapp")', the route
-//
-//	POST /api/products/
-//
-// becomes the policy path
-//
-//	"myapp.POST.api.products"
-func (m *Middleware) WithPolicyFromURL(prefix string) *Middleware {
-	m.policyMapper = urlPolicyPathMapper(prefix)
-	return m
-}
-
-// WithPolicyPathMapper sets a custom policy mapper, a function that takes an incoming request
-// and returns the path within the policy of the package to query.
-func (m *Middleware) WithPolicyPathMapper(mapper StringMapper) *Middleware {
-	m.policyMapper = mapper
-	return m
-}
-
-// WithNoResourceContext causes the middleware to include no resource context in authorization request instead
-// of the default behavior that sends all URL path parameters.
-func (m *Middleware) WithNoResourceContext() *Middleware {
-	m.resourceMappers = []ResourceMapper{func(*http.Request, map[string]any) {}}
-	return m
-}
-
-// WithResourceMapper sets a custom resource mapper, a function that takes an incoming request
-// and returns the resource object to include with the authorization request as a `structpb.Struct`.
-func (m *Middleware) WithResourceMapper(mapper ResourceMapper) *Middleware {
-	m.resourceMappers = append(m.resourceMappers, mapper)
-	return m
 }
 
 func urlPolicyPathMapper(prefix string) StringMapper {

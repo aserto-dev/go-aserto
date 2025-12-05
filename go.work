@@ -1,9 +1,12 @@
-go 1.23.0
+go 1.24.11
 
-toolchain go1.23.7
+toolchain go1.25.4
 
 use (
 	.
+	./examples/middleware/http/gin
+	./examples/middleware/http/gorilla
+	./examples/middleware/http/huma
 	./middleware/ginz
 	./middleware/gorillaz
 	./middleware/grpcz

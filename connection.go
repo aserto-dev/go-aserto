@@ -1,12 +1,3 @@
-/*
-Package client provides communication with the Aserto services.
-
-There are two groups of services:
-
-1. client/authorizer provides access to the authorizer service and the edge services running alongside it.
-
-2. client/tenant provides access to the Aserto control plane services.
-*/
 package aserto
 
 import (

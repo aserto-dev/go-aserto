@@ -14,9 +14,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const port = 8080
-const contextKey = "subject"
-const subjectValue = "CiRmZDE2MTRkMy1jMzlhLTQ3ODEtYjdiZC04Yjk2ZjVhNTEwMGQSBWxvY2Fs"
+const (
+	port         = 8080
+	contextKey   = "subject"
+	subjectValue = "CiRmZDE2MTRkMy1jMzlhLTQ3ODEtYjdiZC04Yjk2ZjVhNTEwMGQSBWxvY2Fs"
+)
 
 func AuthNMiddleware(ctx huma.Context, next func(huma.Context)) {
 	ctx = huma.WithValue(ctx, contextKey, subjectValue)
@@ -31,7 +33,8 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed to create authorizer client:", err)
 	}
-	defer azClient.Close()
+
+	defer func() { _ = azClient.Close() }()
 
 	// Create Aserto middleware for Huma
 	mw := humaz.New(
@@ -78,12 +81,14 @@ func main() {
 
 	// Start the server
 	fmt.Printf("Server running on port %d\n", port)
+
 	if err := router.Run(fmt.Sprintf(":%d", port)); err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return
 	}
 }
 
-// Input struct for the handler
+// AssetRequest input struct for the handler.
 type AssetRequest struct {
 	Asset string `path:"asset"`
 }

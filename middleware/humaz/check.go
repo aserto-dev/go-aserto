@@ -29,7 +29,7 @@ func WithRelation(name string) CheckOption {
 	}
 }
 
-// WithRelation takes a function that is used to determine the relation/permission to check from the incoming request.
+// WithRelationMapper takes a function that is used to determine the relation/permission to check from the incoming request.
 func WithRelationMapper(mapper StringMapper) CheckOption {
 	return func(o *CheckOptions) {
 		o.rel.mapper = mapper
@@ -216,7 +216,7 @@ func (c *Check) resourceContext(ctx huma.Context) (*structpb.Struct, error) {
 	objType, objID := c.opts.object(ctx)
 	subjType := c.opts.subjectType()
 
-	return structpb.NewStruct(map[string]interface{}{
+	return structpb.NewStruct(map[string]any{
 		"relation":     relation,
 		"object_type":  objType,
 		"object_id":    objID,
