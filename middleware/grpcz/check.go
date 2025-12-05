@@ -85,7 +85,7 @@ func WithRelation(name string) CheckOption {
 	}
 }
 
-// WithRelation takes a function that is used to determine the relation/permission to check from the incoming request.
+// WithRelationMapper takes a function that is used to determine the relation/permission to check from the incoming request.
 func WithRelationMapper(mapper StringMapper) CheckOption {
 	return func(o *CheckOptions) {
 		o.rel.mapper = mapper

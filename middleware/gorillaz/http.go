@@ -121,52 +121,6 @@ func (m *Middleware) Check(options ...CheckOption) *Check {
 	return newCheck(m, options...)
 }
 
-func (m *Middleware) policyContext() *api.PolicyContext {
-	return internal.DefaultPolicyContext(m.policy)
-}
-
-func (m *Middleware) resourceContext(r *http.Request) (*structpb.Struct, error) {
-	res := map[string]any{}
-	for _, mapper := range m.resourceMappers {
-		mapper(r, res)
-	}
-
-	return structpb.NewStruct(res)
-}
-
-func (m *Middleware) is(
-	ctx context.Context,
-	identityContext *api.IdentityContext,
-	policyContext *api.PolicyContext,
-	resourceContext *structpb.Struct,
-) (bool, error) {
-	isRequest := &authz.IsRequest{
-		IdentityContext: identityContext,
-		PolicyContext:   policyContext,
-		ResourceContext: resourceContext,
-		PolicyInstance:  internal.DefaultPolicyInstance(m.policy),
-	}
-
-	logger := zerolog.Ctx(ctx).With().Interface("is_request", isRequest).Logger()
-	logger.Debug().Msg("authorizing request")
-	ctx = logger.WithContext(ctx)
-
-	resp, err := m.client.Is(ctx, isRequest)
-
-	switch {
-	case err != nil:
-		return false, cerr.WithContext(err, ctx)
-	case len(resp.GetDecisions()) != 1:
-		return false, cerr.WithContext(aerr.ErrInvalidDecision, ctx)
-	}
-
-	if !resp.GetDecisions()[0].GetIs() {
-		logger.Info().Msg("authorization failed")
-	}
-
-	return resp.GetDecisions()[0].GetIs(), nil
-}
-
 // WithPolicyFromURL instructs the middleware to construct the policy path from the path segment
 // of the incoming request's URL.
 //
@@ -213,6 +167,52 @@ func defaultResourceMapper(r *http.Request, resource map[string]any) {
 	for k, v := range mux.Vars(r) {
 		resource[k] = v
 	}
+}
+
+func (m *Middleware) policyContext() *api.PolicyContext {
+	return internal.DefaultPolicyContext(m.policy)
+}
+
+func (m *Middleware) resourceContext(r *http.Request) (*structpb.Struct, error) {
+	res := map[string]any{}
+	for _, mapper := range m.resourceMappers {
+		mapper(r, res)
+	}
+
+	return structpb.NewStruct(res)
+}
+
+func (m *Middleware) is(
+	ctx context.Context,
+	identityContext *api.IdentityContext,
+	policyContext *api.PolicyContext,
+	resourceContext *structpb.Struct,
+) (bool, error) {
+	isRequest := &authz.IsRequest{
+		IdentityContext: identityContext,
+		PolicyContext:   policyContext,
+		ResourceContext: resourceContext,
+		PolicyInstance:  internal.DefaultPolicyInstance(m.policy),
+	}
+
+	logger := zerolog.Ctx(ctx).With().Interface("is_request", isRequest).Logger()
+	logger.Debug().Msg("authorizing request")
+	ctx = logger.WithContext(ctx)
+
+	resp, err := m.client.Is(ctx, isRequest)
+
+	switch {
+	case err != nil:
+		return false, cerr.WithContext(err, ctx)
+	case len(resp.GetDecisions()) != 1:
+		return false, cerr.WithContext(aerr.ErrInvalidDecision, ctx)
+	}
+
+	if !resp.GetDecisions()[0].GetIs() {
+		logger.Info().Msg("authorization failed")
+	}
+
+	return resp.GetDecisions()[0].GetIs(), nil
 }
 
 func urlPolicyPathMapper(prefix string) StringMapper {

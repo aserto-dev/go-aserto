@@ -50,7 +50,7 @@ type (
 
 	// ResourceMapper functions are used to extract structured data from incoming requests.
 	// The optional resource mapper is a ResourceMapper.
-	ResourceMapper func(huma.Context, map[string]interface{})
+	ResourceMapper func(huma.Context, map[string]any)
 )
 
 // New creates middleware for the specified policy.
@@ -119,6 +119,48 @@ func (m *Middleware) Allowed(options ...CheckOption) func(c huma.Context) (bool,
 	}
 }
 
+// WithPolicyFromURL instructs the middleware to construct the policy path from the path segment
+// of the incoming request's URL.
+//
+// Path separators ('/') are replaced with dots ('.'). If the request uses gorilla/mux to define path
+// parameters, those are added to the path with two leading underscores.
+// An optional prefix can be specified to be included in all paths.
+//
+// # Example
+//
+// Using 'WithPolicyFromURL("myapp")', the route
+//
+//	POST /products/{id}
+//
+// becomes the policy path
+//
+//	"myapp.POST.products.__id"
+func (m *Middleware) WithPolicyFromURL(prefix string) *Middleware {
+	m.policyMapper = urlPolicyPathMapper(prefix)
+	return m
+}
+
+// WithPolicyPathMapper sets a custom policy mapper, a function that takes an incoming request
+// and returns the path within the policy of the package to query.
+func (m *Middleware) WithPolicyPathMapper(mapper StringMapper) *Middleware {
+	m.policyMapper = mapper
+	return m
+}
+
+// WithNoResourceContext causes the middleware to include no resource context in authorization request instead
+// of the default behavior that sends all URL path parameters.
+func (m *Middleware) WithNoResourceContext() *Middleware {
+	m.resourceMappers = []ResourceMapper{}
+	return m
+}
+
+// WithResourceMapper sets a custom resource mapper, a function that takes an incoming request
+// and returns the resource object to include with the authorization request as a `structpb.Struct`.
+func (m *Middleware) WithResourceMapper(mapper ResourceMapper) *Middleware {
+	m.resourceMappers = append(m.resourceMappers, mapper)
+	return m
+}
+
 func (m *Middleware) policyContext() *api.PolicyContext {
 	return &api.PolicyContext{
 		Path:      m.policy.Path,
@@ -171,49 +213,7 @@ func (m *Middleware) is(
 	return resp.GetDecisions()[0].GetIs(), nil
 }
 
-// WithPolicyFromURL instructs the middleware to construct the policy path from the path segment
-// of the incoming request's URL.
-//
-// Path separators ('/') are replaced with dots ('.'). If the request uses gorilla/mux to define path
-// parameters, those are added to the path with two leading underscores.
-// An optional prefix can be specified to be included in all paths.
-//
-// # Example
-//
-// Using 'WithPolicyFromURL("myapp")', the route
-//
-//	POST /products/{id}
-//
-// becomes the policy path
-//
-//	"myapp.POST.products.__id"
-func (m *Middleware) WithPolicyFromURL(prefix string) *Middleware {
-	m.policyMapper = urlPolicyPathMapper(prefix)
-	return m
-}
-
-// WithPolicyPathMapper sets a custom policy mapper, a function that takes an incoming request
-// and returns the path within the policy of the package to query.
-func (m *Middleware) WithPolicyPathMapper(mapper StringMapper) *Middleware {
-	m.policyMapper = mapper
-	return m
-}
-
-// WithNoResourceContext causes the middleware to include no resource context in authorization request instead
-// of the default behavior that sends all URL path parameters.
-func (m *Middleware) WithNoResourceContext() *Middleware {
-	m.resourceMappers = []ResourceMapper{}
-	return m
-}
-
-// WithResourceMapper sets a custom resource mapper, a function that takes an incoming request
-// and returns the resource object to include with the authorization request as a `structpb.Struct`.
-func (m *Middleware) WithResourceMapper(mapper ResourceMapper) *Middleware {
-	m.resourceMappers = append(m.resourceMappers, mapper)
-	return m
-}
-
-func defaultResourceMapper(ctx huma.Context, resource map[string]interface{}) {
+func defaultResourceMapper(ctx huma.Context, resource map[string]any) {
 	for _, param := range ctx.Operation().Parameters {
 		resource[param.Name] = ctx.Param(param.Name)
 	}

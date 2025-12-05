@@ -15,12 +15,14 @@ import (
 
 type TestCase struct {
 	*test.Case
+
 	expectedErr error
 	middleware  *grpcmw.Middleware
 }
 
 type testOptions struct {
 	test.Options
+
 	expectedErr error
 	callback    func(*grpcmw.Middleware)
 }

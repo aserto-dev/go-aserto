@@ -50,7 +50,7 @@ func (cb *Connections) AsSlice() []*grpc.ClientConn {
 	return lo.Values(cb.conns)
 }
 
-// Used for testing.
+// ConnectCounter used for testing.
 type ConnectCounter struct {
 	Count int
 }

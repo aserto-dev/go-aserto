@@ -21,7 +21,8 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed to create authorizer client:", err)
 	}
-	defer azClient.Close()
+
+	defer func() { _ = azClient.Close() }()
 
 	mw := ginz.New(
 		azClient,
@@ -43,7 +44,10 @@ func main() {
 	router.POST("/api/:asset", Handler)
 	router.DELETE("/api/:asset", Handler)
 
-	router.Run(fmt.Sprintf(":%d", port))
+	if err := router.Run(fmt.Sprintf(":%d", port)); err != nil {
+		log.Print(err)
+		return
+	}
 }
 
 func Handler(c *gin.Context) {

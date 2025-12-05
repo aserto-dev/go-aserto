@@ -1,4 +1,6 @@
 /*
+Package aserto
+
 The aserto package provides access to the Aserto authorizer and supporting service.
 
 Authorization requests are performed using an AuthorizerClient.

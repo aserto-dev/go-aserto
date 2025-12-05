@@ -12,12 +12,14 @@ import (
 
 type TestCase struct {
 	*test.Case
+
 	expectedStatusCode int
 	middleware         *httpmw.Middleware
 }
 
 type testOptions struct {
 	test.Options
+
 	expectedStatusCode int
 	callback           func(*httpmw.Middleware)
 }

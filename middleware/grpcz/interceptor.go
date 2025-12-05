@@ -1,9 +1,8 @@
-/*
-Package grpc provides authorization middleware for gRPC servers.
+// Package grpc provides authorization middleware for gRPC servers.
+//
+// The middleware intercepts incoming requests/streams and calls the Aserto authorizer service to
+// determine if access should be granted or denied.
 
-The middleware intercepts incoming requests/streams and calls the Aserto authorizer service to
-determine if access should be granted or denied.
-*/
 package grpcz
 
 import (

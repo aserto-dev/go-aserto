@@ -22,6 +22,7 @@ func TestWithURL(t *testing.T) {
 	assert := require.New(t)
 
 	const URL = "https://server.com:123"
+
 	svcURL, err := url.Parse(URL)
 	assert.NoError(err)
 

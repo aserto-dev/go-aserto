@@ -29,6 +29,20 @@ type RebacMiddleware struct {
 	allowedMethods  internal.Lookup[string]
 }
 
+func NewRebacMiddleware(authzClient AuthorizerClient, policy *Policy) *RebacMiddleware {
+	policyMapper := methodPolicyMapper("")
+	if policy.Path != "" {
+		policyMapper = nil
+	}
+
+	return &RebacMiddleware{
+		Identity:     (&IdentityBuilder{}).Subject().FromMetadata("authorization"),
+		client:       authzClient,
+		policy:       policy,
+		policyMapper: policyMapper,
+	}
+}
+
 /*
 WithResourceFromContextValue instructs the middleware to read the specified value from the incoming request
 context and add it to the authorization resource context.
@@ -87,20 +101,6 @@ func (c *RebacMiddleware) WithIgnoredMethods(methods []string) *RebacMiddleware 
 func (c *RebacMiddleware) WithAllowedMethods(methods ...string) *RebacMiddleware {
 	c.allowedMethods = internal.NewLookup(methods...)
 	return c
-}
-
-func NewRebacMiddleware(authzClient AuthorizerClient, policy *Policy) *RebacMiddleware {
-	policyMapper := methodPolicyMapper("")
-	if policy.Path != "" {
-		policyMapper = nil
-	}
-
-	return &RebacMiddleware{
-		Identity:     (&IdentityBuilder{}).Subject().FromMetadata("authorization"),
-		client:       authzClient,
-		policy:       policy,
-		policyMapper: policyMapper,
-	}
 }
 
 // Unary returns a grpc.UnaryServiceInterceptor that authorizes incoming messages.

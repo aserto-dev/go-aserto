@@ -23,7 +23,7 @@ type IdentityBuilder struct {
 
 // Static values
 
-// Call JWT() to indicate that the user's identity is expressed as a string-encoded JWT.
+// JWT indicates that the user's identity is expressed as a string-encoded JWT.
 //
 // JWT() is always called in conjunction with another method that provides the user ID itself.
 // For example:
@@ -34,7 +34,7 @@ func (b *IdentityBuilder) JWT() *IdentityBuilder {
 	return b
 }
 
-// Call Subject() to indicate that the user's identity is a subject name (email, userid, etc.).
+// Subject() indicates that the user's identity is a subject name (email, userid, etc.).
 
 // Subject() is always used in conjunction with another method that provides the user ID itself.
 // For example:
@@ -45,7 +45,7 @@ func (b *IdentityBuilder) Subject() *IdentityBuilder {
 	return b
 }
 
-// Call Manual() to indicate that the user's identity is set manually and isn't resolved to a user by the authorizer.
+// Manual indicates that the user's identity is set manually and isn't resolved to a user by the authorizer.
 //
 // Manually set identities are available in the authorizer's policy language through the "input.identity" variable.
 func (b *IdentityBuilder) Manual() *IdentityBuilder {
@@ -53,7 +53,7 @@ func (b *IdentityBuilder) Manual() *IdentityBuilder {
 	return b
 }
 
-// Call None() to indicate that requests are unauthenticated.
+// None indicates that requests are unauthenticated.
 func (b *IdentityBuilder) None() *IdentityBuilder {
 	b.identityType = api.IdentityType_IDENTITY_TYPE_NONE
 	b.defaultIdentity = ""
@@ -61,7 +61,7 @@ func (b *IdentityBuilder) None() *IdentityBuilder {
 	return b
 }
 
-// Call ID(...) to set the user's identity. If neither JWT() or Subject() are called too, IdentityMapper
+// ID sets the user's identity. If neither JWT() or Subject() are called too, IdentityMapper
 // tries to infer whether the specified identity is a JWT or not.
 // Passing an empty string is the same as calling .None() and results in an authorization check for anonymous access.
 func (b *IdentityBuilder) ID(identity string) *IdentityBuilder {
@@ -98,7 +98,7 @@ func (b *IdentityBuilder) FromHeader(header ...string) *IdentityBuilder {
 	return b
 }
 
-// FromHumaContextValue extracts caller identity from a value in the incoming request context from the huma context.
+// FromContextValue extracts caller identity from a value in the incoming request context from the huma context.
 //
 // If the value is not present, not a string, or an empty string then the request is considered anonymous.
 func (b *IdentityBuilder) FromContextValue(key string) *IdentityBuilder {

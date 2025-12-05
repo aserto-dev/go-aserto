@@ -12,10 +12,11 @@ import (
 // Client provides access to the Aserto authorization services.
 type Client struct {
 	authz.AuthorizerClient
+
 	conn *grpc.ClientConn
 }
 
-// NewClient creates a Client with the specified connection options.
+// New creates a Client with the specified connection options.
 func New(opts ...aserto.ConnectionOption) (*Client, error) {
 	conn, err := aserto.NewConnection(opts...)
 	if err != nil {

@@ -10,6 +10,8 @@ import (
 	"github.com/aserto-dev/go-aserto/middleware/httpz"
 )
 
+const readHeaderTimeout = 2 * time.Second
+
 func Hello(w http.ResponseWriter, _ *http.Request) {
 	if _, err := w.Write([]byte(`"hello"`)); err != nil {
 		log.Println("Failed to write HTTP response:", err)
@@ -46,7 +48,7 @@ func Example() {
 	// Start server.
 	server := &http.Server{
 		Addr:              ":8080",
-		ReadHeaderTimeout: 2 * time.Second,
+		ReadHeaderTimeout: readHeaderTimeout,
 	}
 	if err := server.ListenAndServe(); err != nil {
 		log.Println("Failed to start server:", err)

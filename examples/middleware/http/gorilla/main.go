@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -13,7 +14,10 @@ import (
 	"github.com/aserto-dev/go-aserto/middleware/gorillaz"
 )
 
-const port = 8080
+const (
+	port              = 8080
+	readHeaderTimeout = 2 * time.Second
+)
 
 func main() {
 	azClient, err := az.New(
@@ -22,7 +26,8 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed to create authorizer client:", err)
 	}
-	defer azClient.Close()
+
+	defer func() { _ = azClient.Close() }()
 
 	mw := gorillaz.New(
 		azClient,
@@ -47,16 +52,20 @@ func main() {
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
-	w.Write([]byte(`"Permission granted"`))
+
+	if _, err := w.Write([]byte(`"Permission granted"`)); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func start(h http.Handler) {
 	addr := fmt.Sprintf("0.0.0.0:%d", port)
-	fmt.Println("Staring server on", addr)
+	fmt.Printf("Staring server on %s\n", addr)
 
 	srv := http.Server{
-		Handler: h,
-		Addr:    addr,
+		Handler:           h,
+		Addr:              addr,
+		ReadHeaderTimeout: readHeaderTimeout,
 	}
 	log.Fatal(srv.ListenAndServe())
 }
