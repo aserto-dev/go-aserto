@@ -15,7 +15,7 @@ require (
 
 require (
 	github.com/aserto-dev/errors v0.0.17 // indirect
-	github.com/aserto-dev/go-authorizer v0.20.15-0.20260204140815-2a8d5308e648 // indirect
+	github.com/aserto-dev/go-authorizer v0.20.20 // indirect
 	github.com/bytedance/sonic v1.14.0 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect

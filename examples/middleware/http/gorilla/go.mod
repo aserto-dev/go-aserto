@@ -14,7 +14,7 @@ require (
 
 require (
 	github.com/aserto-dev/errors v0.0.17 // indirect
-	github.com/aserto-dev/go-authorizer v0.20.15-0.20260204140815-2a8d5308e648 // indirect
+	github.com/aserto-dev/go-authorizer v0.20.20 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.7 // indirect

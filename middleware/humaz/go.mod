@@ -7,7 +7,7 @@ replace github.com/aserto-dev/go-aserto => ../../
 require (
 	github.com/aserto-dev/errors v0.0.17
 	github.com/aserto-dev/go-aserto v0.0.0-00010101000000-000000000000
-	github.com/aserto-dev/go-authorizer v0.20.15-0.20260204140815-2a8d5308e648
+	github.com/aserto-dev/go-authorizer v0.20.20
 	github.com/danielgtaylor/huma/v2 v2.18.0
 	github.com/lestrrat-go/jwx v1.2.26
 	github.com/rs/zerolog v1.34.0

@@ -5,8 +5,8 @@ go 1.24.0
 toolchain go1.25.6
 
 require (
-	github.com/aserto-dev/go-authorizer v0.20.15-0.20260204140815-2a8d5308e648
-	github.com/aserto-dev/go-directory v0.33.12-0.20260204143313-18b34a32187d
+	github.com/aserto-dev/go-authorizer v0.20.20
+	github.com/aserto-dev/go-directory v0.33.20
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.52.0
