@@ -1,16 +1,12 @@
 module github.com/aserto-dev/go-aserto
 
-go 1.24.12
+go 1.24.0
 
 toolchain go1.25.6
 
-// replace github.com/aserto-dev/go-authorizer => ../go-authorizer
-
-// replace github.com/aserto-dev/go-directory => ../go-directory
-
 require (
-	github.com/aserto-dev/go-authorizer v0.20.15-0.20260202162550-9dcd0f291661
-	github.com/aserto-dev/go-directory v0.33.12-0.20260122124051-9c1a117813a6
+	github.com/aserto-dev/go-authorizer v0.20.15-0.20260204140815-2a8d5308e648
+	github.com/aserto-dev/go-directory v0.33.12-0.20260204143313-18b34a32187d
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.52.0
@@ -30,7 +26,7 @@ require (
 	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260203192932-546029d2fa20 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260203192932-546029d2fa20 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
