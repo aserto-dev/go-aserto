@@ -11,10 +11,3 @@ func DefaultPolicyContext(policy *middleware.Policy) *api.PolicyContext {
 		Decisions: []string{policy.Decision},
 	}
 }
-
-func DefaultPolicyInstance(policy *middleware.Policy) *api.PolicyInstance {
-	return &api.PolicyInstance{
-		Name:          policy.Name,
-		InstanceLabel: policy.Name,
-	}
-}

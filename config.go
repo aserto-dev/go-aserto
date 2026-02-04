@@ -23,12 +23,6 @@ type Config struct {
 	// An API key to be used for authentication with the service.
 	APIKey string `json:"api_key"`
 
-	// An Aserto tenant ID.
-	TenantID string `json:"tenant_id"`
-
-	// An Aserto account ID.
-	AccountID string `json:"account_id"`
-
 	// In mTLS connections, ClientCertPath is the path of the client's
 	// certificate file.
 	ClientCertPath string `json:"client_cert_path"`
@@ -55,7 +49,7 @@ type Config struct {
 
 	// Deprecated: no longer used. Timeouts are controlled on a per-call basis
 	// by the provided context.
-	TimeoutInSeconds int `json:"timeout_in_seconds"`
+	// TimeoutInSeconds int `json:"timeout_in_seconds"`
 }
 
 // Connect connects to the service specified in Config,
@@ -102,10 +96,6 @@ func (cfg *Config) ToConnectionOptions() ([]ConnectionOption, error) {
 
 	if cfg.CACertPath != "" {
 		options = append(options, WithCACertPath(cfg.CACertPath))
-	}
-
-	if cfg.TenantID != "" {
-		options = append(options, WithTenantID(cfg.TenantID))
 	}
 
 	if cfg.ClientCertPath != "" {

@@ -22,7 +22,6 @@ func Example() {
 	// Create azClient client.
 	azClient, err := az.New(
 		aserto.WithAPIKeyAuth("<Aserto authorizer API Key>"),
-		aserto.WithTenantID("<Aserto tenant ID>"),
 	)
 	if err != nil {
 		log.Fatal("Failed to create authorizer client:", err)

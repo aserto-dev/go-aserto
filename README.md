@@ -52,8 +52,6 @@ The options below can be specified to override default behaviors:
 
 **`WithTokenAuth()`** - sets an OAuth2 token to be used for authentication.
 
-**`WithTenantID()`** - sets the aserto tenant ID.
-
 **`WithInsecure()`** - enables/disables TLS verification. Default: false.
 
 **`WithCACertPath()`** - adds the specified PEM certificate file to the connection's list of trusted root CAs.
@@ -181,8 +179,7 @@ All services use the same configuration:
 ```json
 {
 	"address": "directory.prod.aserto.com:8443",
-	"api_key": "<API-KEY>",
-	"tenant_id": "<TENANT-ID>"
+	"api_key": "<API-KEY>"
 }
 ```
 

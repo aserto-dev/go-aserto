@@ -74,14 +74,6 @@ func (o *ConnectionOptions) ToDialOptions() ([]grpc.DialOption, error) {
 		opts = append(opts, grpc.WithPerRPCCredentials(o.Creds))
 	}
 
-	if o.TenantID != "" {
-		opts = append(opts, contextWrapperInterceptor(o.tenantContext)...)
-	}
-
-	if o.AccountID != "" {
-		opts = append(opts, contextWrapperInterceptor(o.accountContext)...)
-	}
-
 	if o.NoProxy {
 		opts = append(opts, grpc.WithNoProxy())
 	}
@@ -110,14 +102,6 @@ func (o *ConnectionOptions) transportCredentials() (grpc.DialOption, error) {
 	}
 
 	return grpc.WithTransportCredentials(creds), nil
-}
-
-func (o *ConnectionOptions) tenantContext(ctx context.Context) context.Context {
-	return SetTenantContext(ctx, o.TenantID)
-}
-
-func (o *ConnectionOptions) accountContext(ctx context.Context) context.Context {
-	return SetAccountContext(ctx, o.AccountID)
 }
 
 func (o *ConnectionOptions) outgoingHeaders() []grpc.DialOption {

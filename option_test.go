@@ -97,14 +97,6 @@ func TestTokenAndAPIKey(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestWithTenantID(t *testing.T) {
-	assert := require.New(t)
-	options, err := aserto.NewConnectionOptions(aserto.WithTenantID("<tenantid>"))
-	assert.NoError(err)
-
-	assert.Equal("<tenantid>", options.TenantID)
-}
-
 const (
 	caPath   = "/path/to/ca.crt"
 	certPath = "/path/to/cert.crt"
@@ -168,11 +160,4 @@ func TestWithNoTLS(t *testing.T) {
 	options, err := aserto.NewConnectionOptions(aserto.WithNoTLS(true))
 	assert.NoError(err)
 	assert.True(options.NoTLS)
-}
-
-func TestWithAccountID(t *testing.T) {
-	assert := require.New(t)
-	options, err := aserto.NewConnectionOptions(aserto.WithAccountID("accountID"))
-	assert.NoError(err)
-	assert.Equal("accountID", options.AccountID)
 }

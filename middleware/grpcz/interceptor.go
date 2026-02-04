@@ -81,15 +81,6 @@ func New(authzClient AuthorizerClient, policy *Policy) *Middleware {
 	}
 }
 
-// Deprecated: Use WithAllowedMethods instead.
-// WithIgnoredMethods takes as its input a list of policy paths in Rego dot notation
-// (e.g. "myservice.GET.user.__id") that are ignored by the middleware. Requests that
-// would normally evaluate one of these paths will be allowed to proceed without authorization.
-func (m *Middleware) WithIgnoredMethods(paths []string) *Middleware {
-	m.ignoredPaths = internal.NewLookup(paths...)
-	return m
-}
-
 // WithAllowedMethods takes a list of gRPC methods that are allowed to proceed without authorization.
 // Method paths are in the format "/package.Service/Method".
 // For example: "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo".
@@ -248,7 +239,6 @@ func (m *Middleware) authorize(ctx context.Context, req any) error {
 		IdentityContext: m.Identity.build(ctx, req),
 		PolicyContext:   policyContext,
 		ResourceContext: resource,
-		PolicyInstance:  internal.DefaultPolicyInstance(m.policy),
 	}
 
 	logger := zerolog.Ctx(ctx).With().Interface("is", isReq).Logger()

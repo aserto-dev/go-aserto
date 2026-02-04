@@ -38,6 +38,5 @@ allowing users to programmatically manage their aserto account.
 There are two top-level services, each with its own set of sub-services.
 
 1. `client/authorizer` defines a client for services run at the edge and used to serve authorization requests.
-2. `client/tenant` defines the control-plane services used to configure authorizers.
 */
 package aserto

@@ -35,7 +35,7 @@ func TestConnections(t *testing.T) {
 
 	t.Run("second connection", func(t *testing.T) {
 		assert := require.New(t)
-		cfg := &aserto.Config{Address: "localhost:8282", TenantID: "foobar"}
+		cfg := &aserto.Config{Address: "localhost:8282", APIKey: "foobar"}
 
 		conn, err := conns.Get(cfg)
 		assert.NoError(err)
