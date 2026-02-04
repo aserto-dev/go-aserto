@@ -1,6 +1,6 @@
 module github.com/aserto-dev/go-aserto/middleware/gorillaz
 
-go 1.24.12
+go 1.24.0
 
 replace github.com/aserto-dev/go-aserto => ../../
 
