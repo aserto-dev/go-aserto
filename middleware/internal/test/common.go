@@ -76,10 +76,6 @@ func Request(o ...Override) *authz.IsRequest {
 			Path:      os.path,
 			Decisions: os.decisions,
 		},
-		PolicyInstance: &api.PolicyInstance{
-			Name:          os.policy,
-			InstanceLabel: os.policy,
-		},
 		ResourceContext: os.resource,
 	}
 }

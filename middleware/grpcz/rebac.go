@@ -10,7 +10,6 @@ import (
 	"github.com/aserto-dev/go-authorizer/aserto/authorizer/v2/api"
 	"github.com/aserto-dev/go-authorizer/pkg/aerr"
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -83,18 +82,6 @@ func (c *RebacMiddleware) WithObjectType(value string) *RebacMiddleware {
 	return c
 }
 
-// Deprecated: Use WithAllowedMethods instead.
-// WithIgnoredMethods takes as its input a list of policy paths in Rego dot notation
-// (e.g. "myservice.GET.user.__id") that are ignored by the middleware. Requests that
-// would normally evaluate one of these paths will be allowed to proceed without authorization.
-func (c *RebacMiddleware) WithIgnoredMethods(methods []string) *RebacMiddleware {
-	c.ignoredPaths = internal.NewLookup(
-		lo.Map(methods, func(m string, _ int) string { return strings.ToLower(m) })...,
-	)
-
-	return c
-}
-
 // WithAllowedMethods takes a list of gRPC methods that are allowed to proceed without authorization.
 // Method paths are in the format "/package.Service/Method".
 // For example: "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo".
@@ -159,7 +146,6 @@ func (c *RebacMiddleware) authorize(ctx context.Context, req any) error {
 			IdentityContext: c.identityContext(ctx, req),
 			PolicyContext:   policyContext,
 			ResourceContext: resource,
-			PolicyInstance:  internal.DefaultPolicyInstance(c.policy),
 		},
 	)
 	if err != nil {

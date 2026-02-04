@@ -192,7 +192,6 @@ func (m *Middleware) is(
 		IdentityContext: identityContext,
 		PolicyContext:   policyContext,
 		ResourceContext: resourceContext,
-		PolicyInstance:  internal.DefaultPolicyInstance(m.policy),
 	}
 
 	logger := zerolog.Ctx(ctx).With().Interface("is_request", isRequest).Logger()

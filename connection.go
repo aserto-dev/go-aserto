@@ -1,14 +1,9 @@
 package aserto
 
 import (
-	"context"
-	"strings"
-
 	"github.com/aserto-dev/go-aserto/internal/hosted"
-	"github.com/aserto-dev/header"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 // NewConnection creates a gRPC connection with the given options.
@@ -38,21 +33,4 @@ func Connect(options *ConnectionOptions) (*grpc.ClientConn, error) {
 	}
 
 	return grpc.NewClient(options.Address, dialOpts...)
-}
-
-// SetTenantContext returns a new context with the provided tenant ID embedded as metadata.
-func SetTenantContext(ctx context.Context, tenantID string) context.Context {
-	if strings.TrimSpace(tenantID) == "" {
-		return ctx
-	}
-
-	return metadata.AppendToOutgoingContext(ctx, string(header.HeaderAsertoTenantID), tenantID)
-}
-
-func SetAccountContext(ctx context.Context, accountID string) context.Context {
-	if strings.TrimSpace(accountID) == "" {
-		return ctx
-	}
-
-	return metadata.AppendToOutgoingContext(ctx, string(header.HeaderAsertoAccountID), accountID)
 }

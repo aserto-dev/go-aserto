@@ -22,10 +22,6 @@ func TestFieldMaskIsValid(t *testing.T) {
 			Type:     api.IdentityType_IDENTITY_TYPE_SUB,
 			Identity: "username",
 		},
-		PolicyInstance: &api.PolicyInstance{
-			Name:          "policyName",
-			InstanceLabel: "label",
-		},
 	}
 
 	var msgType *authz.IsRequest
@@ -35,8 +31,6 @@ func TestFieldMaskIsValid(t *testing.T) {
 		"policy_context.path",
 		"identity_context.identity",
 		"resource_context",
-		"policy_instance.name",
-		"policy_instance.instance_label",
 	)
 
 	require.NoError(t, err, "failed to create field mask")

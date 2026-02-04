@@ -116,23 +116,6 @@ func WithAPIKeyAuth(key string) ConnectionOption {
 	}
 }
 
-// WithTenantID sets the Aserto tenant ID.
-func WithTenantID(tenantID string) ConnectionOption {
-	return func(options *ConnectionOptions) error {
-		options.TenantID = tenantID
-
-		return nil
-	}
-}
-
-// WithAccountID sets the Aserto account ID.
-func WithAccountID(accountID string) ConnectionOption {
-	return func(options *ConnectionOptions) error {
-		options.AccountID = accountID
-		return nil
-	}
-}
-
 // WithNoProxy returns a ConnectionOption that bypasses any configured HTTP proxy.
 func WithNoProxy(noProxy bool) ConnectionOption {
 	return func(options *ConnectionOptions) error {
