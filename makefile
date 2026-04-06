@@ -14,13 +14,13 @@ EXT_DIR            := ${PWD}/.ext
 EXT_BIN_DIR        := ${EXT_DIR}/bin
 EXT_TMP_DIR        := ${EXT_DIR}/tmp
 
-GO_VER             := 1.25
+GO_VER             := 1.26
 SVU_VER            := 3.3.0
 GOTESTSUM_VER      := 1.13.0
-GOLANGCI-LINT_VER  := 2.6.2
-GORELEASER_VER     := 2.9.0
+GOLANGCI-LINT_VER  := 2.10.1
+GORELEASER_VER     := 2.14.4
 
-RELEASE_TAG		:= $$(${EXT_BIN_DIR}/svu current)
+RELEASE_TAG        := $$(${EXT_BIN_DIR}/svu current)
 
 .DEFAULT_GOAL      := build
 
@@ -66,9 +66,7 @@ info:
 .PHONY: install-svu
 install-svu: ${EXT_BIN_DIR} ${EXT_TMP_DIR}
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@gh release download v${SVU_VER} --repo https://github.com/caarlos0/svu --pattern "*${GOOS}_all.tar.gz" --output "${EXT_TMP_DIR}/svu.tar.gz" --clobber
-	@tar -xvf ${EXT_TMP_DIR}/svu.tar.gz --directory ${EXT_BIN_DIR} svu &> /dev/null
-	@chmod +x ${EXT_BIN_DIR}/svu
+	@GOBIN=${EXT_BIN_DIR} go install github.com/caarlos0/svu/v3@v${SVU_VER}
 	@${EXT_BIN_DIR}/svu --version
 
 .PHONY: install-gotestsum

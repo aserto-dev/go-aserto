@@ -21,7 +21,7 @@ type Config struct {
 	Token string `json:"token"`
 
 	// An API key to be used for authentication with the service.
-	APIKey string `json:"api_key"`
+	APIKey string `json:"api_key"` //nolint:gosec
 
 	// In mTLS connections, ClientCertPath is the path of the client's
 	// certificate file.
