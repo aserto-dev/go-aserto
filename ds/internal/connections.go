@@ -26,7 +26,7 @@ func NewConnections() *Connections {
 }
 
 func (cb *Connections) Get(cfg *aserto.Config) (*grpc.ClientConn, error) {
-	bin, err := json.Marshal(cfg)
+	bin, err := json.Marshal(cfg) //nolint:gosec
 	if err != nil {
 		return nil, err
 	}
