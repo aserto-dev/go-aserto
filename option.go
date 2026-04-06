@@ -103,7 +103,7 @@ func WithTokenAuth(token string) ConnectionOption {
 	}
 }
 
-// WithAPIKeyAuth uses an Aserto API key to authenticate with the authorizer service.
+// WithAPIKeyAuth uses an authorization API key to authenticate with the authorizer service.
 func WithAPIKeyAuth(key string) ConnectionOption {
 	return func(options *ConnectionOptions) error {
 		if options.Creds != nil {
