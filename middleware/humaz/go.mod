@@ -7,7 +7,7 @@ replace github.com/aserto-dev/go-aserto => ../../
 require (
 	github.com/aserto-dev/errors v0.0.17
 	github.com/aserto-dev/go-aserto v0.0.0-00010101000000-000000000000
-	github.com/aserto-dev/go-authorizer v0.20.20
+	github.com/aserto-dev/go-authorizer v0.24.0
 	github.com/danielgtaylor/huma/v2 v2.37.3
 	github.com/lestrrat-go/jwx v1.2.31
 	github.com/rs/zerolog v1.35.0
@@ -31,7 +31,7 @@ require (
 	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260406210006-6f92a3bedf2d // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260406210006-6f92a3bedf2d // indirect
 	google.golang.org/grpc v1.80.0 // indirect
 )
