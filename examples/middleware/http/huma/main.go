@@ -18,6 +18,7 @@ const (
 	port         = 8080
 	contextKey   = "subject"
 	subjectValue = "CiRmZDE2MTRkMy1jMzlhLTQ3ODEtYjdiZC04Yjk2ZjVhNTEwMGQSBWxvY2Fs"
+	path         = "/api/{asset}"
 )
 
 func AuthNMiddleware(ctx huma.Context, next func(huma.Context)) {
@@ -59,7 +60,7 @@ func main() {
 	huma.Register(api, huma.Operation{
 		OperationID: "getAsset",
 		Method:      "GET",
-		Path:        "/api/{asset}",
+		Path:        path,
 		Summary:     "Get an asset",
 		// Configure authorization only on per operation basis
 		// Middlewares: huma.Middlewares{mw.Handler},
@@ -68,14 +69,14 @@ func main() {
 	huma.Register(api, huma.Operation{
 		OperationID: "createAsset",
 		Method:      "POST",
-		Path:        "/api/{asset}",
+		Path:        path,
 		Summary:     "Create an asset",
 	}, handler)
 
 	huma.Register(api, huma.Operation{
 		OperationID: "deleteAsset",
 		Method:      "DELETE",
-		Path:        "/api/{asset}",
+		Path:        path,
 		Summary:     "Delete an asset",
 	}, handler)
 

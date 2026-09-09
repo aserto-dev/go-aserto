@@ -14,11 +14,11 @@ EXT_DIR            := ${PWD}/.ext
 EXT_BIN_DIR        := ${EXT_DIR}/bin
 EXT_TMP_DIR        := ${EXT_DIR}/tmp
 
-GO_VER             := 1.26
-SVU_VER            := 3.3.0
+GO_VER             := 1.27
+SVU_VER            := 3.4.1
 GOTESTSUM_VER      := 1.13.0
-GOLANGCI-LINT_VER  := 2.11.4
-GORELEASER_VER     := 2.14.1
+GOLANGCI-LINT_VER  := 2.13.2
+GORELEASER_VER     := 2.18.0
 
 RELEASE_TAG        := $$(${EXT_BIN_DIR}/svu current)
 
@@ -36,22 +36,20 @@ build:
 PHONY: go-mod-tidy
 go-mod-tidy:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@go work edit -json | jq -r '.Use[].DiskPath' | xargs -I{} bash -c 'cd {} && go mod tidy -v && cd -'
+	@go work edit -json | jq -r '.Use[].DiskPath' | while read -r dir; do (echo "$${dir}" && cd "$${dir}" && go mod tidy) done
+	@go work sync
 
+PHONY: lint
 lint:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
 	@${EXT_BIN_DIR}/golangci-lint config path
 	@${EXT_BIN_DIR}/golangci-lint config verify
-	@go work edit -json | jq -r '.Use[].DiskPath'  | xargs -I{} ${EXT_BIN_DIR}/golangci-lint run {}/... -c .golangci.yaml
+	@go work edit -json | jq -r '.Use[].DiskPath' | while read -r dir; do (echo "golangci-lint run $${dir}/... -c .golangci.yaml" && ${EXT_BIN_DIR}/golangci-lint run $${dir}/... -c .golangci.yaml) done
 
+PHONY: test
 test:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
 	@go work edit -json | jq -r '.Use[].DiskPath'  | xargs -I{} ${EXT_BIN_DIR}/gotestsum --format short-verbose -- -count=1 -v {}/...
-
-.PHONY: vault-login
-vault-login:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@vault login -method=github token=$$(gh auth token)
 
 .PHONY: info
 info:

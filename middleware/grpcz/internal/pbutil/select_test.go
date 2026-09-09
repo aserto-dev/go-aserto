@@ -1,3 +1,4 @@
+//nolint:goconst
 package pbutil_test
 
 import (
