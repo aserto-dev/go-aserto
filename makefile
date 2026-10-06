@@ -14,11 +14,11 @@ EXT_DIR            := ${PWD}/.ext
 EXT_BIN_DIR        := ${EXT_DIR}/bin
 EXT_TMP_DIR        := ${EXT_DIR}/tmp
 
-GO_VER             := 1.26
-SVU_VER            := 3.3.0
+GO_VER             := 1.27
+SVU_VER            := 3.4.0
 GOTESTSUM_VER      := 1.13.0
-GOLANGCI-LINT_VER  := 2.11.4
-GORELEASER_VER     := 2.14.1
+GOLANGCI-LINT_VER  := 2.14.0
+GORELEASER_VER     := 2.18.2
 
 RELEASE_TAG        := $$(${EXT_BIN_DIR}/svu current)
 
@@ -28,21 +28,50 @@ RELEASE_TAG        := $$(${EXT_BIN_DIR}/svu current)
 deps: info install-svu install-golangci-lint install-gotestsum install-goreleaser
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
 
+.PHONY: gover
+gover:
+	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
+	@(go env GOVERSION | grep "go${GO_VER}") || (echo "go version check failed expected go${GO_VER} got $$(go env GOVERSION)"; exit 1)
+
 .PHONY: build
-build:
+build: gover
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
 	@${EXT_BIN_DIR}/goreleaser build --clean --snapshot --single-target
 
 PHONY: go-mod-tidy
-go-mod-tidy:
+go-mod-tidy: gover
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@go work edit -json | jq -r '.Use[].DiskPath' | xargs -I{} bash -c 'cd {} && go mod tidy -v && cd -'
+	@exit_code=0; \
+	modules=$$(go work edit -json | jq -r '.Use[].DiskPath // empty'); \
+	for mod in $$modules; do \
+		if [ "$$mod" = "." ]; then \
+			mod_dir=$$(pwd); \
+		else \
+			mod_dir=$$(realpath "$$mod" 2>/dev/null || echo "$$mod"); \
+		fi; \
+		echo "go mod tidy $$mod_dir"; \
+		(cd "$$mod_dir" && go mod tidy) || exit_code=$$?; \
+	done; \
+	exit $$exit_code
 
-lint:
+.PHONY: lint
+lint: gover
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
 	@${EXT_BIN_DIR}/golangci-lint config path
 	@${EXT_BIN_DIR}/golangci-lint config verify
-	@go work edit -json | jq -r '.Use[].DiskPath'  | xargs -I{} ${EXT_BIN_DIR}/golangci-lint run {}/... -c .golangci.yaml
+	@exit_code=0; \
+	config=${PWD}/.golangci.yaml; \
+	modules=$$(go work edit -json | jq -r '.Use[].DiskPath // empty'); \
+	for mod in $$modules; do \
+		if [ "$$mod" = "." ]; then \
+			mod_dir=$$(pwd); \
+		else \
+			mod_dir=$$(realpath "$$mod" 2>/dev/null || echo "$$mod"); \
+		fi; \
+		echo -e "$(ATTN_COLOR)==> $@ $$mod_dir$(NO_COLOR)"; \
+		(cd "$$mod_dir" && ${EXT_BIN_DIR}/golangci-lint run --config $$config ./...) || exit_code=$$?; \
+	done; \
+	exit $$exit_code
 
 test:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"

@@ -25,6 +25,7 @@ func AuthNMiddleware(ctx huma.Context, next func(huma.Context)) {
 	next(ctx)
 }
 
+//nolint:goconst
 func main() {
 	// Create Aserto authorizer client
 	azClient, err := az.New(

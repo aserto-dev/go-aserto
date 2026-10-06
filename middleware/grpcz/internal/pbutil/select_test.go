@@ -13,6 +13,7 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
+//nolint:goconst
 func TestFieldMaskIsValid(t *testing.T) {
 	msg := &authz.IsRequest{
 		PolicyContext: &api.PolicyContext{

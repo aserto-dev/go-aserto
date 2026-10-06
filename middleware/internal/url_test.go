@@ -15,6 +15,7 @@ type TestCase struct {
 	expected string
 }
 
+//nolint:goconst
 func TestHostnameSegment(t *testing.T) {
 	testCases := []TestCase{
 		{"should accept a valid positive index", "http://user.example.com", 0, "user"},

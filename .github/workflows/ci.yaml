@@ -12,9 +12,8 @@ on:
   pull_request:
 
 env:
-  GO_RELEASER_VERSION: "v2.14.1"
-  GO_LANGCI_LINT_VERSION: "v2.11.4"
-  GO_TESTSUM_VERSION: "1.13.0"
+  GORELEASER_VER: "v2.18.2"
+  GOLANGCI-LINT_VER: "v2.14.0"
 
 jobs:
   lint:
@@ -34,10 +33,10 @@ jobs:
 
     steps:
       -
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       -
         name: Setup Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -45,37 +44,36 @@ jobs:
         name: Lint ginz
         uses: golangci/golangci-lint-action@v9
         with:
-          version: ${{ env.GO_LANGCI_LINT_VERSION }}
+          version: ${{ env.GOLANGCI-LINT_VER }}
           args: --timeout=5m
           working-directory: ${{ matrix.module }}
   test:
     runs-on: ubuntu-latest
     steps:
       -
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       -
         name: Setup Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: 'go.mod'
           cache: true
       -
         name: Test Setup
-        uses: gertd/action-gotestsum@v3.0.0
-        with:
-          gotestsum_version: ${{ env.GO_TESTSUM_VERSION }}
+        run: |
+          make install-gotestsum
       -
         name: Test
         run: |
-          gotestsum --format short-verbose -- -count=1 -v -timeout=240s -coverprofile=cover.out -coverpkg=./... ./...
+          .ext/bin/gotestsum --format short-verbose -- -count=1 -v -timeout=240s -coverprofile=cover.out -coverpkg=./... ./...
       -
         name: Build Examples
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v7
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           distribution: goreleaser
-          version: ${{ env.GO_RELEASER_VERSION }}
+          version: ${{ env.GORELEASER_VER }}
           args: build --clean --snapshot --single-target
       -
         name: Upload code coverage
@@ -91,10 +89,10 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     steps:
       -
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       -
         name: Setup Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -108,5 +106,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           distribution: goreleaser
-          version: ${{ env.GO_RELEASER_VERSION }}
+          version: ${{ env.GORELEASER_VER }}
           args: release --clean
