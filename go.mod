@@ -5,7 +5,7 @@ go 1.26.0
 toolchain go1.27.1
 
 require (
-	github.com/aserto-dev/go-authorizer/aserto v0.0.0-20261001165020-143136061361
+	github.com/aserto-dev/go-authorizer/aserto v0.0.0-20261007082105-77475b64f74c
 	github.com/aserto-dev/go-directory/aserto v0.0.0-20261006090047-347856b42182
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/pkg/errors v0.9.1
