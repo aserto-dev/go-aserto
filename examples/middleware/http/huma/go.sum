@@ -1,7 +1,7 @@
 github.com/aserto-dev/errors v0.34.2-0.20261006083714-760eef8e0b6c h1:N4+jXftVpH73j1H67si4hkq6XvSskl7NOT/02nld1XQ=
 github.com/aserto-dev/errors v0.34.2-0.20261006083714-760eef8e0b6c/go.mod h1:439P8EwyQ14DVSdKmIvyQo6hTWEDqGX/snNcAF78CPE=
-github.com/aserto-dev/go-authorizer/aserto v0.0.0-20261001165020-143136061361 h1:vng0jQ0j14V918IxQuhyoWhz3Fmq6hNV654/J0Qa9I0=
-github.com/aserto-dev/go-authorizer/aserto v0.0.0-20261001165020-143136061361/go.mod h1:2JbQ41BR2sYsh0GYMbnYI10+Zk2uL1Vs+aCgTjrW5L8=
+github.com/aserto-dev/go-authorizer/aserto v0.0.0-20261007082105-77475b64f74c h1:iP4F5SxhXoMH5JnM164uTpMP728QBKJZUL/BZEqUsHo=
+github.com/aserto-dev/go-authorizer/aserto v0.0.0-20261007082105-77475b64f74c/go.mod h1:2JbQ41BR2sYsh0GYMbnYI10+Zk2uL1Vs+aCgTjrW5L8=
 github.com/aserto-dev/go-authorizer/pkg v0.0.0-20261001165020-143136061361 h1:JXvIlwmTTCbniiamTr9ZNiTfLhU4rP8SlJgFybe/DSE=
 github.com/aserto-dev/go-authorizer/pkg v0.0.0-20261001165020-143136061361/go.mod h1:/ahvDWSoeSKB4orvdYArHCsUce2HrmuOsPCWfdKQvmI=
 github.com/bytedance/gopkg v0.1.4 h1:oZnQwnX82KAIWb7033bEwtxvTqXcYMxDBaQxo5JJHWM=

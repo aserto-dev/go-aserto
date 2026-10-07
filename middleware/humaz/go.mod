@@ -9,7 +9,7 @@ replace github.com/aserto-dev/go-aserto => ../../
 require (
 	github.com/aserto-dev/errors v0.34.2-0.20261006083714-760eef8e0b6c
 	github.com/aserto-dev/go-aserto v0.0.0-00010101000000-000000000000
-	github.com/aserto-dev/go-authorizer/aserto v0.0.0-20261001165020-143136061361
+	github.com/aserto-dev/go-authorizer/aserto v0.0.0-20261007082105-77475b64f74c
 	github.com/aserto-dev/go-authorizer/pkg v0.0.0-20261001165020-143136061361
 	github.com/danielgtaylor/huma/v2 v2.37.3
 	github.com/lestrrat-go/jwx v1.2.31
