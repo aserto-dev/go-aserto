@@ -13,8 +13,8 @@ on:
 
 env:
   PRE_RELEASE: ${{ github.ref == 'refs/heads/main' && 'main' || '' }}
-  GO_RELEASER_VER: "v2.18.0"
-  GO_LANGCI_LINT_VER: "v2.13.2"
+  GO_RELEASER_VER: "v2.20.0"
+  GO_LANGCI_LINT_VER: "v2.15.0"
   
 jobs:
   lint:
