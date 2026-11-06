@@ -12,8 +12,11 @@ linters:
   disable:
     - depguard
     - exhaustruct
+    - exhaustruct
+    - exhaustruct_v5
     - forbidigo
-    - nlreturn          # redundant with wsl
+    - gomodguard # deprecated, replaced by gomodguard_v2
+    - nlreturn # redundant with wsl
     - noinlineerr
     - paralleltest
     - revive

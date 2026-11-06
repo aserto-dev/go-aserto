@@ -1,3 +1,4 @@
+//nolint:goconst
 package internal_test
 
 import (
